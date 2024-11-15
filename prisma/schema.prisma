@@ -1,24 +1,49 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id            String            @id @default(uuid())
+  email         String            @unique
+  username      String
+  password      String
+  sessions      Session[]        
+  refresh_token RefreshToken[]   
 }
 
 
-model User {
-  id             String        @id @default(uuid())
-  username       String
-  password       String
+model RefreshToken {
+  id       String    @id @default(uuid())
+  expireIn Int
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  Session Session[]
 
+  @@index([userId])
+  @@map("refresh_token")
+}
+model Session {
+  id            String        @id @default(uuid())
+  userId        String        
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenId String      
+  refreshToken  RefreshToken? @relation(fields: [refreshTokenId], references: [id], onDelete: Cascade)
+  ipAddress     String?      
+  isValid       Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  expiresAt     DateTime      
 
-  // Outros campos já definidos
+  @@map("session")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([refreshTokenId])
 }
