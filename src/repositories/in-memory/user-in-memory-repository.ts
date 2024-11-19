@@ -1,9 +1,9 @@
 import { PrismaClient, User } from "@prisma/client"
 import { UserRepositoryInterface } from "../interface/user-repository-interface"
-import { RegisterUserRequestParams } from "../../zod/registerUserParamsSchema"
+import { RegisterUserRequestParams } from "../../zod/register-user-params-schema"
 
 export class MemoryUserRepository implements UserRepositoryInterface {
-  private users: User[] = []
+  public users: User[] = []
 
   constructor() { }
 
