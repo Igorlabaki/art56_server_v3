@@ -1,6 +1,7 @@
-import { Session } from "@prisma/client";
-import { CreateSessionRequestParams, SessionRepositoryInterface } from "../interface/session-repository-interface";
 import dayjs from "dayjs";
+import { Session, User } from "@prisma/client";
+
+import { CreateSessionRequestParams, SessionRepositoryInterface, UpdateSessionRequestParams } from "../interface/session-repository-interface";
 
 export class InMemorySessionRepository implements SessionRepositoryInterface {
   private sessions: Session[] = [];
@@ -24,6 +25,11 @@ export class InMemorySessionRepository implements SessionRepositoryInterface {
   // Encontrando uma sessão pelo ID
   async getById(reference: string): Promise<Session | null> {
     const session = this.sessions.find(session => session.id === reference);
+    return session || null;
+  }
+
+  async getByUserId(reference: string): Promise<Session & { user: Partial<User> }  | null> {
+    const session = this.sessions.find(session => session.userId === reference);
     return session || null;
   }
 

@@ -3,7 +3,7 @@ import { sign } from "jsonwebtoken"
 import { User } from "@prisma/client"
 import { HttConfigurationError } from '../errors/errors-type/http-configuration-error';
 
-class RefreshTokenProvider {
+class AccessTokenProvider {
     private jwtSecretKey: string;
 
     constructor() {
@@ -16,18 +16,18 @@ class RefreshTokenProvider {
     }
 
     async execute({id,email,username}: {id:string,email:string,username:string}) {
-        const token = sign({
+        const accessToken = sign({
             id: id,
             email: email,
             username: username,
         }, this.jwtSecretKey, {
             subject: id,
-            expiresIn: '10d'
+           expiresIn: '1m'
         })
 
-        return token
+        return accessToken
     }
 }
 
-export { RefreshTokenProvider }
+export { AccessTokenProvider }
 

@@ -1,19 +1,20 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
-import { RegisterUserUseCase } from "./use-case-register-user";
-import { RegisterUserRequestParams, RegisterUserSchema } from "../../../zod/registerUserParamsSchema";
+import { CreateSessionUseCase } from "./use-case-create-session";
+import { CreateSessionRequestParams, CreateSessionSchema } from "../../../zod/create-session-params-schema copy";
 
-class RegisterUserController {
-    constructor(private registerUserUseCase: RegisterUserUseCase) { }
+
+class CreateSessionController {
+    constructor(private createSessionUseCase: CreateSessionUseCase) { }
 
     async handle(req: Request, resp: Response) {
         try {
-            const body: RegisterUserRequestParams = req.body;
+            const body: CreateSessionRequestParams = req.body;
             // Validate the request parms
-            RegisterUserSchema.parse(body);
+            CreateSessionSchema.parse(body);
 
             // Esperar a execução do caso de uso
-            const response = await this.registerUserUseCase.execute(body);
+            const response = await this.createSessionUseCase.execute(body);
             // Retornar o token
             return resp.json(response);
 
@@ -27,4 +28,4 @@ class RegisterUserController {
     }
 }
 
-export { RegisterUserController };
+export { CreateSessionController };

@@ -9,7 +9,7 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepositoryInter
 
   async create(reference: string): Promise<RefreshToken | null> {
 
-    const expireIn = dayjs().add(1, 'day').unix()
+    const expireIn = dayjs().add(2, 'minute').unix()
 
     return await this.prisma.refreshToken.create({
       data: {
@@ -27,7 +27,10 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepositoryInter
   async get(reference: string): Promise<RefreshToken | null> {
     return await this.prisma.refreshToken.findFirst({
       where: {
-        userId: reference
+        userId: reference,
+      },
+      orderBy: {
+        createdAt: 'desc',
       }
     })
   }
