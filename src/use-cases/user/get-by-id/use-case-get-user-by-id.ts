@@ -1,3 +1,4 @@
+import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface"
 
 class GetUserByIdUseCase {
@@ -8,7 +9,7 @@ class GetUserByIdUseCase {
         const user = await this.userRepository.getById(id)
 
         if (!user) {
-            throw new Error("User not found")
+            throw new HttpResourceNotFoundError("User")
         }
         //
 
