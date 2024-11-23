@@ -73,7 +73,7 @@ class RefreshTokenUseCase {
 
         // 5. Atualizar a validade da sessão, caso necessário
         const newExpiresAt = dayjs.unix(refreshToken.expireIn).toDate();
-        console.log(session)
+ 
         const sessionUpdated = await this.sessionRepository.update({
             sessionId: session.id,
             data:{
