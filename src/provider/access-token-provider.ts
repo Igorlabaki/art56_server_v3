@@ -22,7 +22,7 @@ class AccessTokenProvider {
             username: username,
         }, this.jwtSecretKey, {
             subject: id,
-           expiresIn: '1m'
+           expiresIn: '10d'
         })
 
         return accessToken

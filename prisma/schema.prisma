@@ -11,22 +11,13 @@ datasource db {
   relationMode = "prisma"
 }
 
-model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  username     String
-  password     String
-  session      Session[]
-  refreshToken RefreshToken[]
-}
-
 model RefreshToken {
-  id       String    @id @default(uuid())
-  expireIn Int
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  session  Session[]
-  createdAt      DateTime      @default(now())
+  id        String    @id @default(uuid())
+  expireIn  Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  session   Session[]
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@map("refresh_token")
@@ -49,3 +40,320 @@ model Session {
   @@map("session")
 }
 
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  username          String
+  password          String
+  session           Session[]
+  refreshToken      RefreshToken[]
+  userOrganizations UserOrganization[]
+}
+
+model Organization {
+  id                String             @id @default(uuid())
+  name              String             @unique
+  createdAt         DateTime           @default(now())
+  venues            Venue[]
+  userOrganizations UserOrganization[]
+}
+
+model UserOrganization {
+  id             String   @id @default(uuid())
+  userId         String
+  organizationId String
+  role           Role     @default(ADMIN)
+  joinedAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
+  @@index([organizationId])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Proposal {
+  id               String            @id @default(uuid())
+  type             ProposalType
+  trafficSource    TrafficSource
+  knowsVenue       Boolean           @default(false)
+  startDate        DateTime
+  endDate          DateTime
+  name             String
+  email            String
+  whatsapp         String
+  description      String            @db.LongText
+  guests           Int
+  basePrice        Float
+  extraHoursQty    Int
+  extraHourPrice   Float
+  totalAmount      Float
+  termsAccepted    Boolean           @default(false)
+  approved         Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  contact          Boolean?
+  paid             Boolean?          @default(false)
+  amountPaid       Float?            @default(0.0)
+  venueId          String
+  venue            Venue             @relation(fields: [venueId], references: [id])
+  payments         Payment[]
+  dateEvents       DateEvent[]
+  proposalCosts    ProposalCost[]
+  proposalServices ProposalService[]
+
+  @@index([venueId])
+  @@index([trafficSource])
+  @@index([email, startDate])
+  @@index([name, startDate])
+  @@map("proposal")
+}
+
+model ProposalService {
+  id         String @id @default(uuid())
+  proposalId String
+  serviceId  String
+
+  joinedAt DateTime @default(now())
+
+  service  Service  @relation(fields: [serviceId], references: [id])
+  proposal Proposal @relation(fields: [proposalId], references: [id])
+
+  @@unique([proposalId, serviceId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
+  @@index([proposalId])
+  @@index([serviceId])
+}
+
+model Service {
+  id               String            @id @default(uuid())
+  name             String
+  price            Float
+  venueId          String
+  proposalServices ProposalService[]
+  venue            Venue             @relation(fields: [venueId], references: [id])
+
+  @@index([venueId])
+}
+
+enum TrafficSource {
+  AIRBNB
+  GOOGLE
+  INSTAGRAM
+  TIKTOK
+  OUTROS
+  AMIGO
+  FACEBOOK
+}
+
+enum ProposalType {
+  EVENT
+  PRODUCTION
+  BARTER
+  OTHER
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  proposalId    String
+  proposal      Proposal      @relation(fields: [proposalId], references: [id])
+  amount        Float
+  paymentDate   DateTime
+  paymentMethod PaymentMethod
+  status        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([proposalId])
+  @@map("payment")
+}
+
+enum PaymentMethod {
+  PIX
+}
+
+model ProposalCost {
+  id   String       @id @default(uuid())
+  name ProposalName
+
+  amount    Float
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+  proposals Proposal[]
+
+  @@map("proposalCost")
+}
+
+enum ProposalName {
+  RECEPTIONIST
+  SECURITY
+  CLEANER
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  description String // Expense description
+  amount      Float // Amount of the expense
+  paymentDate DateTime // Payment date of the expense
+  type        ExpenseType // Type of expense (Fixed, Variable)
+  category    ExpenseCategory // Category of expense (Maintenance, Services, Materials, etc.)
+  recurring   Boolean // Indicates if it's a recurring or one-time expense
+  createdAt   DateTime        @default(now()) // Record creation date
+  updatedAt   DateTime        @updatedAt
+  venue       Venue           @relation(fields: [venueId], references: [id]) // Allows deleting without losing the quote
+  venueId     String // Can be null for expenses not linked to specific events
+
+  @@index([venueId])
+  @@map("expense")
+}
+
+enum ExpenseType {
+  RECURRING
+  SPORADIC
+}
+
+enum ExpenseCategory {
+  TAX
+  INVESTMENT
+  MAINTENANCE
+  ADVERTISING
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  venueId     String
+  venue       Venue            @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  dateEventId String?
+  dateEvent   DateEvent?       @relation(fields: [dateEventId], references: [id], onDelete: Cascade)
+  content     String
+  type        NotificationType
+  createdAt   DateTime         @default(now())
+  isRead      Boolean          @default(false)
+
+  @@index([venueId])
+  @@index([dateEventId])
+}
+
+enum NotificationType {
+  VISIT
+  EVENT
+  ALERT
+  PROPOSAL
+}
+
+model DateEvent {
+  id            String         @id @default(cuid())
+  type          String
+  title         String
+  startDate     DateTime
+  endDate       DateTime
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  proposalId    String?
+  proposal      Proposal?      @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  venueId       String
+  venue         Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@index([proposalId])
+  @@index([venueId])
+}
+
+model Venue {
+  id             String         @id @default(uuid())
+  name           String         @unique
+  street         String
+  streetNumber   String
+  complement     String?
+  neighborhood   String
+  city           String
+  state          String
+  cep            String
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  pricingModel   PricingModel // Enum que define o tipo de cobrança
+  pricePerPerson Float? // Valor por pessoa
+  pricePerDay    Float? // Valor por dia
+  texts          Text[]
+  owners         Owner[]
+  images         Image[]
+  expenses       Expense[]
+  questions      Question[]
+  proposals      Proposal[]
+  DateEvent      DateEvent[]
+  notifications  Notification[]
+  Service        Service[]
+
+  @@index([organizationId])
+}
+
+enum PricingModel {
+  PER_PERSON
+  PER_DAY
+}
+
+model Owner {
+  id           String   @id @default(uuid())
+  completeName String
+  rg           String?
+  cpf          String
+  pix          String
+  street       String
+  streetNumber String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  cep          String
+  venueId      String
+  createdAt    DateTime @default(now())
+  venue        Venue    @relation(fields: [venueId], references: [id])
+
+  @@index([venueId])
+}
+
+model Image {
+  id             String    @id @default(cuid())
+  imageUrl       String    @db.LongText
+  area           String // "area" permanece o mesmo
+  position       Int
+  createdAt      DateTime? @default(now()) // "created_at" para "createdAt"
+  updatedAt      DateTime? @updatedAt
+  responsiveMode String
+  tag            String
+  venueId        String
+  venue          Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+}
+
+model Text {
+  id        String   @id @default(cuid())
+  area      String // "area" permanece o mesmo
+  title     String? // "titulo" para "title"
+  position  Int      @default(0)
+  text      String   @db.LongText
+  createdAt DateTime @default(now()) // "created_at" para "createdAt"
+  updatedAt DateTime @updatedAt
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  question  String   @db.LongText
+  response  String   @db.LongText
+  createdAt DateTime @default(now()) // "created_at" para "createdAt"
+  updatedAt DateTime @updatedAt
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+}

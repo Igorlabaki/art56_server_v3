@@ -2,7 +2,7 @@ import { Router } from "express"
 import { registerUserFactory } from "../use-cases/auth/register-user/factory-register-user"
 import { authenticateUserFactory } from "../use-cases/auth/authenticate-user/factory-autheticate-user";
 import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
-import { updateUserPasswordFactory } from "../use-cases/user/updatePassword/factory-update-user-password";
+import { updateUserPasswordFactory } from "../use-cases/user/update-password/factory-update-user-password";
 
 const authRoutes = Router()
 

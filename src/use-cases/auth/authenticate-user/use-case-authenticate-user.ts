@@ -56,7 +56,8 @@ class AuthenticateUserUseCase {
         }
 
         // Create session
-        const expiresAt = dayjs().add(refreshToken.expireIn, 'days').toDate()
+        const expiresAt = dayjs.unix(refreshToken.expireIn).toDate();
+        
         const session = await this.sessionRepository.create({
             expiresAt: expiresAt,
             userId: refreshToken.userId,

@@ -50,32 +50,52 @@ export const handleErrors = (error: any) => {
 
         // Verifica se é um erro de chave duplicada
         if (error.code === "P2002") {
+            // Extração apenas da mensagem de erro relevante
+            const detail = errorMessage.match(/Unique constraint failed on the constraint: `.*`/)?.[0] || "Erro desconhecido";
+
             return {
                 statusCode: 409,
                 body: {
                     errors: [
                         {
-                            title: error.name,
-                            detail: error.message,
+                            title: error.name, // Nome do erro (PrismaClientKnownRequestError)
+                            detail, // Detalhe extraído (apenas a mensagem relevante)
                         }
                     ]
                 }
             };
         }
 
-        if (error.code === "P2007" || error instanceof PrismaClientValidationError) {
+        if (error.code === "P2007") {
+            const detail = error.message || "Erro desconhecido";
             return {
                 statusCode: 400,
                 body: {
                     errors: [
                         {
                             title: error.name,
-                            detail: error.message,
+                            detail: detail,
                         }
                     ]
                 }
             };
         }
+    }
+
+    if (error instanceof PrismaClientValidationError) {
+        const match = error.message.match(/Unknown argument `.*?`\..*?\?/);
+        const detail = match ? match[0] : "Erro de validação desconhecido";
+        return {
+            statusCode: 400,
+            body: {
+                errors: [
+                    {
+                        title: error.name,
+                        detail: detail,
+                    }
+                ]
+            }
+        };
     }
     // Resposta padrão para erros desconhecidos
     return {
