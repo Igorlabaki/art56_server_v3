@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `guest` ADD COLUMN `rg` VARCHAR(191) NULL;

@@ -2,7 +2,7 @@ import { Request, Response } from "express"
 
 import { handleErrors } from "../../errors/error-handler";
 import { RefreshTokenUseCase } from "./use-case-refresh-token";
-import { refreshTokenSchema } from "../../zod/refresh-token-params-schema";
+import { refreshTokenSchema } from "../../zod/auth/refresh-token-params-schema";
 
 class RefreshTokenController {
     constructor(private refreshTokenUseCase: RefreshTokenUseCase) { }

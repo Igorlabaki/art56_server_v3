@@ -1,6 +1,6 @@
 import { hash } from "bcryptjs"
 
-import { UpdateUserPasswordRequestParams } from "../../../zod/update-user-password-params-schema"
+import { UpdateUserPasswordRequestParams } from "../../../zod/auth/update-user-password-params-schema"
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface"
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 

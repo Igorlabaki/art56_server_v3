@@ -5,7 +5,8 @@ export const createNotificationSchema = z.object({
     venueId: z.string(),
     isRead: z.boolean().optional(),
     dataEventId: z.string().optional(),
-    type: z.enum(["VISIT", "EVENT", "ALERT", "PROPOSAL"]), 
+    proposalId: z.string().optional(),
+    type: z.enum(["VISIT", "EVENT", "PROPOSAL","OVERNIGHT", "BARTER", "PRODUCTION", "OTHER"]), 
 });
 
 export type CreateNotificationRequestParams = z.infer<typeof createNotificationSchema>;

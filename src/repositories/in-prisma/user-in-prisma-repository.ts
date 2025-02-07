@@ -1,7 +1,8 @@
 import { PrismaClient, User } from "@prisma/client"
-import { UserRepositoryInterface } from "../interface/user-repository-interface"
-import { RegisterUserRequestParams } from "../../zod/register-user-params-schema"
-import { UpdateUserPasswordRequestParams } from "../../zod/update-user-password-params-schema"
+import { UserRepositoryInterface, UserWithPartial } from "../interface/user-repository-interface"
+import { RegisterUserRequestParams } from "../../zod/auth/register-user-params-schema"
+import { UpdateUserPasswordRequestParams } from "../../zod/auth/update-user-password-params-schema"
+import { UpdateUserRequestParams } from "../../zod/user/update-user-params-schema"
 
 export class PrismaUserRepository implements UserRepositoryInterface {
 
@@ -38,6 +39,22 @@ export class PrismaUserRepository implements UserRepositoryInterface {
       },
       data: {
         password: password
+      }
+    })
+  }
+
+  async update({ userId, ...rest }: UpdateUserRequestParams): Promise<UserWithPartial | null> {
+    return await this.prisma.user.update({
+      where: {
+        id: userId
+      },
+      data: {
+        ...rest
+      },
+      select:{
+        avatarUrl: true,
+        email: true,
+        username: true,
       }
     })
   }

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `notification` MODIFY `type` ENUM('VISIT', 'EVENT', 'ALERT', 'BARTER', 'PROPOSAL', 'OVERNIGHT', 'OTHER') NOT NULL;

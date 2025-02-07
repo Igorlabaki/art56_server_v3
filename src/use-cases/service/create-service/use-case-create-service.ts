@@ -9,15 +9,31 @@ class CreateServiceUseCase {
 
     async execute(params: CreateServiceRequestParams) {
 
-        // Validate if user exists
-        const serviceAlreadyExists = await this.serviceRepository.create(params)
+        const serviceAlreadyExists = await this.serviceRepository.getByName({name: params.name, venueId: params.venueId})
 
-        if (!serviceAlreadyExists) {
-            throw new HttpConflictError("Service")
+        if (serviceAlreadyExists) {
+            throw new HttpConflictError("Servico")
+        }
+
+        // Validate if user exists
+        const newService = await this.serviceRepository.create(params)
+
+        if (!newService) {
+            throw new HttpConflictError("Servico")
         }
         //
 
-        return { serviceAlreadyExists }
+        const formatedResponse = {
+            success: true,
+            message: "Servico foi registrado com sucesso",
+            data: {
+                ...newService
+            },
+            count: 1,
+            type: "Service"
+        }
+
+        return formatedResponse
     }
 }
 

@@ -18,6 +18,7 @@ export function ensureAuthenticate(req: Request, resp: Response, next: NextFunct
         verify(token, process.env.JWT_SECRET_KEY!);
         next();
     } catch (error) {
+
         // Captura e formata o erro
         const errorResponse = handleErrors(error);
         resp.status(errorResponse.statusCode).json(errorResponse.body);

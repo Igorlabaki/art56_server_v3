@@ -45,7 +45,9 @@ model User {
   email             String             @unique
   username          String
   password          String
+  avatarUrl         String?
   session           Session[]
+  histories         History[]
   refreshToken      RefreshToken[]
   userOrganizations UserOrganization[]
 }
@@ -55,6 +57,7 @@ model Organization {
   name              String             @unique
   createdAt         DateTime           @default(now())
   venues            Venue[]
+  owners            Owner[]
   userOrganizations UserOrganization[]
 }
 
@@ -66,7 +69,7 @@ model UserOrganization {
   joinedAt       DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([organizationId])
@@ -81,6 +84,7 @@ model Proposal {
   id               String            @id @default(uuid())
   type             ProposalType
   trafficSource    TrafficSource
+  guestNumber      Int
   knowsVenue       Boolean           @default(false)
   startDate        DateTime
   endDate          DateTime
@@ -88,7 +92,6 @@ model Proposal {
   email            String
   whatsapp         String
   description      String            @db.LongText
-  guests           Int
   basePrice        Float
   extraHoursQty    Int
   extraHourPrice   Float
@@ -101,17 +104,53 @@ model Proposal {
   paid             Boolean?          @default(false)
   amountPaid       Float?            @default(0.0)
   venueId          String
-  venue            Venue             @relation(fields: [venueId], references: [id])
+  venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  personList        Person[]
+  histories        History[]
   payments         Payment[]
   dateEvents       DateEvent[]
   proposalCosts    ProposalCost[]
   proposalServices ProposalService[]
+  noificationList  Notification[]
+  scheduleList     Schedule[]
 
   @@index([venueId])
   @@index([trafficSource])
   @@index([email, startDate])
   @@index([name, startDate])
   @@map("proposal")
+}
+
+model History {
+  id         String   @id @default(uuid())
+  action     String
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username   String?
+  userId     String?
+  proposalId String
+  createdAt  DateTime @default(now())
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([proposalId])
+}
+
+model Person {
+  id         String   @id @default(uuid())
+  attendance Boolean  @default(false)
+  type       PersonType
+  name       String   
+  email      String?
+  rg         String?
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
+}
+
+enum PersonType {
+  GUEST
+  WORKER
 }
 
 model ProposalService {
@@ -121,10 +160,9 @@ model ProposalService {
 
   joinedAt DateTime @default(now())
 
-  service  Service  @relation(fields: [serviceId], references: [id])
-  proposal Proposal @relation(fields: [proposalId], references: [id])
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
-  @@unique([proposalId, serviceId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([proposalId])
   @@index([serviceId])
 }
@@ -137,6 +175,7 @@ model Service {
   proposalServices ProposalService[]
   venue            Venue             @relation(fields: [venueId], references: [id])
 
+  @@unique([name, venueId])
   @@index([venueId])
 }
 
@@ -145,44 +184,48 @@ enum TrafficSource {
   GOOGLE
   INSTAGRAM
   TIKTOK
-  OUTROS
-  AMIGO
+  OTHER
+  FRIEND
   FACEBOOK
 }
 
 enum ProposalType {
   EVENT
+  OVERNIGHT
   PRODUCTION
   BARTER
   OTHER
 }
 
 model Payment {
-  id            String        @id @default(uuid())
+  id            String         @id @default(uuid())
   proposalId    String
-  proposal      Proposal      @relation(fields: [proposalId], references: [id])
+  proposal      Proposal       @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  venueId       String
+  venue         Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
   amount        Float
   paymentDate   DateTime
-  paymentMethod PaymentMethod
-  status        String
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  paymentMethod PaymentMethod?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([proposalId])
+  @@index([venueId])
   @@map("payment")
 }
 
 enum PaymentMethod {
   PIX
+  CREDIT_CARD
 }
 
 model ProposalCost {
-  id   String       @id @default(uuid())
-  name ProposalName
-
+  id        String       @id @default(uuid())
+  name      ProposalName
+  teste     String
   amount    Float
-  updatedAt DateTime   @updatedAt
-  createdAt DateTime   @default(now())
+  updatedAt DateTime     @updatedAt
+  createdAt DateTime     @default(now())
   proposals Proposal[]
 
   @@map("proposalCost")
@@ -196,7 +239,8 @@ enum ProposalName {
 
 model Expense {
   id          String          @id @default(cuid())
-  description String // Expense description
+  name        String
+  description String? // Expense description
   amount      Float // Amount of the expense
   paymentDate DateTime // Payment date of the expense
   type        ExpenseType // Type of expense (Fixed, Variable)
@@ -212,7 +256,10 @@ model Expense {
 }
 
 enum ExpenseType {
-  RECURRING
+  WEEKLY
+  ANNUAL
+  MONTHLY
+  BIWEEKLY
   SPORADIC
 }
 
@@ -227,6 +274,8 @@ model Notification {
   id          String           @id @default(uuid())
   venueId     String
   venue       Venue            @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  proposalId  String?
+  proposal    Proposal?        @relation(fields: [proposalId], references: [id], onDelete: Cascade) // Já está com onDelete: Cascade
   dateEventId String?
   dateEvent   DateEvent?       @relation(fields: [dateEventId], references: [id], onDelete: Cascade)
   content     String
@@ -236,27 +285,41 @@ model Notification {
 
   @@index([venueId])
   @@index([dateEventId])
+  @@index([proposalId])
 }
 
 enum NotificationType {
   VISIT
   EVENT
-  ALERT
+  OTHER
+  BARTER
   PROPOSAL
+  OVERNIGHT
+  PRODUCTION
+}
+
+enum DateEventType {
+  VISIT
+  EVENT
+  OTHER
+  BARTER
+  PROPOSAL
+  OVERNIGHT
+  PRODUCTION
 }
 
 model DateEvent {
   id            String         @id @default(cuid())
-  type          String
   title         String
   startDate     DateTime
   endDate       DateTime
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   proposalId    String?
-  proposal      Proposal?      @relation(fields: [proposalId], references: [id], onDelete: Cascade)
   venueId       String
   venue         Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  proposal      Proposal?      @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  type          DateEventType
   notifications Notification[]
 
   @@index([proposalId])
@@ -264,32 +327,51 @@ model DateEvent {
 }
 
 model Venue {
-  id             String         @id @default(uuid())
-  name           String         @unique
-  street         String
-  streetNumber   String
-  complement     String?
-  neighborhood   String
-  city           String
-  state          String
-  cep            String
-  createdAt      DateTime       @default(now())
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  pricingModel   PricingModel // Enum que define o tipo de cobrança
-  pricePerPerson Float? // Valor por pessoa
-  pricePerDay    Float? // Valor por dia
-  texts          Text[]
-  owners         Owner[]
-  images         Image[]
-  expenses       Expense[]
-  questions      Question[]
-  proposals      Proposal[]
-  DateEvent      DateEvent[]
-  notifications  Notification[]
-  Service        Service[]
+  id               String         @id @default(uuid())
+  name             String         @unique
+  street           String
+  streetNumber     String
+  complement       String?
+  neighborhood     String
+  city             String
+  state            String
+  checkIn          String?        @default("12:00")
+  checkOut         String?        @default("12:00")
+  cep              String
+  hasOvernightStay Boolean
+  createdAt        DateTime       @default(now())
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+  pricingModel     PricingModel // Enum que define o tipo de cobrança
+  pricePerPerson   Float? // Valor por pessoa
+  pricePerDay      Float? // Valor por dia
+  maxGuest         Int
+  texts            Text[]
+  images           Image[]
+  expenses         Expense[]
+  services         Service[]
+  Payment          Payment[]
+  questions        Question[]
+  proposals        Proposal[]
+  DateEvent        DateEvent[]
+  ownerVenue       OwnerVenue[]
+  notifications    Notification[]
 
   @@index([organizationId])
+}
+
+model OwnerVenue {
+  id       String   @id @default(uuid())
+  ownerId  String
+  venueId  String
+  role     Role     @default(ADMIN)
+  joinedAt DateTime @default(now())
+
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, venueId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
+  @@index([venueId])
 }
 
 enum PricingModel {
@@ -298,23 +380,27 @@ enum PricingModel {
 }
 
 model Owner {
-  id           String   @id @default(uuid())
-  completeName String
-  rg           String?
-  cpf          String
-  pix          String
-  street       String
-  streetNumber String
-  complement   String?
-  neighborhood String
-  city         String
-  state        String
-  cep          String
-  venueId      String
-  createdAt    DateTime @default(now())
-  venue        Venue    @relation(fields: [venueId], references: [id])
+  id                String       @id @default(uuid())
+  completeName      String
+  rg                String?
+  cpf               String
+  pix               String
+  street            String
+  streetNumber      String
+  complement        String?
+  neighborhood      String
+  city              String
+  state             String
+  bankName          String
+  bankAgency        String
+  cep               String
+  createdAt         DateTime     @default(now())
+  bankAccountNumber String
+  ownerVenue        OwnerVenue[]
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@index([venueId])
+  @@index([organizationId])
 }
 
 model Image {
@@ -327,6 +413,7 @@ model Image {
   responsiveMode String
   tag            String
   venueId        String
+  teste          String
   venue          Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
@@ -356,4 +443,20 @@ model Question {
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+}
+
+model Schedule {
+  id           String   @id @default(cuid())
+  name         String
+  workerNumber Int
+  description  String?   @db.LongText
+  startHour    DateTime
+  endHour      DateTime
+  createdAt    DateTime @default(now()) // "created_at" para "createdAt"
+  updatedAt    DateTime @updatedAt
+
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
 }

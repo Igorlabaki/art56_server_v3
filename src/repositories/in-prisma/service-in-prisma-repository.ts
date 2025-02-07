@@ -1,6 +1,9 @@
 import { PrismaClient, Service } from "@prisma/client"
 import { GetByProposalServiceListTotalAmount, ServiceRepositoryInterface } from "../interface/service-repository-interface"
 import { CreateServiceRequestParams } from "../../zod/services/create-service-params-schema"
+import { ListServiceRequestQuerySchema } from "../../zod/services/list-service-query-schema"
+import { UpdateServiceRequestParams } from "../../zod/services/update-service-params-schema"
+import { GetByNameServiceSchema } from "../../zod/services/get-by-name-service-params-schema"
 
 export class PrismaServiceRepository implements ServiceRepositoryInterface {
 
@@ -14,7 +17,7 @@ export class PrismaServiceRepository implements ServiceRepositoryInterface {
       })
     }
   
-   /*  async update (reference: UpdateServiceRequestParams): Promise<Service  | null> {
+   async update (reference: UpdateServiceRequestParams): Promise<Service  | null> {
       return await this.prisma.service.update({
         where:{
           id: reference.serviceId
@@ -23,12 +26,29 @@ export class PrismaServiceRepository implements ServiceRepositoryInterface {
           ...reference.data
         }
       })
-    } */
+    } 
 
     async getByVenueId (reference: string): Promise<Service [] | null> {
       return await this.prisma.service.findMany({
         where:{
           venueId: reference
+        }
+      })
+    }
+
+    async getById (reference: string): Promise<Service | null> {
+      return await this.prisma.service.findFirst({
+        where:{
+          id: reference
+        }
+      })
+    }
+
+    async getByName ({name,venueId}: GetByNameServiceSchema): Promise<Service | null> {
+      return await this.prisma.service.findFirst({
+        where:{
+          name,
+          venueId
         }
       })
     }
@@ -57,9 +77,16 @@ export class PrismaServiceRepository implements ServiceRepositoryInterface {
       })
     }
 
-    async list (reference: string): Promise<Service[] | null> {
+    async list ({venueId,name}: ListServiceRequestQuerySchema): Promise<Service[] | null> {
       return await this.prisma.service.findMany({
-        
+        where: {
+          venueId,
+          ...(name && {
+            name: {
+              contains: name
+            }
+          }),
+        },
       })
     }
   }

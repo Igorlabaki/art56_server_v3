@@ -10,23 +10,41 @@ import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-er
 class CreateOrganizationUseCase {
     constructor(
         private organizationRepository: OrganizationRepositoryInterface,
-        private userOrganizationRepository: UserOrganizationRepositoryInterface,
+        private userRepositoryInterface: UserRepositoryInterface,
     ) { }
 
     async execute({ name, userId }: CreateOrganizationRequestParams) {
 
+        const userByid = await this.userRepositoryInterface.getById(
+            userId
+        )
+
+        if (!userByid) {
+            throw new HttpResourceNotFoundError("Usuario")
+        }
+
         // Validate if user exists
-        const organizationAlreadyExists = await this.organizationRepository.create({
+        const newOrganization = await this.organizationRepository.create({
             name,
             userId
         })
 
-        if (!organizationAlreadyExists) {
-            throw new HttpConflictError("Organization")
+        if (!newOrganization) {
+            throw new HttpConflictError("Organizacao")
         }
         //
 
-        return { organizationAlreadyExists  }
+        const formatedResponse = {
+            success: true,
+            message: `Organizacao ${newOrganization.name} criada com sucesso`,
+            data: {
+                organization:newOrganization
+            },
+            count: 1,
+            type: "Organization"
+        }
+
+        return formatedResponse
     }
 }
 

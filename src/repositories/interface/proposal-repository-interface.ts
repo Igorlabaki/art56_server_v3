@@ -1,10 +1,12 @@
-import { Proposal, User } from "@prisma/client";
+import { Person, Payment, Proposal, Service } from "@prisma/client";
+import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
+import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 
 export interface CreateProposalInDbParams {
   name: string
   endDate: Date
   email: string
-  guests: number
+  guestNumber: number
   startDate: Date
   venueId: string
   whatsapp: string
@@ -16,18 +18,50 @@ export interface CreateProposalInDbParams {
   knowsVenue: boolean
   extraHoursQty: number
   extraHourPrice: number
-  termsAccepted: boolean
   trafficSource: TrafficSource
 }
 
-type TrafficSource = "AIRBNB" | "GOOGLE" | "INSTAGRAM" | "TIKTOK" | "OUTROS" | "AMIGO" | "FACEBOOK";
+export type ProposalWithRelations = Proposal & {
+  proposalServices: {
+    service: Service;
+  }[];
+  payments: Payment[]; 
+  personList: Person[];
+};
 
-type ProposalType = "EVENT" | "OTHER" | "BARTER" | "PRODUCTION"
+export interface ItemListProposalResponse{
+  id: string,
+  name: string,
+  email: string,
+  totalAmount: number,
+}
+
+export interface UpdateProposalServices{
+  proposalId: string;
+  serviceIds: string[]
+}
+
+export interface TrafficSourceTypes {
+  all: number;
+  other: number;
+  google: number;
+  friend: number;
+  tikTok: number;
+  facebook: number;
+  instagram: number;
+}
+
+
+type TrafficSource = "AIRBNB" | "GOOGLE" | "INSTAGRAM" | "TIKTOK" | "OTHER" | "FRIEND" | "FACEBOOK";
+
+type ProposalType = "EVENT" | "OTHER" | "BARTER" | "PRODUCTION" | "OVERNIGHT"
 
 export interface ProposalRepositoryInterface {
-  list: (params: string) => Promise<Proposal[] | null>
   delete: (params: string) => Promise<Proposal | null>
-  getById: (params: string) => Promise<Proposal | null>
-  /* update: (params: UpdateProposalRequestParams) => Promise<Proposal | null> */
-  create: (params: CreateProposalInDbParams) => Promise<Proposal | null>
+  getById: (params: string) => Promise<ProposalWithRelations | null>
+  update: (params: UpdateProposalInDbParam) => Promise<Proposal | null> 
+  updateServices: (params: UpdateProposalServices) => Promise<Proposal | null> 
+  createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>
+  createPerPerson: (params: CreateProposalInDbParams) => Promise<Proposal | null>
+  list: (params: ListProposalRequestQuerySchema) => Promise<ItemListProposalResponse[] | null>
 }
