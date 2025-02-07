@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { AuthenticateUserUseCase } from "./use-case-authenticate-user"
-import { AuthenticateUserRequestParams, authenticateUserSchema } from "../../../zod/authenticate-user-params-schema";
+import { AuthenticateUserRequestParams, authenticateUserSchema } from "../../../zod/auth/authenticate-user-params-schema";
 import { handleErrors } from "../../../errors/error-handler";
 
 class AuthenticateUserController {

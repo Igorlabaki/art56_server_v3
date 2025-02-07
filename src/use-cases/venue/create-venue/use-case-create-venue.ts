@@ -9,15 +9,25 @@ class CreateVenueUseCase {
 
     async execute(params: CreateVenueRequestParams) {
 
-        // Validate if user exists
-        const venueAlreadyExists = await this.venueRepository.create(params)
 
-        if (!venueAlreadyExists) {
+        const newVenue = await this.venueRepository.create(params)
+
+        if (!newVenue) {
             throw new HttpConflictError("Venue")
         }
         //
 
-        return { venueAlreadyExists }
+        const formatedResponse = {
+            success: true,
+            message: "Locacao foi criada com sucesso",
+            data: {
+                venue: newVenue
+            },
+            count: 1,
+            type: "Venue"
+        } 
+
+        return formatedResponse
     }
 }
 

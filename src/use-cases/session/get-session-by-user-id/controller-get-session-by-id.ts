@@ -2,7 +2,7 @@ import { Request, Response } from "express"
 
 import { handleErrors } from "../../../errors/error-handler";
 import { GetSessionByUserIdUseCase } from "./use-case-get-session-user-by-id";
-import { getSessionByUserIdSchema } from "../../../zod/get-session-by-user-id-params-schema copy 2"
+import { getSessionByUserIdSchema } from "../../../zod/auth/get-session-by-user-id-params-schema copy 2"
 
 class GetSessionByUserIdController {
     constructor(private getSessionByUserIdUseCase: GetSessionByUserIdUseCase) { }

@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { UpdateUserPasswordCase } from "./use-case-update-user-password"
-import { UpdateUserPasswordRequestParams, updateUserPasswordSchema } from "../../../zod/update-user-password-params-schema";
+import { UpdateUserPasswordRequestParams, updateUserPasswordSchema } from "../../../zod/auth/update-user-password-params-schema";
 
 
 class UpdateUserPasswordController {

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
 import { RegisterUserUseCase } from "./use-case-register-user";
-import { RegisterUserRequestParams, RegisterUserSchema } from "../../../zod/register-user-params-schema";
+import { RegisterUserRequestParams, RegisterUserSchema } from "../../../zod/auth/register-user-params-schema";
 
 class RegisterUserController {
     constructor(private registerUserUseCase: RegisterUserUseCase) { }

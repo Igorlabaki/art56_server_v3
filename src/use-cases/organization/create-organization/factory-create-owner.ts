@@ -9,8 +9,8 @@ import { PrismaUserOrganizationRepository } from "../../../repositories/in-prism
 
 export const createOrganizationFactory = (): CreateOrganizationController => {
     const prismaOrganizationRepository = new PrismaOrganizationRepository(prismaClient);
-    const prismaUserOrganizationRepository = new PrismaUserOrganizationRepository(prismaClient);
-    const createOrganizationUseCase = new CreateOrganizationUseCase(prismaOrganizationRepository,prismaUserOrganizationRepository);
+    const prismaUserRepository = new PrismaUserRepository(prismaClient);
+    const createOrganizationUseCase = new CreateOrganizationUseCase(prismaOrganizationRepository,prismaUserRepository);
     const createOrganizationController = new CreateOrganizationController(createOrganizationUseCase);
 
     return createOrganizationController;

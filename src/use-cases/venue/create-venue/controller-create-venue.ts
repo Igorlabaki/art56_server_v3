@@ -11,7 +11,7 @@ class CreateVenueController {
             const body: CreateVenueRequestParams = req.body;
             // Validate the request parms
             createVenueSchema.parse(body);
-
+          
             // Esperar a execução do caso de uso
             const response = await this.createVenueUseCase.execute(body);
             // Retornar o token

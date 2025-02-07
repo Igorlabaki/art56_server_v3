@@ -50,4 +50,12 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
       }
     })
   }
+
+  async list(parmas: string): Promise<UserOrganization[] | null> {
+    return await this.prisma.userOrganization.findMany({
+      where: {
+        userId: parmas
+      }
+    })
+  }
 }

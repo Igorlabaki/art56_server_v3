@@ -2,7 +2,7 @@ import { hash } from "bcryptjs"
 
 import { GenerateRefreshToken } from "../../../provider/generate-refresh-token"
 import { RefreshTokenProvider } from "../../../provider/refresh-token-provider"
-import { RegisterUserRequestParams, } from "../../../zod/register-user-params-schema"
+import { RegisterUserRequestParams, } from "../../../zod/auth/register-user-params-schema"
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface"
 import { SessionRepositoryInterface } from "../../../repositories/interface/session-repository-interface"

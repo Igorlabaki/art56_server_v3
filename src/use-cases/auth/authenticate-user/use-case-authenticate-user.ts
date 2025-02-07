@@ -27,7 +27,7 @@ class AuthenticateUserUseCase {
         const userAlreadyExists = await this.userRepository.getByEmail(email)
 
         if (!userAlreadyExists) {
-            throw new HttpResourceNotFoundError("User")
+            throw new HttpInvalidCredentialsError()
         }
         //
 

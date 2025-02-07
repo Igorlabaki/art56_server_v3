@@ -4,5 +4,6 @@ import { CreateUserOrganizationRequestParams } from "../../zod/user-organization
 export interface UserOrganizationRepositoryInterface {
   delete: (params: string) => Promise<UserOrganization | null>
   getById: (params: string) => Promise<UserOrganization | null>
+  list: (query: string) => Promise<UserOrganization[]  | null>
   create: (params: CreateUserOrganizationRequestParams) => Promise<UserOrganization | null>
 }

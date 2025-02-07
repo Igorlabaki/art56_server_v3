@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
 import { CreateSessionUseCase } from "./use-case-create-session";
-import { CreateSessionRequestParams, CreateSessionSchema } from "../../../zod/create-session-params-schema";
+import { CreateSessionRequestParams, CreateSessionSchema } from "../../../zod/auth/create-session-params-schema";
 
 
 class CreateSessionController {

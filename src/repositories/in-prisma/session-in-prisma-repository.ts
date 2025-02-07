@@ -15,8 +15,10 @@ export class PrismaSessionRepository implements SessionRepositoryInterface {
         include:{
           user: {
             select:{
+              id: true,
               email: true,
               username: true,
+              avatarUrl: true
             }
           }
         },
@@ -50,6 +52,7 @@ export class PrismaSessionRepository implements SessionRepositoryInterface {
         include:{
           user: {
             select:{
+              id: true,
               email: true,
               username: true,
             }
