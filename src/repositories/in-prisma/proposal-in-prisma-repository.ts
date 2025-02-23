@@ -1,8 +1,9 @@
 import { PrismaClient, Proposal } from "@prisma/client"
 import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
-import { CreateProposalInDbParams, ItemListProposalResponse, ProposalRepositoryInterface, ProposalWithRelations, UpdateProposalServices } from "../interface/proposal-repository-interface"
-
+import { CreateProposalInDbParams, ItemListProposalResponse, MonthProposalDataCount, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices } from "../interface/proposal-repository-interface"
+import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
+import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -87,7 +88,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
-  async updateServices({serviceIds,proposalId}: UpdateProposalServices): Promise<Proposal | null>{
+  async updateServices({ serviceIds, proposalId }: UpdateProposalServices): Promise<Proposal | null> {
     const currentServices = await this.prisma.proposal.findUnique({
       where: { id: proposalId },
       include: {
@@ -120,6 +121,68 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       }
     })
   }
+
+  async trafficCount({ year, venueId, approved }: GetTrafficCountVenueDbSchema): Promise<TrafegoCountResponse | null> {
+    const trafegoCounts = await this.prisma.proposal.groupBy({
+      by: ["trafficSource"],
+      _count: {
+        trafficSource: true,
+      },
+      where: {
+        venueId,
+        ...(approved && {
+          approved: true,
+        }),
+        startDate: {
+          gte: new Date(year ? year : new Date().getFullYear(),0,1),
+          lt: new Date(year ? year : new Date().getFullYear(), 12, 31),
+        },
+      },
+    });
+
+    const proposalAccount = trafegoCounts.reduce(
+      (acc, curr) => acc + curr._count.trafficSource,
+      0
+    );
+
+    const trafficData = {
+      all: proposalAccount,
+      google:
+        trafegoCounts.find((item) => item.trafficSource === "GOOGLE")?._count
+          .trafficSource || 0,
+      instagram:
+        trafegoCounts.find((item) => item.trafficSource === "INSTAGRAM")?._count
+          .trafficSource || 0,
+      tikTok:
+        trafegoCounts.find((item) => item.trafficSource === "TIKTOK")?._count
+          .trafficSource || 0,
+      facebook:
+        trafegoCounts.find((item) => item.trafficSource === "FACEBOOK")?._count
+          .trafficSource || 0,
+      friend:
+        trafegoCounts.find((item) => item.trafficSource === "FRIEND")?._count
+          .trafficSource || 0,
+      other:
+        trafegoCounts.find((item) => item.trafficSource === "OTHER")?._count
+          .trafficSource || 0,
+      airbnb:
+        trafegoCounts.find((item) => item.trafficSource === "AIRBNB")?._count
+          .trafficSource || 0,
+    };
+
+    const trafegoList = Object.keys(trafficData)?.map((key) => ({
+      name: key,
+      count: trafficData[key as keyof TrafficSourceTypes],
+    }));
+
+    // Ordenando baseado no valor de 'todos'
+    const sortedSources = trafegoList.sort(
+      (a, b) => b.count / trafficData?.all - a.count / trafficData?.all
+    );
+
+    return { all: trafficData.all, sortedSources };
+  }
+
 
   async getById(reference: string): Promise<ProposalWithRelations | null> {
     return await this.prisma.proposal.findFirst({
@@ -200,4 +263,30 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       }
     })
   }
+
+  async analysisByMonth({ year,venueId,approved }: GetVenueAnalysisByMonthDbSchema): Promise<any> {
+    return await this.prisma.proposal.findMany({
+      where: {
+        venueId,
+        ...(approved && {
+          approved: true,
+        }),
+        startDate: {
+          gte: new Date(year ? year : new Date().getFullYear(),0,1),
+          lt: new Date(year ? year : new Date().getFullYear(), 12, 31),
+        },
+      },
+      select: {
+        totalAmount: true,
+        startDate: true,
+        trafficSource: true,
+        guestNumber: true,
+        approved: true,
+      },
+      orderBy: {
+        startDate: "asc",
+      },
+    });
+  }
 }
+

@@ -105,7 +105,7 @@ model Proposal {
   amountPaid       Float?            @default(0.0)
   venueId          String
   venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  personList        Person[]
+  personList       Person[]
   histories        History[]
   payments         Payment[]
   dateEvents       DateEvent[]
@@ -136,14 +136,14 @@ model History {
 }
 
 model Person {
-  id         String   @id @default(uuid())
-  attendance Boolean  @default(false)
+  id         String     @id @default(uuid())
+  attendance Boolean    @default(false)
   type       PersonType
-  name       String   
+  name       String
   email      String?
   rg         String?
   proposalId String
-  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposal   Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
 }
@@ -347,6 +347,7 @@ model Venue {
   pricePerDay      Float? // Valor por dia
   maxGuest         Int
   texts            Text[]
+  contacts         Contact[]
   images           Image[]
   expenses         Expense[]
   services         Service[]
@@ -358,6 +359,17 @@ model Venue {
   notifications    Notification[]
 
   @@index([organizationId])
+}
+
+model Contact {
+  id       String @id @default(uuid())
+  name     String
+  role     String
+  whatsapp String
+  venueId  String
+  venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
 }
 
 model OwnerVenue {
@@ -406,14 +418,13 @@ model Owner {
 model Image {
   id             String    @id @default(cuid())
   imageUrl       String    @db.LongText
-  area           String // "area" permanece o mesmo
+  description    String?
   position       Int
   createdAt      DateTime? @default(now()) // "created_at" para "createdAt"
   updatedAt      DateTime? @updatedAt
-  responsiveMode String
-  tag            String
+  responsiveMode String?
+  tag            String?
   venueId        String
-  teste          String
   venue          Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
@@ -449,7 +460,7 @@ model Schedule {
   id           String   @id @default(cuid())
   name         String
   workerNumber Int
-  description  String?   @db.LongText
+  description  String?  @db.LongText
   startHour    DateTime
   endHour      DateTime
   createdAt    DateTime @default(now()) // "created_at" para "createdAt"

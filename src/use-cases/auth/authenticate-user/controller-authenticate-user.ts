@@ -7,7 +7,6 @@ class AuthenticateUserController {
     constructor(private authenticateUserUseCase: AuthenticateUserUseCase) { }
 
     async handle(req: Request, resp: Response) {
-
         try {
             const body: AuthenticateUserRequestParams = req.body
 

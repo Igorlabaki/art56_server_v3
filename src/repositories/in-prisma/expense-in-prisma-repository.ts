@@ -3,6 +3,7 @@ import { CreateExpenseRequestParams } from "../../zod/expense/create-expense-par
 import { ExpenseRepositoryInterface } from "../interface/expense-repository-interface"
 import { UpdateExpenseRequestParams } from "../../zod/expense/update-expense-params-schema"
 import { ListExpenseRequestQuerySchema } from "../../zod/expense/list-expense-query-schema"
+import { AnalysisExpenseRequestParamSchema } from "../../zod/expense/analysis-expense-param-schema"
 
 
 
@@ -72,5 +73,25 @@ export class PrismaExpenseRepository implements ExpenseRepositoryInterface {
           }),
         },
       })
+    }
+
+    async analyze({venueId,year}:AnalysisExpenseRequestParamSchema): Promise<Expense[] | null> {
+      return await this.prisma.expense.findMany({
+        where: {
+          venueId,
+          OR: [
+            {
+              recurring: true, // Todos os recorrentes (independente do ano)
+            },
+            {
+              recurring: false, // Somente os não recorrentes do ano escolhido
+              paymentDate: {
+                gte: new Date(year ? Number(year) : new Date().getFullYear(),0,1),
+                lt: new Date(year ? Number(year) : new Date().getFullYear(), 12, 31),
+              },
+            },
+          ],
+        },
+      });
     }
   }

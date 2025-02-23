@@ -1,6 +1,8 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
 import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
+import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
+import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 
 export interface CreateProposalInDbParams {
   name: string
@@ -51,6 +53,14 @@ export interface TrafficSourceTypes {
   instagram: number;
 }
 
+export interface TrafegoCountResponse {
+  all: number;
+  sortedSources: { name: string; count: number }[];
+}
+
+export interface MonthProposalDataCount{
+  year: number
+}
 
 type TrafficSource = "AIRBNB" | "GOOGLE" | "INSTAGRAM" | "TIKTOK" | "OTHER" | "FRIEND" | "FACEBOOK";
 
@@ -63,5 +73,7 @@ export interface ProposalRepositoryInterface {
   updateServices: (params: UpdateProposalServices) => Promise<Proposal | null> 
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>
   createPerPerson: (params: CreateProposalInDbParams) => Promise<Proposal | null>
+  trafficCount: (params: GetTrafficCountVenueDbSchema) => Promise<TrafegoCountResponse | null>
   list: (params: ListProposalRequestQuerySchema) => Promise<ItemListProposalResponse[] | null>
+  analysisByMonth: (params: GetVenueAnalysisByMonthDbSchema) => Promise<Proposal[] | null>
 }

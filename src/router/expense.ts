@@ -4,6 +4,7 @@ import { listExpenseFactory } from "../use-cases/expense/list-expense/factory-li
 import { createExpenseFactory } from "../use-cases/expense/create-expense/factory-create-expense";
 import { deleteExpenseFactory } from "../use-cases/expense/delete-expense/factory-delete-expense";
 import { updateExpenseFactory } from "../use-cases/expense/update-expense/factory-update-expense";
+import { analysisExpenseFactory } from "../use-cases/expense/analysis-expense/factory-analysis-expense";
 
 const expenseRoutes = Router()
 
@@ -30,6 +31,12 @@ expenseRoutes.delete("/delete/:expenseId", async (req, res) => {
 // Update
 expenseRoutes.put("/update", async (req, res) => {
     const controller = updateExpenseFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+
+// Analysis
+expenseRoutes.get("/analysis?:venueId?/:year?", async (req, res) => {
+    const controller = analysisExpenseFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 

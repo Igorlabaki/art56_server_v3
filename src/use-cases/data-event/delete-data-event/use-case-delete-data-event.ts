@@ -27,8 +27,6 @@ class DeleteDateEventUseCase {
                     approved: false
                 }
             });
-
-            console.log(teste)
         }
 
         const formatedResponse = {

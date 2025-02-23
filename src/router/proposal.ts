@@ -42,6 +42,7 @@ proposalRoutes.get("/list?:venueId?/:name?/:month?/:year?/:approved?", async (re
     const controller = listProposalFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+
 proposalRoutes.delete("/delete/:proposalId", async (req, res) => {
     const controller = deleteProposalByidFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona

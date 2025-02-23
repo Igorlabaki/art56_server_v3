@@ -3,10 +3,12 @@ import express from "express";
 import { textRoutes } from "./router/text";
 import { authRoutes } from "./router/auth";
 import { userRoutes } from "./router/user";
+import { imageRoutes } from "./router/image";
 import { tokenRoutes } from "./router/token";
 import { venueRoutes } from "./router/venue";
 import { ownerRoutes } from "./router/owner";
 import { personRoutes } from "./router/person";
+import { contactRoutes } from "./router/contact";
 import { serviceRoutes } from "./router/service";
 import { expenseRoutes } from "./router/expense";
 import { paymentRoutes } from "./router/payment";
@@ -32,6 +34,7 @@ app.use(express.json());
 app.use('/auth', authRoutes)
 app.use('/user', userRoutes)
 app.use('/text', textRoutes)
+app.use('/image', imageRoutes)
 app.use('/venue', venueRoutes)
 app.use('/token', tokenRoutes)
 app.use('/owner', ownerRoutes)
@@ -39,6 +42,7 @@ app.use('/person', personRoutes)
 app.use('/service', serviceRoutes)
 app.use('/expense', expenseRoutes)
 app.use('/payment', paymentRoutes)
+app.use('/contact', contactRoutes)
 app.use('/question', questionRoutes)
 app.use('/proposal', proposalRoutes)
 app.use('/schedule', scheduleRoutes)
