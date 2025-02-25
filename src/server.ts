@@ -19,6 +19,7 @@ import { dateEventRoutes } from "./router/dateEvent";
 import { organizationRoutes } from "./router/organization";
 import { notificationRoutes } from "./router/notification";
 import { userorganizationRoutes } from "./router/userOrganization";
+import { clauseRoutes } from "./router/clause";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/venue', venueRoutes)
 app.use('/token', tokenRoutes)
 app.use('/owner', ownerRoutes)
 app.use('/person', personRoutes)
+app.use('/clause', clauseRoutes)
 app.use('/service', serviceRoutes)
 app.use('/expense', expenseRoutes)
 app.use('/payment', paymentRoutes)
