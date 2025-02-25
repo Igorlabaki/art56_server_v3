@@ -17,6 +17,7 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
+    "@aws-sdk/lib-storage": "^3.750.0",
     "@prisma/client": "^5.22.0",
     "@types/axios": "^0.14.4",
     "@types/bcryptjs": "^2.4.6",

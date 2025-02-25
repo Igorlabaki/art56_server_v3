@@ -1,8 +1,8 @@
 import { Payment } from "@prisma/client";
 
+import { CreatePaymentInDb } from "../../zod/payment/create-payment-db";
 import { UpdatePaymentIndBSchema } from "../../zod/payment/update-payment-in-db";
 import { ListPaymentRequestQuerySchema } from "../../zod/payment/list-payment-query-schema";
-import { CreatePaymentInDb } from "../../zod/payment/create-payment-DB";
 
 export interface PaymentRepositoryInterface {
   delete: (params: string) => Promise<Payment | null>;  

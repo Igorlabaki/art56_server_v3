@@ -1,12 +1,12 @@
 import prismaClient from "../../../service/prisma-client";
-import { UpdateQuestionUseCase } from "./use-case-update-question";
-import { UpdateQuestionController } from "./controller-update-question";
-import { PrismaQuestionRepository } from "../../../repositories/in-prisma/question-in-prisma-repository";
+import { UpdateImageUseCase } from "./use-case-update-image";
+import { UpdateImageController } from "./controller-update-image";
+import { PrismaImageRepository } from "../../../repositories/in-prisma/image-in-prisma-repository";
 
-export const updateQuestionFactory = () => {
-  const prismaQuestionRepository = new PrismaQuestionRepository(prismaClient);
-  const updateQuestionCase = new UpdateQuestionUseCase(prismaQuestionRepository);
-  const updateQuestionController = new UpdateQuestionController(updateQuestionCase);
+export const updateImageFactory = () => {
+  const prismaImageRepository = new PrismaImageRepository(prismaClient);
+  const updateImageCase = new UpdateImageUseCase(prismaImageRepository);
+  const updateImageController = new UpdateImageController(updateImageCase,prismaImageRepository);
 
-  return updateQuestionController;
+  return updateImageController;
 };

@@ -2,6 +2,7 @@ import { PrismaClient, Image } from "@prisma/client";
 import { ImageRepositoryInterface } from "../interface/image-repository-interface";
 import { CreateImageRequestParams } from "../../zod/image/create-image-params-schema";
 import { ListImageRequestQuerySchema } from "../../zod/image/list-image-query-schema";
+import { UpdateImageRequestParams } from "../../zod/image/upload-image-params-schema";
 /* import { ListImageRequestQuerySchema } from "../../zod/image/list-image-query-schema";
 import { UpdateImageRequestParams } from "../../zod/image/update-image-params-schema"; */
 
@@ -9,11 +10,11 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
   async create(params: CreateImageRequestParams): Promise<Image | null> {
-    const {position,venueId,...rest} = params
+    const { position, venueId, ...rest } = params
     return await this.prisma.image.create({
       data: {
-        venue:{
-          connect:{
+        venue: {
+          connect: {
             id: venueId
           }
         },
@@ -39,35 +40,42 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
     });
   }
 
-  async verifyImage(reference: {position: number, tag: string}): Promise<Image | null> {
+  async verifyImage({ imageId, position, tag }: { position: number, tag: string, imageId: string | null }): Promise<Image | null> {
     return await this.prisma.image.findFirst({
       where: {
-        ...reference
+        tag: tag,
+        ...(imageId && {
+          id: {
+            not: imageId,
+          }
+        }),
+        position: position,
       },
     });
   }
 
-/*   async update({ data, imageId }: UpdateImageRequestParams): Promise<Image | null> {
+  async update({ imageId, position, ...rest }: UpdateImageRequestParams): Promise<Image | null> {
     return await this.prisma.image.update({
       where: {
         id: imageId,
       },
       data: {
-        ...data,
+        ...rest,
+        position: Number(position),
       },
     });
   }
-*/
+
   async list({ venueId, description }: ListImageRequestQuerySchema): Promise<Image[]> {
     return await this.prisma.image.findMany({
       where: {
         ...(description && {
-          image: {
+          description: {
             contains: description
           }
         }),
         venueId
       },
     });
-  } 
+  }
 }

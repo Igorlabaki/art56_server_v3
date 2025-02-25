@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { listImageFactory } from "../use-cases/image/list-image/factory-list-image";
 import { createImageFactory } from "../use-cases/image/create-image/factory-create-image";
 import { deleteImageFactory } from "../use-cases/image/delete-image/factory-delete-image";
+import { updateImageFactory } from "../use-cases/image/update-image/factory-update-question";
 
 dotenv.config();
 
@@ -41,6 +42,12 @@ imageRoutes.delete("/delete/:imageId", async (req, res) => {
     const controller = deleteImageFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+
+// update
+imageRoutes.put("/update", upload.single("file"), (req, res) => {
+  const controller = updateImageFactory();
+  controller.handle(req, res);
+});
 
 
 export { imageRoutes };

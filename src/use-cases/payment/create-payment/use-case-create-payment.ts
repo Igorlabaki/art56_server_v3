@@ -15,9 +15,11 @@ class CreatePaymentUseCase {
   ) { }
 
   async execute(params: CreatePaymentRequestParams) {
-    const { proposalId, userId, venueId, username, amount, paymentDate } = params
-    const proposalById = await this.proposalRepository.getById(proposalId);
+ 
+    const { proposalId, userId, venueId, username, amount, paymentDate, imageUrl } = params
 
+    const proposalById = await this.proposalRepository.getById(proposalId);
+  
     if (!proposalById) {
       throw new HttpResourceNotFoundError("Orcamento")
     }
@@ -31,8 +33,9 @@ class CreatePaymentUseCase {
     const newPayment = await this.paymentRepository.create({
       venueId,
       proposalId,
-      amount: amount,
+      amount: Number(amount),
       paymentDate: data,
+      imageUrl
     });
 
     if (!newPayment) {

@@ -1,5 +1,5 @@
 import { PrismaClient, Payment } from "@prisma/client";
-import { CreatePaymentInDb } from "../../zod/payment/create-payment-DB";
+import { CreatePaymentInDb } from "../../zod/payment/create-payment-db";
 import { UpdatePaymentIndBSchema } from "../../zod/payment/update-payment-in-db";
 import { PaymentRepositoryInterface } from "../interface/payment-repository-interface";
 import { ListPaymentRequestQuerySchema } from "../../zod/payment/list-payment-query-schema";

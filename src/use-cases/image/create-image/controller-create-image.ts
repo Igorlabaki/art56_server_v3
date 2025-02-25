@@ -7,6 +7,7 @@ import { s3Client } from "../../../service/upload-config-sw";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { createImageRequestParams } from "../../../zod/image/create-image-params-schema";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
+import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 
 class CreateImageController {
   constructor(private createImageUseCase: CreateImageUseCase,private imageRepository: ImageRepositoryInterface) {}
@@ -14,26 +15,27 @@ class CreateImageController {
   async handle(req: Request, res: Response) {
     try {
       if (!req.file) {
-        return res.status(400).json({ error: "Arquivo não enviado." });
+        throw new HttpResourceNotFoundError("Arquivo");
       }
 
       // Valida os dados recebidos
       const teste = createImageRequestParams.safeParse(req.body);
-      console.log(teste)
+
       const { position, tag } = req.body;
 
       // Verifica se já existe uma imagem na posição/tag
       if (tag) {
         const verifyImage = await this.imageRepository.verifyImage({
-          position: Number(position),
           tag,
+          imageId: null,
+          position: Number(position),
         });
-        console.log(verifyImage)
+
         if (verifyImage) {
           throw new HttpConflictError("Já existe uma imagem nessa posição desta tag.");
         }
       }
-
+      
       // Gerando um nome único para o arquivo
       const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
 
@@ -48,11 +50,10 @@ class CreateImageController {
 
       // URL pública do arquivo
       const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-      console.log("fileUrl",fileUrl)
+  
       // Salva no banco com a URL da imagem
       const response = await this.createImageUseCase.execute({ ...req.body, imageUrl: fileUrl });
-      console.log(response)
-      res.status(201).json(response);
+      return res.status(201).json(response);
     } catch (error) {
       const errorResponse = handleErrors(error);
       res.status(errorResponse.statusCode).json(errorResponse.body);
