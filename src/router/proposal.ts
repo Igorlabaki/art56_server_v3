@@ -7,6 +7,7 @@ import { createProposalPerDayFactory } from "../use-cases/proposal/create-propos
 import { updateProposalPerPersonFactory } from "../use-cases/proposal/update-proposal-per-person/factory-update-proposal-per-person";
 import { createProposalPerPersonFactory } from "../use-cases/proposal/create-proposal-per-person/factory-create-proposal-per-person";
 import { updateProposalPerDayFactory } from "../use-cases/proposal/update-proposal-per-day/factory-update-proposal-per-day";
+import { updateProposalPersonalInfoFactory } from "../use-cases/proposal/update-personal-info-proposal/factory-update-proposal-personal-info";
 
 const proposalRoutes = Router()
 
@@ -30,6 +31,11 @@ proposalRoutes.get("/byId/:proposalId", async (req, res) => {
 
 proposalRoutes.put("/updatePerPerson", async (req, res) => {
     const controller = updateProposalPerPersonFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+}) 
+
+proposalRoutes.put("/updatePersonalInfo", async (req, res) => {
+    const controller = updateProposalPersonalInfoFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 }) 
 

@@ -3,6 +3,7 @@ import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
+import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
 
 export interface CreateProposalInDbParams {
   name: string
@@ -73,7 +74,8 @@ export interface ProposalRepositoryInterface {
   updateServices: (params: UpdateProposalServices) => Promise<Proposal | null> 
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>
   createPerPerson: (params: CreateProposalInDbParams) => Promise<Proposal | null>
+  analysisByMonth: (params: GetVenueAnalysisByMonthDbSchema) => Promise<Proposal[] | null>
+  updatePersonalInfo: (params: UpdatePersonalInfoProposalSchema) => Promise<Proposal | null> 
   trafficCount: (params: GetTrafficCountVenueDbSchema) => Promise<TrafegoCountResponse | null>
   list: (params: ListProposalRequestQuerySchema) => Promise<ItemListProposalResponse[] | null>
-  analysisByMonth: (params: GetVenueAnalysisByMonthDbSchema) => Promise<Proposal[] | null>
 }

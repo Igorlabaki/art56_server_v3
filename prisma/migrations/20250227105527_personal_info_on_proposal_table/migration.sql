@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE `proposal` ADD COLUMN `cep` VARCHAR(191) NULL,
+    ADD COLUMN `city` VARCHAR(191) NULL,
+    ADD COLUMN `completeName` VARCHAR(191) NULL,
+    ADD COLUMN `cpf` VARCHAR(191) NULL,
+    ADD COLUMN `neighborhood` VARCHAR(191) NULL,
+    ADD COLUMN `rg` VARCHAR(191) NULL,
+    ADD COLUMN `state` VARCHAR(191) NULL,
+    ADD COLUMN `street` VARCHAR(191) NULL,
+    ADD COLUMN `streetNumber` VARCHAR(191) NULL;

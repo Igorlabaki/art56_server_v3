@@ -7,9 +7,14 @@ import { UpdateClauseRequestParams } from "../../zod/clause/update-clause-params
 export class PrismaClauseRepository implements ClauseRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
-  async create(params: CreateClauseRequestParams): Promise<Clause | null> {
+  async create({organizationId,...params}: CreateClauseRequestParams): Promise<Clause | null> {
     return await this.prisma.clause.create({
       data: {
+        organization: {
+          connect: {
+            id: organizationId
+          }
+        },
         ...params,
       },
     });
@@ -31,21 +36,14 @@ export class PrismaClauseRepository implements ClauseRepositoryInterface {
     });
   }
 
- /*  async getByClause(reference: string): Promise<Clause | null> {
-    return await this.prisma.clause.findFirst({
-      where: {
-        clause: reference,
-      },
-    });
-  }
- */
   async update({ data, clauseId }: UpdateClauseRequestParams): Promise<Clause | null> {
+    const {...rest} = data
     return await this.prisma.clause.update({
       where: {
         id: clauseId,
       },
       data: {
-        ...data,
+        ...rest,
       },
     });
   }
@@ -58,7 +56,9 @@ export class PrismaClauseRepository implements ClauseRepositoryInterface {
             contains: title
           }
         }),
-        organizationId
+        ...(organizationId && {
+          organizationId
+        }),
       },
     });
   }

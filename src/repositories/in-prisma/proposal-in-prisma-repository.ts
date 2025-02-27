@@ -1,9 +1,10 @@
-import { PrismaClient, Proposal } from "@prisma/client"
+import { Prisma, PrismaClient, Proposal } from "@prisma/client"
 import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { CreateProposalInDbParams, ItemListProposalResponse, MonthProposalDataCount, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices } from "../interface/proposal-repository-interface"
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
+import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -214,7 +215,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
           orderBy: {
             startHour: "asc"
           }
-        }
+        },
       }
     })
   }
@@ -224,6 +225,26 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       where: {
         id: reference
       }
+    })
+  }
+
+  async updatePersonalInfo({proposalId,data}: UpdatePersonalInfoProposalSchema): Promise<Proposal | null> {
+    const {cep,cpf,city,completeName,neighborhood,state,street,streetNumber,rg} = data
+    return await this.prisma.proposal.update({
+      where: {
+        id: proposalId
+      },
+      data: {
+        cpf,
+        cep,
+        city,
+        state,
+        street,
+        completeName,
+        streetNumber,
+        neighborhood,
+        rg: rg ?? null, 
+      } as Prisma.ProposalUpdateInput,
     })
   }
 

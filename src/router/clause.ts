@@ -13,7 +13,7 @@ clauseRoutes.post("/create", async (req, res) => {
 })
 
 // List
-clauseRoutes.get("/list/:organizationId?/:title?", async (req, res) => {
+clauseRoutes.get("/list?:organizationId?/:title?", async (req, res) => {
     const controller = listClauseFactory();  
     await controller.handle(req, res);       
 })

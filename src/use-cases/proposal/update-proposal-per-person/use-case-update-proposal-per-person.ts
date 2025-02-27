@@ -9,7 +9,6 @@ import { HistoryRepositoryInterface } from "../../../repositories/interface/hist
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
-
 class UpdateProposalPerPersonUseCase {
     constructor(
         private userRepository: UserRepositoryInterface,

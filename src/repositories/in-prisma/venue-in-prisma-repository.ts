@@ -15,7 +15,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
   async create(params: CreateVenueRequestParams): Promise<Venue | null> {
     const { data, organizationId } = params
-    const { owners, pricePerDay, pricePerPerson,maxGuest, ...rest } = data
+    const { owners, pricePerDay, pricePerPerson, maxGuest, ...rest } = data
     const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
     const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
     const maxGuestFormated = Number(maxGuest)
@@ -40,22 +40,22 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async update(reference: UpdateVenueSchema): Promise<Venue | null> {
-    const { pricePerDay, pricePerPerson, owners,maxGuest, ...rest } = reference.data;
+    const { pricePerDay, pricePerPerson, owners, maxGuest, ...rest } = reference.data;
 
     const currentVenue = await this.prisma.venue.findUnique({
       where: { id: reference.venueId },
       include: {
         ownerVenue: {
-          select: { ownerId: true }, 
+          select: { ownerId: true },
         },
       },
     });
-    
+
     const currentOwnerIds = currentVenue?.ownerVenue.map((relation) => relation.ownerId) || [];
- 
+
     const ownersToConnect = owners?.filter((id) => !currentOwnerIds.includes(id)) || [];
     const ownersToDisconnect = currentOwnerIds.filter((id) => !owners?.includes(id)) || [];
-  
+
     return await this.prisma.venue.update({
       where: {
         id: reference.venueId,
@@ -82,6 +82,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     return await this.prisma.venue.findFirst({
       where: {
         id: venueId
+      },
+      include: {
+        ownerVenue: {
+          include:{
+            owner: true
+          }
+        },
       }
     })
   }

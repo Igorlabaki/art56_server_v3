@@ -5,7 +5,6 @@ export const updateClauseSchema = z.object({
     data: z.object({
         text: z.string(),
         title: z.string(),
-        position: z.number(),
     }),
 });
 

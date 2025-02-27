@@ -8,6 +8,7 @@ import { tokenRoutes } from "./router/token";
 import { venueRoutes } from "./router/venue";
 import { ownerRoutes } from "./router/owner";
 import { personRoutes } from "./router/person";
+import { clauseRoutes } from "./router/clause";
 import { contactRoutes } from "./router/contact";
 import { serviceRoutes } from "./router/service";
 import { expenseRoutes } from "./router/expense";
@@ -15,11 +16,11 @@ import { paymentRoutes } from "./router/payment";
 import { proposalRoutes } from "./router/proposal";
 import { questionRoutes } from "./router/question";
 import { scheduleRoutes } from "./router/schedule";
+import { contractRoutes } from "./router/contract";
 import { dateEventRoutes } from "./router/dateEvent";
 import { organizationRoutes } from "./router/organization";
 import { notificationRoutes } from "./router/notification";
 import { userorganizationRoutes } from "./router/userOrganization";
-import { clauseRoutes } from "./router/clause";
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/service', serviceRoutes)
 app.use('/expense', expenseRoutes)
 app.use('/payment', paymentRoutes)
 app.use('/contact', contactRoutes)
+app.use('/contract', contractRoutes)
 app.use('/question', questionRoutes)
 app.use('/proposal', proposalRoutes)
 app.use('/schedule', scheduleRoutes)
