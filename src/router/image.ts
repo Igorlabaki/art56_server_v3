@@ -1,14 +1,10 @@
-import { Router, Request, Response } from "express";
 import multer from "multer";
+import { Router, Request, Response } from "express";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import dotenv from "dotenv";
-import { randomUUID } from "crypto";
 import { listImageFactory } from "../use-cases/image/list-image/factory-list-image";
 import { createImageFactory } from "../use-cases/image/create-image/factory-create-image";
 import { deleteImageFactory } from "../use-cases/image/delete-image/factory-delete-image";
 import { updateImageFactory } from "../use-cases/image/update-image/factory-update-question";
-
-dotenv.config();
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();

@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import multer from "multer";
 import { Router } from "express";
 import { listDocumentFactory } from "../use-cases/document/list-document/factory-list-document";
@@ -7,8 +6,6 @@ import { deleteDocumentFactory } from "../use-cases/document/delete-document/fac
 import { updateDocumentFactory } from "../use-cases/document/update-document/factory-update-document";
 
 const documentRoutes = Router();
-
-dotenv.config();
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();

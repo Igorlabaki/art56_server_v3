@@ -1,5 +1,4 @@
 import multer from "multer";
-import dotenv from "dotenv";
 import { Router } from "express";
 import { listPaymentFactory } from "../use-cases/payment/list-payment/factory-list-payment";
 import { createPaymentFactory } from "../use-cases/payment/create-payment/factory-create-payment";
@@ -7,8 +6,6 @@ import { deletePaymentFactory } from "../use-cases/payment/delete-payment/factor
 import { updatePaymentFactory } from "../use-cases/payment/update-payment/factory-update-payment";
 
 const paymentRoutes = Router();
-
-dotenv.config();
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();

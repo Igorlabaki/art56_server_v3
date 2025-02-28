@@ -1,12 +1,10 @@
 import multer from "multer";
-import dotenv from "dotenv";
 import { Router } from "express"
 import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 import { updateUserFactory } from "../use-cases/user/update/factory-update-user";
 
 const userRoutes = Router()
 
-dotenv.config();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
