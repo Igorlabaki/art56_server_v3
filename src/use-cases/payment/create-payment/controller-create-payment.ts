@@ -5,9 +5,11 @@ import { s3Client } from "../../../service/upload-config-sw";
 import { handleErrors } from "../../../errors/error-handler";
 import { CreatePaymentUseCase } from "./use-case-create-payment";
 import { CreatePaymentRequestParams, createPaymentSchema } from "../../../zod/payment/create-payment-params-schema";
+import { CreateDocumentUseCase } from "../../document/create-document/use-case-create-document";
+import { format } from "date-fns";
 
 class CreatePaymentController {
-    constructor(private createPaymentUseCase: CreatePaymentUseCase) { }
+    constructor(private createPaymentUseCase: CreatePaymentUseCase, private createDocumentUseCase : CreateDocumentUseCase) { }
 
     async handle(req: Request, resp: Response) {
         try {
@@ -30,6 +32,10 @@ class CreatePaymentController {
                 const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
                 // Salva no banco com a URL da imagem
                 const response = await this.createPaymentUseCase.execute({ ...req.body, imageUrl: fileUrl });
+
+                if(response.success){
+                    await this.createDocumentUseCase.execute({ imageUrl: fileUrl, proposalId: body.proposalId, title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}` });
+                }
           
                 return resp.status(201).json(response);
             }

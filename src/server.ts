@@ -17,6 +17,7 @@ import { proposalRoutes } from "./router/proposal";
 import { questionRoutes } from "./router/question";
 import { scheduleRoutes } from "./router/schedule";
 import { contractRoutes } from "./router/contract";
+import { documentRoutes } from "./router/document";
 import { dateEventRoutes } from "./router/dateEvent";
 import { organizationRoutes } from "./router/organization";
 import { notificationRoutes } from "./router/notification";
@@ -48,6 +49,7 @@ app.use('/payment', paymentRoutes)
 app.use('/contact', contactRoutes)
 app.use('/contract', contractRoutes)
 app.use('/question', questionRoutes)
+app.use('/document', documentRoutes)
 app.use('/proposal', proposalRoutes)
 app.use('/schedule', scheduleRoutes)
 app.use('/dateEvent', dateEventRoutes)
