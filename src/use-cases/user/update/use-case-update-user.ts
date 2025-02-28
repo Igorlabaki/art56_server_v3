@@ -1,10 +1,6 @@
-import { hash } from "bcryptjs"
-
-
-import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface"
-import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
-import { UpdateUserRequestParams } from "../../../zod/user/update-user-params-schema"
-
+import { UpdateUserRequestParams } from "../../../zod/user/update-user-params-schema";
+import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
+import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 class UpdateUserCase {
 
     constructor(
