@@ -26,37 +26,37 @@ CREATE TABLE `session` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User` (
+CREATE TABLE `user` (
     `id` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `username` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
     `avatarUrl` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `user_email_key`(`email`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Organization` (
+CREATE TABLE `organization` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    UNIQUE INDEX `Organization_name_key`(`name`),
+    UNIQUE INDEX `organization_name_key`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `UserOrganization` (
+CREATE TABLE `userOrganization` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
     `organizationId` VARCHAR(191) NOT NULL,
     `role` ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'ADMIN',
     `joinedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `UserOrganization_organizationId_idx`(`organizationId`),
-    UNIQUE INDEX `UserOrganization_userId_organizationId_key`(`userId`, `organizationId`),
+    INDEX `userOrganization_organizationId_idx`(`organizationId`),
+    UNIQUE INDEX `userOrganization_userId_organizationId_key`(`userId`, `organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -103,7 +103,7 @@ CREATE TABLE `proposal` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `History` (
+CREATE TABLE `history` (
     `id` VARCHAR(191) NOT NULL,
     `action` VARCHAR(191) NOT NULL,
     `username` VARCHAR(191) NULL,
@@ -111,13 +111,13 @@ CREATE TABLE `History` (
     `proposalId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `History_userId_idx`(`userId`),
-    INDEX `History_proposalId_idx`(`proposalId`),
+    INDEX `history_userId_idx`(`userId`),
+    INDEX `history_proposalId_idx`(`proposalId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Person` (
+CREATE TABLE `person` (
     `id` VARCHAR(191) NOT NULL,
     `attendance` BOOLEAN NOT NULL DEFAULT false,
     `type` ENUM('GUEST', 'WORKER') NOT NULL,
@@ -126,31 +126,31 @@ CREATE TABLE `Person` (
     `rg` VARCHAR(191) NULL,
     `proposalId` VARCHAR(191) NOT NULL,
 
-    INDEX `Person_proposalId_idx`(`proposalId`),
+    INDEX `person_proposalId_idx`(`proposalId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `ProposalService` (
+CREATE TABLE `proposalService` (
     `id` VARCHAR(191) NOT NULL,
     `proposalId` VARCHAR(191) NOT NULL,
     `serviceId` VARCHAR(191) NOT NULL,
     `joinedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `ProposalService_proposalId_idx`(`proposalId`),
-    INDEX `ProposalService_serviceId_idx`(`serviceId`),
+    INDEX `proposalService_proposalId_idx`(`proposalId`),
+    INDEX `proposalService_serviceId_idx`(`serviceId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Service` (
+CREATE TABLE `service` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `price` DOUBLE NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
 
-    INDEX `Service_venueId_idx`(`venueId`),
-    UNIQUE INDEX `Service_name_venueId_key`(`name`, `venueId`),
+    INDEX `service_venueId_idx`(`venueId`),
+    UNIQUE INDEX `service_name_venueId_key`(`name`, `venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -202,7 +202,7 @@ CREATE TABLE `expense` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Notification` (
+CREATE TABLE `notification` (
     `id` VARCHAR(191) NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
     `proposalId` VARCHAR(191) NULL,
@@ -212,14 +212,14 @@ CREATE TABLE `Notification` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `isRead` BOOLEAN NOT NULL DEFAULT false,
 
-    INDEX `Notification_venueId_idx`(`venueId`),
-    INDEX `Notification_dateEventId_idx`(`dateEventId`),
-    INDEX `Notification_proposalId_idx`(`proposalId`),
+    INDEX `notification_venueId_idx`(`venueId`),
+    INDEX `notification_dateEventId_idx`(`dateEventId`),
+    INDEX `notification_proposalId_idx`(`proposalId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `DateEvent` (
+CREATE TABLE `dataEvent` (
     `id` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
     `startDate` DATETIME(3) NOT NULL,
@@ -230,13 +230,13 @@ CREATE TABLE `DateEvent` (
     `venueId` VARCHAR(191) NOT NULL,
     `type` ENUM('VISIT', 'EVENT', 'OTHER', 'BARTER', 'PROPOSAL', 'OVERNIGHT', 'PRODUCTION') NOT NULL,
 
-    INDEX `DateEvent_proposalId_idx`(`proposalId`),
-    INDEX `DateEvent_venueId_idx`(`venueId`),
+    INDEX `dataEvent_proposalId_idx`(`proposalId`),
+    INDEX `dataEvent_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Venue` (
+CREATE TABLE `venue` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `street` VARCHAR(191) NOT NULL,
@@ -256,38 +256,38 @@ CREATE TABLE `Venue` (
     `pricePerDay` DOUBLE NULL,
     `maxGuest` INTEGER NOT NULL,
 
-    UNIQUE INDEX `Venue_name_key`(`name`),
-    INDEX `Venue_organizationId_idx`(`organizationId`),
+    UNIQUE INDEX `venue_name_key`(`name`),
+    INDEX `venue_organizationId_idx`(`organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Contact` (
+CREATE TABLE `contact` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `role` VARCHAR(191) NOT NULL,
     `whatsapp` VARCHAR(191) NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
 
-    INDEX `Contact_venueId_idx`(`venueId`),
+    INDEX `contact_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `OwnerVenue` (
+CREATE TABLE `ownerVenue` (
     `id` VARCHAR(191) NOT NULL,
     `ownerId` VARCHAR(191) NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
     `role` ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'ADMIN',
     `joinedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `OwnerVenue_venueId_idx`(`venueId`),
-    UNIQUE INDEX `OwnerVenue_ownerId_venueId_key`(`ownerId`, `venueId`),
+    INDEX `ownerVenue_venueId_idx`(`venueId`),
+    UNIQUE INDEX `ownerVenue_ownerId_venueId_key`(`ownerId`, `venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Owner` (
+CREATE TABLE `owner` (
     `id` VARCHAR(191) NOT NULL,
     `completeName` VARCHAR(191) NOT NULL,
     `rg` VARCHAR(191) NULL,
@@ -306,12 +306,12 @@ CREATE TABLE `Owner` (
     `bankAccountNumber` VARCHAR(191) NOT NULL,
     `organizationId` VARCHAR(191) NOT NULL,
 
-    INDEX `Owner_organizationId_idx`(`organizationId`),
+    INDEX `owner_organizationId_idx`(`organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Image` (
+CREATE TABLE `image` (
     `id` VARCHAR(191) NOT NULL,
     `imageUrl` LONGTEXT NOT NULL,
     `description` VARCHAR(191) NULL,
@@ -322,12 +322,12 @@ CREATE TABLE `Image` (
     `tag` VARCHAR(191) NULL,
     `venueId` VARCHAR(191) NOT NULL,
 
-    INDEX `Image_venueId_idx`(`venueId`),
+    INDEX `image_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Text` (
+CREATE TABLE `text` (
     `id` VARCHAR(191) NOT NULL,
     `area` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NULL,
@@ -337,12 +337,12 @@ CREATE TABLE `Text` (
     `updatedAt` DATETIME(3) NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
 
-    INDEX `Text_venueId_idx`(`venueId`),
+    INDEX `text_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Document` (
+CREATE TABLE `document` (
     `id` VARCHAR(191) NOT NULL,
     `imageUrl` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
@@ -350,12 +350,12 @@ CREATE TABLE `Document` (
     `updatedAt` DATETIME(3) NOT NULL,
     `proposalId` VARCHAR(191) NOT NULL,
 
-    INDEX `Document_proposalId_idx`(`proposalId`),
+    INDEX `document_proposalId_idx`(`proposalId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Question` (
+CREATE TABLE `question` (
     `id` VARCHAR(191) NOT NULL,
     `question` LONGTEXT NOT NULL,
     `response` LONGTEXT NOT NULL,
@@ -363,23 +363,23 @@ CREATE TABLE `Question` (
     `updatedAt` DATETIME(3) NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
 
-    INDEX `Question_venueId_idx`(`venueId`),
+    INDEX `question_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Contract` (
+CREATE TABLE `contract` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
     `organizationId` VARCHAR(191) NOT NULL,
 
-    INDEX `Contract_organizationId_idx`(`organizationId`),
+    INDEX `contract_organizationId_idx`(`organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Clause` (
+CREATE TABLE `clause` (
     `id` VARCHAR(191) NOT NULL,
     `text` LONGTEXT NOT NULL,
     `title` LONGTEXT NOT NULL,
@@ -389,13 +389,13 @@ CREATE TABLE `Clause` (
     `organizationId` VARCHAR(191) NULL,
     `contractId` VARCHAR(191) NULL,
 
-    INDEX `Clause_contractId_idx`(`contractId`),
-    INDEX `Clause_organizationId_idx`(`organizationId`),
+    INDEX `clause_contractId_idx`(`contractId`),
+    INDEX `clause_organizationId_idx`(`organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Schedule` (
+CREATE TABLE `schedule` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `workerNumber` INTEGER NOT NULL,
@@ -406,7 +406,7 @@ CREATE TABLE `Schedule` (
     `updatedAt` DATETIME(3) NOT NULL,
     `proposalId` VARCHAR(191) NOT NULL,
 
-    INDEX `Schedule_proposalId_idx`(`proposalId`),
+    INDEX `schedule_proposalId_idx`(`proposalId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
