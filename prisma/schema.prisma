@@ -50,6 +50,8 @@ model User {
   histories         History[]
   refreshToken      RefreshToken[]
   userOrganizations UserOrganization[]
+
+  @@map("user")
 }
 
 model Organization {
@@ -63,6 +65,8 @@ model Organization {
   Clause Clause[]
 
   Contract Contract[]
+
+    @@map("organization")
 }
 
 model UserOrganization {
@@ -77,6 +81,7 @@ model UserOrganization {
 
   @@unique([userId, organizationId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([organizationId])
+  @@map("userOrganization")
 }
 
 enum Role {
@@ -126,7 +131,7 @@ model Proposal {
   proposalServices ProposalService[]
   noificationList  Notification[]
   scheduleList     Schedule[]
-  documents Document[]
+  documents        Document[]
 
   @@index([venueId])
   @@index([trafficSource])
@@ -147,6 +152,8 @@ model History {
 
   @@index([userId])
   @@index([proposalId])
+
+  @@map("history")
 }
 
 model Person {
@@ -160,6 +167,7 @@ model Person {
   proposal   Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
+   @@map("person")
 }
 
 enum PersonType {
@@ -179,6 +187,7 @@ model ProposalService {
 
   @@index([proposalId])
   @@index([serviceId])
+  @@map("proposalService")
 }
 
 model Service {
@@ -191,6 +200,7 @@ model Service {
 
   @@unique([name, venueId])
   @@index([venueId])
+  @@map("service")
 }
 
 enum TrafficSource {
@@ -301,6 +311,8 @@ model Notification {
   @@index([venueId])
   @@index([dateEventId])
   @@index([proposalId])
+
+  @@map("notification")
 }
 
 enum NotificationType {
@@ -339,6 +351,8 @@ model DateEvent {
 
   @@index([proposalId])
   @@index([venueId])
+
+  @@map("dataEvent")
 }
 
 model Venue {
@@ -374,6 +388,8 @@ model Venue {
   notifications    Notification[]
 
   @@index([organizationId])
+
+  @@map("venue")
 }
 
 model Contact {
@@ -385,6 +401,8 @@ model Contact {
   venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+
+  @@map("contact")
 }
 
 model OwnerVenue {
@@ -399,6 +417,8 @@ model OwnerVenue {
 
   @@unique([ownerId, venueId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([venueId])
+
+  @@map("ownerVenue")
 }
 
 enum PricingModel {
@@ -428,6 +448,8 @@ model Owner {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+
+  @@map("owner")
 }
 
 model Image {
@@ -443,6 +465,8 @@ model Image {
   venue          Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+
+  @@map("image")
 }
 
 model Text {
@@ -457,17 +481,22 @@ model Text {
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+
+  @@map("text")
 }
+
 model Document {
-  id        String   @id @default(cuid())
-  imageUrl  String // "area" permanece o mesmo
-  title     String // "titulo" para "title"
-  createdAt DateTime @default(now()) // "created_at" para "createdAt"
-  updatedAt DateTime @updatedAt
-  proposalId   String
-  proposal     Proposal    @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  imageUrl   String // "area" permanece o mesmo
+  title      String // "titulo" para "title"
+  createdAt  DateTime @default(now()) // "created_at" para "createdAt"
+  updatedAt  DateTime @updatedAt
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
+
+  @@map("document")
 }
 
 model Question {
@@ -480,6 +509,8 @@ model Question {
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+
+  @@map("question")
 }
 
 model Contract {
@@ -491,6 +522,8 @@ model Contract {
   clauses        Clause[]
 
   @@index([organizationId])
+
+  @@map("contract")
 }
 
 model Clause {
@@ -507,6 +540,8 @@ model Clause {
 
   @@index([contractId])
   @@index([organizationId])
+
+  @@map("clause")
 }
 
 model Schedule {
@@ -523,4 +558,6 @@ model Schedule {
   proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
+
+  @@map("schedule")
 }

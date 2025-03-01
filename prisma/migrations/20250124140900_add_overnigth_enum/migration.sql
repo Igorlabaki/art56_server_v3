@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE `notification` MODIFY `type` ENUM('VISIT', 'EVENT', 'ALERT', 'PROPOSAL', 'OVERNIGHT') NOT NULL;
-
--- AlterTable
-ALTER TABLE `proposal` MODIFY `type` ENUM('EVENT', 'OVERNIGHT', 'PRODUCTION', 'BARTER', 'OTHER') NOT NULL;
