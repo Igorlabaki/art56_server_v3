@@ -25,7 +25,11 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
         ...params,
       },
       include: {
-        clauses: true
+        clauses: {
+          orderBy:{
+            position: "asc"
+          }
+        }
       }
     });
   }

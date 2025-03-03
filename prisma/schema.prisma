@@ -267,7 +267,7 @@ model Expense {
   name        String
   description String? // Expense description
   amount      Float // Amount of the expense
-  paymentDate DateTime // Payment date of the expense
+  paymentDate DateTime? // Payment date of the expense
   type        ExpenseType // Type of expense (Fixed, Variable)
   category    ExpenseCategory // Category of expense (Maintenance, Services, Materials, etc.)
   recurring   Boolean // Indicates if it's a recurring or one-time expense
