@@ -43,6 +43,7 @@ export class PrismaClauseRepository implements ClauseRepositoryInterface {
         title: title,
       },
       data: {
+        title,
         ...rest,
       },
     });
