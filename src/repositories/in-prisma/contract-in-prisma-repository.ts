@@ -26,7 +26,7 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
       },
       include: {
         clauses: {
-          orderBy:{
+          orderBy: {
             position: "asc"
           }
         }
@@ -71,53 +71,57 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
       select: { id: true },
     });
 
-    const incomingClauseIds = clauses.map((clause: any) => clause.id).filter((id: any) => id);
+    // 2. Extrair os IDs das cláusulas existentes
+    const existingClauseIds = existingClauses.map((clause) => clause.id);
 
-    const clausesToDelete = existingClauses.filter(id => !incomingClauseIds.includes(id));
+    // 3. Extrair os IDs das cláusulas recebidas
+    const incomingClauseIds = clauses.map((clause) => clause.id).filter((id) => id);
 
+    // 4. Identificar cláusulas para exclusão (presentes no banco, mas não na lista recebida)
+    const clausesToDelete = existingClauseIds.filter((id) => !incomingClauseIds.includes(id));
 
-    const deletePromises = clausesToDelete.map(item => {
+    // 5. Excluir cláusulas que não estão mais na lista
+    const deletePromises = clausesToDelete.map((id) => {
       return this.prisma.clause.delete({
-        where: {
-          id: item.id
-        },
+        where: { id },
       });
     });
 
-    //
-    const newClauses = clauses.filter((clause: any) => !clause.contractId);
-
-    // 6. Criar as cláusulas novas associadas ao contrato
-    const createPromises = newClauses.map((clause: any) => {
-      return this.prisma.clause.create({
-        data: {
-          text: clause.text,
-          title: clause.title,
-          position: Number(clause.position),
-          Contract: {
-            connect: {
-              id: contractId
-            }
-          }
-        },
-      });
-    });
-
-    await Promise.all([
-      ...deletePromises,
-      ...createPromises,
-    ]);
-
-
-    return await this.prisma.contract.findUnique({
-      where: {
-        id: contractId
-      },
-      include: {
-        clauses: true
+    // 6. Identificar cláusulas para atualização ou criação
+    const updatePromises = clauses.map((clause) => {
+      if (clause.id && existingClauseIds.includes(clause.id)) {
+        // Atualizar cláusula existente
+        return this.prisma.clause.update({
+          where: { id: clause.id },
+          data: {
+            text: clause.text,
+            title: clause.title,
+            position: Number(clause.position),
+          },
+        });
+      } else {
+        // Criar nova cláusula
+        return this.prisma.clause.create({
+          data: {
+            text: clause.text,
+            title: clause.title,
+            position: Number(clause.position),
+            contractId, // Associar ao contrato
+          },
+        });
       }
     });
+
+    // 7. Executar todas as operações de exclusão, atualização e criação
+    await Promise.all([...deletePromises, ...updatePromises]);
+
+    // 8. Retornar o contrato atualizado com as cláusulas
+    return await this.prisma.contract.findUnique({
+      where: { id: contractId },
+      include: { clauses: true },
+    });
   }
+
 
   async list({ organizationId, title }: ListContractRequestQuerySchema): Promise<Contract[]> {
     return await this.prisma.contract.findMany({
