@@ -97,6 +97,9 @@ export class PrismaDateEventRepository implements DateEventRepositoryInterface {
             guestNumber: true
           }
         }
+      },
+      orderBy:{
+        startDate: "asc"
       }
     })
   }
