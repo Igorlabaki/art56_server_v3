@@ -64,7 +64,16 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
     });
   }
 
-  async update({ clauses, contractId }: UpdateContractRequestParams): Promise<Contract | null> {
+  async update({ clauses, contractId,...rest }: UpdateContractRequestParams): Promise<Contract | null> {
+    await this.prisma.contract.update({
+      where: { 
+        id: contractId
+       },
+      data:{
+        ...rest
+      }
+    });
+
     // 1. Buscar as cláusulas existentes no banco
     const existingClauses = await this.prisma.clause.findMany({
       where: { contractId },
