@@ -11,7 +11,7 @@ export const createExpenseRequestParams = z.object({
     amount: z.number({
         required_error: 'Estem campo e obrigatorio.',
     }),
-    paymentDate: z.date({
+    paymentDate: z.string({
         required_error: 'Estem campo e obrigatorio.',
     }),
     type: z.enum(["ANNUAL", "MONTHLY","WEEKLY","BIWEEKLY","SPORADIC"]),
