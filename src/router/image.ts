@@ -39,11 +39,16 @@ imageRoutes.delete("/delete/:imageId", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
+// Delete
+imageRoutes.get("/getByTag?:venueId?/:tag?", async (req, res) => {
+    const controller = deleteImageFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
 // update
 imageRoutes.put("/update", upload.single("file"), (req, res) => {
   const controller = updateImageFactory();
   controller.handle(req, res);
 });
 
-
+    
 export { imageRoutes };

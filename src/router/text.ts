@@ -34,7 +34,7 @@ textRoutes.put("/update", async (req, res) => {
 // Get By Id
 textRoutes.get("/getById/:textId", getTextByIdFactory().handle);
 //
-// Get By Name
+/  
 textRoutes.get("/getByArea/:area", getTextByAreaFactory().handle);
 //
 */

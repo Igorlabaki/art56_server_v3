@@ -1,6 +1,7 @@
+import sharp from "sharp";
 import { randomUUID } from "crypto";
 import { Request, Response } from "express";
-import {  PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { CreateImageUseCase } from "./use-case-create-image";
 import { handleErrors } from "../../../errors/error-handler";
 import { s3Client } from "../../../service/upload-config-sw";
@@ -10,7 +11,10 @@ import { ImageRepositoryInterface } from "../../../repositories/interface/image-
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 
 class CreateImageController {
-  constructor(private createImageUseCase: CreateImageUseCase,private imageRepository: ImageRepositoryInterface) {}
+  constructor(
+    private createImageUseCase: CreateImageUseCase,
+    private imageRepository: ImageRepositoryInterface
+  ) {}
 
   async handle(req: Request, res: Response) {
     try {
@@ -19,7 +23,7 @@ class CreateImageController {
       }
 
       // Valida os dados recebidos
-      const teste = createImageRequestParams.safeParse(req.body);
+      createImageRequestParams.parse(req.body);
 
       const { position, tag, venueId } = req.body;
 
@@ -29,31 +33,42 @@ class CreateImageController {
           tag,
           imageId: null,
           position: Number(position),
-          venueId
+          venueId,
         });
 
         if (verifyImage) {
-          throw new HttpConflictError("Já existe uma imagem nessa posição desta tag.");
+          throw new HttpConflictError(
+            "Já existe uma imagem nessa posição desta tag."
+          );
         }
       }
-      
-      // Gerando um nome único para o arquivo
-      const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
+
+      // Gera um nome único para o arquivo no formato WebP
+      const fileKey = `${Date.now()}-${randomUUID()}.webp`;
+
+      // Converte a imagem para WebP antes de enviar ao S3
+      const webpBuffer = await sharp(req.file.buffer)
+        .webp({ quality: 80 }) // Converte para WebP com qualidade 80%
+        .toBuffer();
 
       const params = {
         Bucket: process.env.AWS_BUCKET_NAME!,
         Key: fileKey,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
+        Body: webpBuffer,
+        ContentType: "image/webp",
       };
 
       await s3Client.send(new PutObjectCommand(params));
 
       // URL pública do arquivo
       const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-  
+
       // Salva no banco com a URL da imagem
-      const response = await this.createImageUseCase.execute({ ...req.body, imageUrl: fileUrl });
+      const response = await this.createImageUseCase.execute({
+        ...req.body,
+        imageUrl: fileUrl,
+      });
+
       return res.status(201).json(response);
     } catch (error) {
       const errorResponse = handleErrors(error);
