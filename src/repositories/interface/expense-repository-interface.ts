@@ -7,10 +7,10 @@ import { AnalysisExpenseRequestParamSchema } from "../../zod/expense/analysis-ex
 export interface ExpenseRepositoryInterface {
   delete: (params: string) => Promise<Expense | null>
   getById: (params: string) => Promise<Expense | null>
-  getByName: (params: string) => Promise<Expense | null>
   getByVenueId: (params: string) => Promise<Expense[] | null>
   update: (params: UpdateExpenseRequestParams) => Promise<Expense | null> 
   create: (params: CreateExpenseRequestParams) => Promise<Expense | null>
   list: (query: ListExpenseRequestQuerySchema) => Promise<Expense[]  | null>
+  getByName: (params: {venueId:string, name: string}) => Promise<Expense | null>
   analyze :(params: AnalysisExpenseRequestParamSchema) => Promise<Expense[]  | null>
 }

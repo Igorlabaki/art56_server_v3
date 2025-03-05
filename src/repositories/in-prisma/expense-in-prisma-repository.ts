@@ -46,10 +46,11 @@ export class PrismaExpenseRepository implements ExpenseRepositoryInterface {
       })
     }
 
-    async getByName (reference: string): Promise<Expense | null> {
+    async getByName ({name,venueId}: {venueId:string, name: string}): Promise<Expense | null> {
       return await this.prisma.expense.findFirst({
         where:{
-          name: reference
+          name: name,
+          venueId: venueId
         }
       })
     }

@@ -9,7 +9,10 @@ class CreateExpenseUseCase {
 
     async execute(params: CreateExpenseRequestParams) {
 
-        const expenseAlreadyExists = await this.expenseRepository.getByName(params.name)
+        const expenseAlreadyExists = await this.expenseRepository.getByName({
+            name: params.name,
+            venueId: params.venueId
+        })
 
         if (expenseAlreadyExists) {
             throw new HttpConflictError("Despesa")
