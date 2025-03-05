@@ -9,7 +9,9 @@ const documentRoutes = Router();
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ 
+  storage
+});
 
 // Create
 // Create
