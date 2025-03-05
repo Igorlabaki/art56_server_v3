@@ -7,11 +7,13 @@ export interface ValidateTextAreaTitleParams {
   area: string;
   title: string;
   textId?: string;
+  venueId: string;
 }
 export interface ValidateTextAreaPositionParams {
   area: string;
   textId?: string;
   position: number;
+  venueId: string;
 }
 
 export interface TextRepositoryInterface {

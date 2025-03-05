@@ -17,7 +17,7 @@ class UpdateTextUseCase {
         //
 
         if (title && area) {
-            const validateIfExistTextAreaTitle = await this.textRepository.validateIfExistTextAreaTitle({ area, title,textId: text.id });
+            const validateIfExistTextAreaTitle = await this.textRepository.validateIfExistTextAreaTitle({ area, title,textId: text.id, venueId: param.venueId });
 
             if (validateIfExistTextAreaTitle && title != undefined) {
                 throw new HttpConflictError("Texto com esse mesmo titulo")
@@ -25,7 +25,7 @@ class UpdateTextUseCase {
         }
 
         if (position && area) {
-            const validateIfExistTextAreaPosition = await this.textRepository.validateIfExistTextAreaPosition({ area, position,textId: text.id });
+            const validateIfExistTextAreaPosition = await this.textRepository.validateIfExistTextAreaPosition({ area, position,textId: text.id, venueId: param.venueId });
 
             if (validateIfExistTextAreaPosition) {
                 throw new HttpConflictError("Texto nesta area com esta posicao")

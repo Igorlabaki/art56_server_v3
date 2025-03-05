@@ -6,8 +6,8 @@ import { UpdateQuestionRequestParams } from "../../zod/question/update-question-
 export interface QuestionRepositoryInterface {
   delete: (params: string) => Promise<Question | null>;  
   getById: (params: string) => Promise<Question | null>;
-  getByQuestion: (params: string) => Promise<Question | null>
   update: (params: UpdateQuestionRequestParams) => Promise<Question | null>;
   create: (params: CreateQuestionRequestParams) => Promise<Question | null>;
   list: (params: ListQuestionRequestQuerySchema) => Promise<Question[]  | null>;
+  getByQuestion: (params: {question: string, venueId: string, questionId: string | undefined}) => Promise<Question | null>
 }

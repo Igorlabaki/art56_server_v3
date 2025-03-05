@@ -1,10 +1,11 @@
 import { z } from "zod";
 
 export const updateQuestionSchema = z.object({
+    venueId: z.string(),
     questionId: z.string(),
     data: z.object({
-        question:  z.string().optional(),
-        response:  z.string().optional(),
+        question:  z.string(),
+        response:  z.string(),
     }),
 });
 

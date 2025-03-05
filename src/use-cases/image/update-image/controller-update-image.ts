@@ -17,7 +17,7 @@ class UpdateImageController {
                 try {
                     const param = updateImageRequestParams.parse(req.body);
 
-                    const { position, tag, imageId } = param;
+                    const { position, tag, imageId,venueId } = param;
 
                     // Verifica se já existe uma imagem na posição/tag
                     if (tag) {
@@ -25,6 +25,7 @@ class UpdateImageController {
                             tag,
                             imageId,
                             position: Number(position),
+                            venueId
                         });
                         if (verifyImage) {
                             throw new HttpConflictError("Já existe uma imagem nessa posição desta tag.");
@@ -48,7 +49,7 @@ class UpdateImageController {
 
             const body: UpdateImageRequestParams = req.body;
 
-            const { position, tag, imageId } = body;
+            const { position, tag, imageId, venueId } = body;
 
             // Validate if image exists
             const image = await this.imageRepository.getById(imageId)
@@ -64,6 +65,7 @@ class UpdateImageController {
                     tag,
                     imageId,
                     position: Number(position),
+                    venueId
                 });
 
                 if (verifyImage) {

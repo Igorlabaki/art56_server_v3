@@ -8,14 +8,14 @@ class CreateTextUseCase {
   async execute({area,position,text,title,venueId}: CreateTextRequestParams) {
 
     if(title){
-      const validateIfExistTextAreaTitle = await this.textRepository.validateIfExistTextAreaTitle({area, title});
+      const validateIfExistTextAreaTitle = await this.textRepository.validateIfExistTextAreaTitle({area, title, venueId});
 
       if (validateIfExistTextAreaTitle && title != undefined) {
         throw new HttpConflictError("Texto com esse mesmo titulo")
       }
     }
     
-    const validateIfExistTextAreaPosition = await this.textRepository.validateIfExistTextAreaPosition({area, position});
+    const validateIfExistTextAreaPosition = await this.textRepository.validateIfExistTextAreaPosition({area, position, venueId});
 
     if (validateIfExistTextAreaPosition) {
       throw new HttpConflictError("Texto nesta area com esta posicao")

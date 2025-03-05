@@ -40,14 +40,15 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
     });
   }
 
-  async verifyImage({ imageId, position, tag }: { position: number, tag: string, imageId: string | null }): Promise<Image | null> {
+  async verifyImage({ imageId, position, tag, venueId }: { position: number, tag: string, imageId: string | null, venueId:string }): Promise<Image | null> {
     return await this.prisma.image.findFirst({
       where: {
         tag: tag,
         ...(imageId && {
           id: {
             not: imageId,
-          }
+          },
+          venueId
         }),
         position: position,
       },

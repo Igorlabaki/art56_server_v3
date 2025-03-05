@@ -50,6 +50,7 @@ export class PrismaTextRepository implements TextRepositoryInterface {
             area: data.area,
           },
           { title: data.title },
+          { venueId: data.venueId },
         ],
         NOT: [
           { id: data.textId }
@@ -63,7 +64,8 @@ export class PrismaTextRepository implements TextRepositoryInterface {
       where: {
         AND: [
           { area: data.area },
-          { position: data.position }
+          { position: data.position },
+          { venueId: data.venueId }
         ],
         NOT: [
           { id: data.textId }

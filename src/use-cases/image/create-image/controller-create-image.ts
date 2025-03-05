@@ -21,7 +21,7 @@ class CreateImageController {
       // Valida os dados recebidos
       const teste = createImageRequestParams.safeParse(req.body);
 
-      const { position, tag } = req.body;
+      const { position, tag, venueId } = req.body;
 
       // Verifica se já existe uma imagem na posição/tag
       if (tag) {
@@ -29,6 +29,7 @@ class CreateImageController {
           tag,
           imageId: null,
           position: Number(position),
+          venueId
         });
 
         if (verifyImage) {

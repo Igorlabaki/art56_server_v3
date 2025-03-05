@@ -6,7 +6,11 @@ class CreateQuestionUseCase {
   constructor(private questionRepository: QuestionRepositoryInterface) {}
 
   async execute(params: CreateQuestionRequestParams) {
-    const questionAlreadyExists = await this.questionRepository.getByQuestion(params.question);
+    const questionAlreadyExists = await this.questionRepository.getByQuestion({
+      venueId: params.venueId,
+      question: params.question,
+      questionId: undefined
+    });
 
     if(questionAlreadyExists){
       throw new HttpConflictError("Essa pergunta ja esta cadastrada.")

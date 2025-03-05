@@ -31,10 +31,19 @@ export class PrismaQuestionRepository implements QuestionRepositoryInterface {
     });
   }
 
-  async getByQuestion(reference: string): Promise<Question | null> {
+  async getByQuestion({question,venueId,questionId}: {question: string, venueId: string, questionId: string | undefined}): Promise<Question | null> {
     return await this.prisma.question.findFirst({
       where: {
-        question: reference,
+        AND: [
+          { venueId: venueId },
+          { question: question },
+        ],
+        ...(questionId && {
+          NOT: [
+            { id: questionId }
+          ]
+        }),
+        
       },
     });
   }

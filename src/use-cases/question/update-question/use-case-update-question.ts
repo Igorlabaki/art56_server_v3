@@ -7,7 +7,7 @@ class UpdateQuestionUseCase {
     constructor(private questionRepository: QuestionRepositoryInterface) { }
 
     async execute(param: UpdateQuestionRequestParams) {
-      
+
         // Validate if question exists
         const question = await this.questionRepository.getById(param.questionId)
 
@@ -15,6 +15,16 @@ class UpdateQuestionUseCase {
             throw new HttpResourceNotFoundError("Pergunta")
         }
         //
+
+        const questionAlreadyExists = await this.questionRepository.getByQuestion({
+            venueId: param.venueId,
+            question: param.data.question,
+            questionId: param.questionId
+        });
+
+        if (questionAlreadyExists) {
+            throw new HttpConflictError("Essa pergunta ja esta cadastrada.")
+        }
 
         const updatedQuestion = await this.questionRepository.update(param)
 
