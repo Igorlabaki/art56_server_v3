@@ -4,8 +4,8 @@ export const updateOverNigthDateEventSchema = z.object({
     userId: z.string(),
     venueId: z.string(),
     username: z.string(),
-    proposalId:z.string(),
     dateEventId: z.string(),
+    proposalId:z.string().optional(),
     data: z.object({
       title: z.string(),
       endDay: z.string(),
