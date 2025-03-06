@@ -27,6 +27,7 @@ class UpdateOvernigthDateEventUseCase {
             venueId,
             endDate: startDate,
             startDate: endDate,
+            dataeEventId: dateEventId
         });
 
         if (isNotAvailable) {

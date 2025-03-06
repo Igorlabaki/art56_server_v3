@@ -43,12 +43,15 @@ export class PrismaDateEventRepository implements DateEventRepositoryInterface {
     return newDateEvent
   }
 
-  async checkAvailability({ endDate, startDate, venueId }: ValidateDateParam): Promise<DateEvent | null> {
+  async checkAvailability({ endDate, startDate, venueId,dataeEventId }: ValidateDateParam): Promise<DateEvent | null> {
     return await this.prisma.dateEvent.findFirst({
       where: {
         venueId: venueId,
         endDate: { gte: startDate }, // Verifica se a data de fim é maior ou igual à data de início
-        startDate: { lte: endDate }, // Verifica se a data de início é menor ou igual à data de fim
+        startDate: { lte: endDate },
+        NOT: {
+          id: dataeEventId, 
+        }, 
       },
     });
   }
