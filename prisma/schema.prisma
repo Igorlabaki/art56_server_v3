@@ -66,7 +66,7 @@ model Organization {
 
   Contract Contract[]
 
-    @@map("organization")
+  @@map("organization")
 }
 
 model UserOrganization {
@@ -76,8 +76,9 @@ model UserOrganization {
   role           Role     @default(ADMIN)
   joinedAt       DateTime @default(now())
 
-  user         User         @relation(fields: [userId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id])
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  UserPermission[]
 
   @@unique([userId, organizationId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([organizationId])
@@ -89,49 +90,78 @@ enum Role {
   USER
 }
 
+model UserPermission {
+  id                 String         @id @default(uuid())
+  userOrganizationId String
+  permission         PermissionType
+
+  userOrganization UserOrganization @relation(fields: [userOrganizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userOrganizationId, permission])
+}
+
+enum PermissionType {
+  VIEW_INFO
+  VIEW_EVENTS
+  VIEW_IMAGES
+  VIEW_CALENDAR
+  VIEW_ANALYSIS
+  VIEW_PROPOSALS
+  VIEW_NOTIFICATIONS
+
+  EDIT_INFO
+  EDIT_IMAGE
+  EDIT_VENUE
+  EDIT_EVENT
+  EDIT_PROPOSAL
+  EDIT_CALENDAR
+  EDIT_ORGANIZATION
+}
+
 model Proposal {
-  id               String            @id @default(uuid())
-  completeName     String?
-  cpf              String?
-  rg               String?
-  street           String?
-  streetNumber     String?
-  neighborhood     String?
-  cep              String?
-  city             String?
-  state            String?
-  type             ProposalType
-  trafficSource    TrafficSource
-  guestNumber      Int
-  knowsVenue       Boolean           @default(false)
-  startDate        DateTime
-  endDate          DateTime
-  name             String
-  email            String
-  whatsapp         String
-  description      String            @db.LongText
-  basePrice        Float
-  extraHoursQty    Int
-  extraHourPrice   Float
-  totalAmount      Float
-  termsAccepted    Boolean           @default(false)
-  approved         Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  contact          Boolean?
-  paid             Boolean?          @default(false)
-  amountPaid       Float?            @default(0.0)
-  venueId          String
-  venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  personList       Person[]
-  histories        History[]
-  payments         Payment[]
-  dateEvents       DateEvent[]
-  proposalCosts    ProposalCost[]
-  proposalServices ProposalService[]
-  noificationList  Notification[]
-  scheduleList     Schedule[]
-  documents        Document[]
+  id                  String            @id @default(uuid())
+  completeCompanyName String?
+  completeClientName  String?
+  cpf                 String?
+  rg                  String?
+  street              String?
+  streetNumber        String?
+  neighborhood        String?
+  cep                 String?
+  city                String?
+  state               String?
+  type                ProposalType
+  trafficSource       TrafficSource
+  guestNumber         Int
+  knowsVenue          Boolean           @default(false)
+  startDate           DateTime
+  endDate             DateTime
+  name                String
+  email               String
+  whatsapp            String
+  description         String            @db.LongText
+  basePrice           Float
+  extraHoursQty       Int
+  extraHourPrice      Float
+  totalAmount         Float
+  termsAccepted       Boolean           @default(false)
+  approved            Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  contact             Boolean?
+  paid                Boolean?          @default(false)
+  amountPaid          Float?            @default(0.0)
+  venueId             String
+  venue               Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  personList          Person[]
+  histories           History[]
+  payments            Payment[]
+  dateEvents          DateEvent[]
+  proposalCosts       ProposalCost[]
+  proposalServices    ProposalService[]
+  noificationList     Notification[]
+  scheduleList        Schedule[]
+  documents           Document[]
 
   @@index([venueId])
   @@index([trafficSource])
@@ -152,7 +182,6 @@ model History {
 
   @@index([userId])
   @@index([proposalId])
-
   @@map("history")
 }
 
@@ -167,7 +196,7 @@ model Person {
   proposal   Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
-   @@map("person")
+  @@map("person")
 }
 
 enum PersonType {
@@ -311,7 +340,6 @@ model Notification {
   @@index([venueId])
   @@index([dateEventId])
   @@index([proposalId])
-
   @@map("notification")
 }
 
@@ -351,7 +379,6 @@ model DateEvent {
 
   @@index([proposalId])
   @@index([venueId])
-
   @@map("dataEvent")
 }
 
@@ -388,7 +415,6 @@ model Venue {
   notifications    Notification[]
 
   @@index([organizationId])
-
   @@map("venue")
 }
 
@@ -401,7 +427,6 @@ model Contact {
   venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
-
   @@map("contact")
 }
 
@@ -417,7 +442,6 @@ model OwnerVenue {
 
   @@unique([ownerId, venueId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([venueId])
-
   @@map("ownerVenue")
 }
 
@@ -448,7 +472,6 @@ model Owner {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
-
   @@map("owner")
 }
 
@@ -465,7 +488,6 @@ model Image {
   venue          Venue     @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
-
   @@map("image")
 }
 
@@ -481,7 +503,6 @@ model Text {
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
-
   @@map("text")
 }
 
@@ -495,7 +516,6 @@ model Document {
   proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
-
   @@map("document")
 }
 
@@ -509,7 +529,6 @@ model Question {
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
-
   @@map("question")
 }
 
@@ -522,7 +541,6 @@ model Contract {
   clauses        Clause[]
 
   @@index([organizationId])
-
   @@map("contract")
 }
 
@@ -540,7 +558,6 @@ model Clause {
 
   @@index([contractId])
   @@index([organizationId])
-
   @@map("clause")
 }
 
@@ -558,6 +575,5 @@ model Schedule {
   proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
-
   @@map("schedule")
 }

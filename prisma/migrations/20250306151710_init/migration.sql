@@ -61,9 +61,20 @@ CREATE TABLE `userOrganization` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `UserPermission` (
+    `id` VARCHAR(191) NOT NULL,
+    `userOrganizationId` VARCHAR(191) NOT NULL,
+    `permission` ENUM('VIEW_INFO', 'VIEW_EVENTS', 'VIEW_IMAGES', 'VIEW_CALENDAR', 'VIEW_ANALYSIS', 'VIEW_PROPOSALS', 'VIEW_NOTIFICATIONS', 'EDIT_INFO', 'EDIT_IMAGE', 'EDIT_VENUE', 'EDIT_EVENT', 'EDIT_PROPOSAL', 'EDIT_CALENDAR', 'EDIT_ORGANIZATION') NOT NULL,
+
+    UNIQUE INDEX `UserPermission_userOrganizationId_permission_key`(`userOrganizationId`, `permission`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `proposal` (
     `id` VARCHAR(191) NOT NULL,
-    `completeName` VARCHAR(191) NULL,
+    `completeCompanyName` VARCHAR(191) NULL,
+    `completeClientName` VARCHAR(191) NULL,
     `cpf` VARCHAR(191) NULL,
     `rg` VARCHAR(191) NULL,
     `street` VARCHAR(191) NULL,
@@ -189,7 +200,7 @@ CREATE TABLE `expense` (
     `name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
     `amount` DOUBLE NOT NULL,
-    `paymentDate` DATETIME(3) NOT NULL,
+    `paymentDate` DATETIME(3) NULL,
     `type` ENUM('WEEKLY', 'ANNUAL', 'MONTHLY', 'BIWEEKLY', 'SPORADIC') NOT NULL,
     `category` ENUM('TAX', 'INVESTMENT', 'MAINTENANCE', 'ADVERTISING') NOT NULL,
     `recurring` BOOLEAN NOT NULL,

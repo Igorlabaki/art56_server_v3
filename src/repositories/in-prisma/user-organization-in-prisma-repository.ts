@@ -4,6 +4,7 @@ import { PrismaClient, UserOrganization, User } from "@prisma/client"
 
 import { UserOrganizationRepositoryInterface } from "../interface/user-organization-repository-interface"
 import { CreateUserOrganizationRequestParams } from "../../zod/user-organization/create-user-organization-params-schema"
+import { connect } from "http2"
 
 
 
@@ -11,10 +12,22 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
 
   constructor(private readonly prisma: PrismaClient) { }
 
-  async create(params: CreateUserOrganizationRequestParams): Promise<UserOrganization | null> {
+  async create({ permissions, organizationId, userId, role }: CreateUserOrganizationRequestParams): Promise<UserOrganization | null> {
+
     return await this.prisma.userOrganization.create({
       data: {
-        ...params
+        organization: {
+          connect: {
+            id: organizationId
+          }
+        },
+        user: {
+          connect: { id: userId },
+        },
+        permissions: {
+          connect: permissions.map((permissionId) => ({ id: permissionId })),
+        },
+        role
       },
     })
   }
