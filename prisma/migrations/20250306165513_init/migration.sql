@@ -65,8 +65,10 @@ CREATE TABLE `UserPermission` (
     `id` VARCHAR(191) NOT NULL,
     `userOrganizationId` VARCHAR(191) NOT NULL,
     `permission` ENUM('VIEW_INFO', 'VIEW_EVENTS', 'VIEW_IMAGES', 'VIEW_CALENDAR', 'VIEW_ANALYSIS', 'VIEW_PROPOSALS', 'VIEW_NOTIFICATIONS', 'EDIT_INFO', 'EDIT_IMAGE', 'EDIT_VENUE', 'EDIT_EVENT', 'EDIT_PROPOSAL', 'EDIT_CALENDAR', 'EDIT_ORGANIZATION') NOT NULL,
+    `venueId` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `UserPermission_userOrganizationId_permission_key`(`userOrganizationId`, `permission`),
+    INDEX `UserPermission_userOrganizationId_idx`(`userOrganizationId`),
+    INDEX `UserPermission_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

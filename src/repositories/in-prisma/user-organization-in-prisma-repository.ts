@@ -12,26 +12,38 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
 
   constructor(private readonly prisma: PrismaClient) { }
 
-  async create({ permissions, organizationId, userId, role }: CreateUserOrganizationRequestParams): Promise<UserOrganization | null> {
-
-    return await this.prisma.userOrganization.create({
+  async create({
+    organizationId,
+    userId,
+    role,
+    venuesPermissions,  // Aqui você passaria as permissões específicas para os venues
+  }: CreateUserOrganizationRequestParams): Promise<UserOrganization | null> {
+  
+    // Cria o UserOrganization
+    const userOrganization = await this.prisma.userOrganization.create({
       data: {
         organization: {
           connect: {
-            id: organizationId
-          }
+            id: organizationId,
+          },
         },
         user: {
           connect: { id: userId },
         },
+        role,
+        // Aqui você pode adicionar as permissões globais diretamente
         permissions: {
-          connect: permissions.map((permissionId) => ({ id: permissionId })),
+          create: venuesPermissions.map((item:any)=> ({
+            permission: item.permission,   // Exemplo: "VIEW_INFO", "EDIT_EVENT", etc.
+            venueId: item.venueId || null,   // Se o venueId for passado, ótimo, se não for, será nulo (permissão global)
+          })),
         },
-        role
       },
-    })
+    });
+  
+    return userOrganization;
   }
-
+  
   async getById(reference: string): Promise<UserOrganization | null> {
     return await this.prisma.userOrganization.findFirst({
       where: {
