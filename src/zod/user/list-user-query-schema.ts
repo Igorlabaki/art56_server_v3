@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const listUserRequestQuerySchema = z.object({
-    email: z.string().email(),
+    email: z.string().optional(),
     organizationId: z.string(),
 })
 
