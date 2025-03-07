@@ -1,22 +1,22 @@
 
-import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
+
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { OrganizationRepositoryInterface } from "../../../repositories/interface/organization-repository-interface";
 import { UserOrganizationRepositoryInterface } from "../../../repositories/interface/user-organization-repository-interface";
-import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
 import { ListUserOrganizationRequestQuerySchema } from "../../../zod/user-organization/list-user-organization-query-schema";
 
 class ListUserOrganizationUseCase {
-  constructor(private userOrganizationRepository: UserOrganizationRepositoryInterface, private userRepository: UserRepositoryInterface) { }
+  constructor(private userOrganizationRepository: UserOrganizationRepositoryInterface, private organizationRepository: OrganizationRepositoryInterface) { }
 
-  async execute({userId}: ListUserOrganizationRequestQuerySchema) {
+  async execute({organizationId,username}: ListUserOrganizationRequestQuerySchema) {
 
-    const userById = await this.userRepository.getById(userId)
+    const userById = await this.organizationRepository.getById({organizationId})
 
     if(!userById){
-      throw new HttpResourceNotFoundError("Usuario")
+      throw new HttpResourceNotFoundError("Organizacao")
     }
 
-    const userOrganizationList = await this.userOrganizationRepository.list(userId);
+    const userOrganizationList = await this.userOrganizationRepository.list({organizationId,username});
 
     const formatedResponse = {
       success: true,

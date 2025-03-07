@@ -8,7 +8,7 @@ const userorganizationRoutes = Router()
 userorganizationRoutes.use(ensureAuthenticate)
 
 // Register
-userorganizationRoutes.get("/list", async (req, res) => {
+userorganizationRoutes.get("/list?:organizationId?/:username?", async (req, res) => {
     const controller = listUserOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })

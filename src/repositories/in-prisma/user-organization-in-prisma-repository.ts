@@ -5,6 +5,7 @@ import { PrismaClient, UserOrganization, User } from "@prisma/client"
 import { UserOrganizationRepositoryInterface } from "../interface/user-organization-repository-interface"
 import { CreateUserOrganizationRequestParams } from "../../zod/user-organization/create-user-organization-params-schema"
 import { connect } from "http2"
+import { ListUserOrganizationRequestQuerySchema } from "../../zod/user-organization/list-user-organization-query-schema"
 
 
 
@@ -76,10 +77,15 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     })
   }
 
-  async list(parmas: string): Promise<UserOrganization[] | null> {
+  async list({organizationId,username}: ListUserOrganizationRequestQuerySchema): Promise<UserOrganization[] | null> {
     return await this.prisma.userOrganization.findMany({
       where: {
-        userId: parmas
+        ...(username && {
+          user: {
+            username
+          }
+        }),
+        organizationId
       }
     })
   }
