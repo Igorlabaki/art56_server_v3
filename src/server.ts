@@ -58,7 +58,7 @@ app.use('/schedule', scheduleRoutes)
 app.use('/dateEvent', dateEventRoutes)
 app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
-app.use('/userorganization', userorganizationRoutes)
+app.use('/userOrganization', userorganizationRoutes)
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

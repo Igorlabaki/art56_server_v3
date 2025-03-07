@@ -86,6 +86,9 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
           }
         }),
         organizationId
+      },
+      include:{
+        user: true
       }
     })
   }
