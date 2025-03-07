@@ -18,7 +18,7 @@ userRoutes.put("/update", upload.single("file"), (req, res) => {
 });
 
 // Register
-userRoutes.get("/list?organizationId/:email?", (req, res) => {
+userRoutes.get("/list?:organizationId?/:email?", (req, res) => {
     const controller = listUserFactory();
     controller.handle(req, res);
 });
