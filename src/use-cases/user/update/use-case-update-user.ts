@@ -30,7 +30,7 @@ class UpdateUserCase {
             success: true,
             message: `Usuario ${updatedUser?.username} foi atualizado com sucesso`,
             data: {
-                user: updatedUser
+             ...updatedUser
             },
             type: "USER"
         }
