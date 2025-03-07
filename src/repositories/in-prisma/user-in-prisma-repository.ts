@@ -3,6 +3,7 @@ import { UserRepositoryInterface, UserWithPartial } from "../interface/user-repo
 import { RegisterUserRequestParams } from "../../zod/auth/register-user-params-schema"
 import { UpdateUserPasswordRequestParams } from "../../zod/auth/update-user-password-params-schema"
 import { UpdateUserRequestParams } from "../../zod/user/update-user-params-schema"
+import { ListUserRequestQuerySchema } from "../../zod/user/list-user-query-schema"
 
 export class PrismaUserRepository implements UserRepositoryInterface {
 
@@ -63,6 +64,24 @@ export class PrismaUserRepository implements UserRepositoryInterface {
     return await this.prisma.user.delete({
       where: {
         id: reference
+      }
+    })
+  }
+
+
+  async list({email,organizationId}: ListUserRequestQuerySchema): Promise<User[] | null>{
+    return await this.prisma.user.findMany({
+      where: {
+        ...(email && {
+          email: {
+            contains: email
+          }
+        }),
+        userOrganizations:{
+          none:{
+            organizationId
+          }
+        }
       }
     })
   }
