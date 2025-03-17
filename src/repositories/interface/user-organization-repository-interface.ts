@@ -6,5 +6,5 @@ export interface UserOrganizationRepositoryInterface {
   delete: (params: string) => Promise<UserOrganization | null>
   getById: (params: string) => Promise<UserOrganization | null>
   list: (query: ListUserOrganizationRequestQuerySchema) => Promise<UserOrganization[]  | null>
-  create: (params: CreateUserOrganizationRequestParams) => Promise<UserOrganization | null>
+  create: (params: CreateUserOrganizationRequestParams) => Promise<UserOrganization[] | null>
 }

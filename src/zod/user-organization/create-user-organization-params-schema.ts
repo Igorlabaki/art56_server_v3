@@ -3,10 +3,10 @@ import { z } from "zod";
 export const createUserOrganizationSchema = z.object({
     userId: z.string(),
     organizationId: z.string(),
-    role: z.enum(["ADMIN", "USER"]),
     venuesPermissions: z.array(
         z.object({
             venueId: z.string(),
+            role: z.enum(["ADMIN", "USER"]),
             permissions: z.array(
                 z.enum([
                     "VIEW_INFO",
