@@ -18,7 +18,8 @@ export class PrismaSessionRepository implements SessionRepositoryInterface {
               id: true,
               email: true,
               username: true,
-              avatarUrl: true
+              avatarUrl: true,
+              userOrganizations: true
             }
           }
         },
