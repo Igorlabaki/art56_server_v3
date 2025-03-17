@@ -18,7 +18,7 @@ venueRoutes.post("/create", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 // List
-venueRoutes.get("/list?:organizationId/:name?", async (req, res) => {
+venueRoutes.get("/list?:organizationId?/:name?", async (req, res) => {
     const controller = listVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
