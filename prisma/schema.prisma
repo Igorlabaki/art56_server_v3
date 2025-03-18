@@ -100,7 +100,6 @@ model UserPermission {
 
   @@index([userOrganizationId])
   @@index([venueId])  // Permissões específicas por venue
-
 }
 
 model Permission {

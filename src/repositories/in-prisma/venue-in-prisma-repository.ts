@@ -14,29 +14,68 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
   async create(params: CreateVenueRequestParams): Promise<Venue | null> {
-    const { data, organizationId } = params
-    const { owners, pricePerDay, pricePerPerson, maxGuest, ...rest } = data
-    const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-    const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0
-    const maxGuestFormated = Number(maxGuest)
-    return await this.prisma.venue.create({
-      data: {
-        ...rest,
-        ownerVenue: {
-          create: owners.map((ownerId: string) => ({
-            ownerId: ownerId, // Para cada ID, cria a relação
-          }))
+    const { data, organizationId, userId } = params; // createdBy = ID do usuário que criou a venue
+    const { owners, pricePerDay, pricePerPerson, maxGuest, ...rest } = data;
+    const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    const maxGuestFormated = Number(maxGuest);
+  
+    return await this.prisma.$transaction(async (prisma) => {
+      // Criar a Venue
+      const newVenue = await prisma.venue.create({
+        data: {
+          ...rest,
+          ownerVenue: {
+            create: owners.map((ownerId: string) => ({
+              ownerId: ownerId, // Para cada ID, cria a relação
+            })),
+          },
+          organization: {
+            connect: {
+              id: organizationId,
+            },
+          },
+          pricePerDay: perDay,
+          pricePerPerson: perPerson,
+          maxGuest: maxGuestFormated,
         },
-        organization: {
-          connect: {
-            id: organizationId
-          }
-        },
-        pricePerDay: perDay,
-        pricePerPerson: perPerson,
-        maxGuest: maxGuestFormated,
-      },
-    })
+      });
+  
+      // Buscar o UserOrganization do usuário que criou a Venue
+      const userOrganization = await prisma.userOrganization.findFirst({
+        where: { userId, organizationId },
+      });
+  
+      if (userOrganization) {
+        // Lista de permissões padrão
+        const permissionsData = [
+          "VIEW_INFO",
+          "VIEW_EVENTS",
+          "VIEW_IMAGES",
+          "VIEW_CALENDAR",
+          "VIEW_ANALYSIS",
+          "VIEW_PROPOSALS",
+          "VIEW_NOTIFICATIONS",
+          "EDIT_INFO",
+          "EDIT_IMAGE",
+          "EDIT_VENUE",
+          "EDIT_EVENT",
+          "EDIT_PROPOSAL",
+          "EDIT_CALENDAR",
+        ];
+  
+        // Criar permissões apenas para o usuário que criou a Venue
+        await prisma.userPermission.createMany({
+          data: permissionsData.map((permissionName) => ({
+            userOrganizationId: userOrganization.id,
+            venueId: newVenue.id,
+            permission: permissionName,
+          })),
+        });
+      }
+  
+      return newVenue;
+    });
   }
 
   async update(reference: UpdateVenueSchema): Promise<Venue | null> {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const createVenueSchema =  z.object({
+    userId: z.string(),
     organizationId: z.string(),
     data: z.object({
         cep: z.string(),
