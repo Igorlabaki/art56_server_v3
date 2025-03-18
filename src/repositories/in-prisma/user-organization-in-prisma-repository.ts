@@ -1,5 +1,5 @@
 
-import { PrismaClient, UserOrganization, User, Permission, PermissionEnum } from "@prisma/client"
+import { PrismaClient, UserOrganization } from "@prisma/client"
 import { UserOrganizationRepositoryInterface } from "../interface/user-organization-repository-interface"
 import { CreateUserOrganizationRequestParams } from "../../zod/user-organization/create-user-organization-params-schema"
 import { ListUserOrganizationRequestQuerySchema } from "../../zod/user-organization/list-user-organization-query-schema"
@@ -10,78 +10,83 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
 
   constructor(private readonly prisma: PrismaClient) { }
 
-  async  getPermissions(permissionNames: PermissionEnum[]): Promise<Permission[]> {
-    const permissions = await this.prisma.permission.findMany({
+  async getPermissions(permissionNames: string[], userId: string, venueId: string): Promise<string> {
+    // Busca as permissões associadas ao usuário e ao venueId
+    const permissions = await this.prisma.userPermission.findMany({
       where: {
-        name: {
-          in: permissionNames, // Busca as permissões pelos nomes
+        userOrganization: {
+          userId, // Filtro pelo ID do usuário
         },
+        venueId, // Filtro pelo ID do venue
       },
     });
   
-    // Se a permissão não existir, crie uma nova (isso pode ser adaptado conforme necessidade)
+    // Obtém as permissões atuais (separadas por vírgula) e as divide em uma lista
+    const currentPermissions = permissions.flatMap((perm) => perm.permissions.split(','));
+  
+    // Adiciona as permissões faltantes
     const missingPermissions = permissionNames.filter(
-      (name) => !permissions.some((perm) => perm.name === name)
+      (name) => !currentPermissions.includes(name)
     );
   
-    const newPermissions = await Promise.all(
-      missingPermissions.map((name) =>
-        this.prisma.permission.create({
-          data: { name: name as PermissionEnum }, // cria novas permissões
-        })
-      )
+    // Remove as permissões que não estão mais na lista `permissionNames`
+    const permissionsToRemove = currentPermissions.filter(
+      (perm) => !permissionNames.includes(perm)
     );
   
-    // Retorna todas as permissões (já existentes ou recém criadas)
-    return [...permissions, ...newPermissions];
+    // Calcula a lista final de permissões após adicionar as faltantes e remover as desnecessárias
+    const finalPermissions = [
+      ...new Set([...currentPermissions, ...missingPermissions]) // Remove duplicatas
+    ];
+  
+    // Remove as permissões que não estão mais na lista `permissionNames`
+    const updatedPermissions = finalPermissions.filter(
+      (perm) => !permissionsToRemove.includes(perm)
+    );
+  
+    // Retorna a string com as permissões finais separadas por vírgulas
+    return updatedPermissions.join(',');
   }
 
   async create({
     organizationId,
     userId,
+    role,
     venuesPermissions,  // Array de permissões por venue
-  }: CreateUserOrganizationRequestParams): Promise<UserOrganization[] | null> {
+  }: CreateUserOrganizationRequestParams): Promise<UserOrganization | null> {
     if (!venuesPermissions || venuesPermissions.length === 0) {
       return null;
     }
   
-    // Cria um array de permissões
+    // Cria um array de permissões (nome de permissões por venue)
     const permissionsNames = venuesPermissions.flatMap((item) => item.permissions);
   
-    // Verifica se as permissões já existem no banco ou cria novas
-    const permissions = await this.getPermissions(permissionsNames);
+    // Verifica as permissões do usuário para cada venue e compara com a lista recebida
+    const updatedPermissions = await this.getPermissions(permissionsNames, userId, venuesPermissions[0].venueId);
   
-    // Cria múltiplos UserOrganization
-    const userOrganizations = await Promise.all(
-      venuesPermissions.map(async (item) => {
-        return await this.prisma.userOrganization.create({
-          data: {
-            organization: {
-              connect: { id: organizationId },
-            },
-            user: {
-              connect: { id: userId },
-            },
-            role: item.role, // Role específico para o venue
-            permissions: {
-              create: item.permissions.map((permissionName) => {
-                const permission = permissions.find(
-                  (perm) => perm.name === permissionName
-                );
-                return {
-                  ...(permission && {
-                    permission: { connect: { id: permission.id } },
-                  }),
-                  venueId: item.venueId, 
-                };
-              }),
-            },
-          },
-        });
-      })
-    );
+    // Divide as permissões de volta em uma lista
+    const finalPermissions = updatedPermissions.split(',');
   
-    return userOrganizations;
+    // Cria um único UserOrganization
+    const userOrganization = await this.prisma.userOrganization.create({
+      data: {
+        organization: {
+          connect: { id: organizationId },
+        },
+        user: {
+          connect: { id: userId },
+        },
+        role: role, // Role específico para o venue
+        userPermissions: {
+          create: venuesPermissions.map((item) => ({
+            permissions: finalPermissions.join(','), // Define as permissões atualizadas como uma string separada por vírgula
+            venueId: item.venueId, // Relaciona a permissão ao venue específico
+          })),
+        },
+      },
+    });
+  
+    return userOrganization;
   }
 
   async getById(reference: string): Promise<UserOrganization | null> {

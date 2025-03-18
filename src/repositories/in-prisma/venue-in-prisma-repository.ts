@@ -16,6 +16,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   async create(params: CreateVenueRequestParams): Promise<Venue | null> {
     const { data, organizationId, userId } = params; // createdBy = ID do usuário que criou a venue
     const { owners, pricePerDay, pricePerPerson, maxGuest, ...rest } = data;
+    
+    // Formatando os valores de preço e maxGuest
     const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const maxGuestFormated = Number(maxGuest);
@@ -64,13 +66,16 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           "EDIT_CALENDAR",
         ];
   
-        // Criar permissões apenas para o usuário que criou a Venue
-        await prisma.userPermission.createMany({
-          data: permissionsData.map((permissionName) => ({
+        // Concatenando as permissões em uma única string
+        const permissionsString = permissionsData.join(',');
+  
+        // Criar uma única permissão para o usuário admin, com todas as permissões concatenadas
+        await prisma.userPermission.create({
+          data: {
             userOrganizationId: userOrganization.id,
             venueId: newVenue.id,
-            permission: permissionName,
-          })),
+            permissions: permissionsString, // Agora armazenando todas as permissões em uma única string
+          },
         });
       }
   
