@@ -92,7 +92,7 @@ enum Role {
 model UserPermission {
   id                 String        @id @default(uuid())
   userOrganizationId String
-  permission         PermissionEnum
+  permission         Permission[]
   venueId            String? // Pode ser nulo se for uma permissão global
 
   userOrganization   UserOrganization @relation(fields: [userOrganizationId], references: [id], onDelete: Cascade)
@@ -103,6 +103,13 @@ model UserPermission {
 
 }
 
+model Permission {
+  id    String         @id @default(uuid())
+  name  PermissionEnum @unique
+
+  userPermissions UserPermission[]
+}
+
 enum PermissionEnum {
   VIEW_INFO
   VIEW_EVENTS
@@ -111,7 +118,6 @@ enum PermissionEnum {
   VIEW_ANALYSIS
   VIEW_PROPOSALS
   VIEW_NOTIFICATIONS
-
   EDIT_INFO
   EDIT_IMAGE
   EDIT_VENUE
