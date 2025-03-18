@@ -20,30 +20,30 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
         venueId, // Filtro pelo ID do venue
       },
     });
-  
+
     // Obtém as permissões atuais (separadas por vírgula) e as divide em uma lista
     const currentPermissions = permissions.flatMap((perm) => perm.permissions.split(','));
-  
+
     // Adiciona as permissões faltantes
     const missingPermissions = permissionNames.filter(
       (name) => !currentPermissions.includes(name)
     );
-  
+
     // Remove as permissões que não estão mais na lista `permissionNames`
     const permissionsToRemove = currentPermissions.filter(
       (perm) => !permissionNames.includes(perm)
     );
-  
+
     // Calcula a lista final de permissões após adicionar as faltantes e remover as desnecessárias
     const finalPermissions = [
       ...new Set([...currentPermissions, ...missingPermissions]) // Remove duplicatas
     ];
-  
+
     // Remove as permissões que não estão mais na lista `permissionNames`
     const updatedPermissions = finalPermissions.filter(
       (perm) => !permissionsToRemove.includes(perm)
     );
-  
+
     // Retorna a string com as permissões finais separadas por vírgulas
     return updatedPermissions.join(',');
   }
@@ -57,16 +57,16 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     if (!venuesPermissions || venuesPermissions.length === 0) {
       return null;
     }
-  
+
     // Cria um array de permissões (nome de permissões por venue)
     const permissionsNames = venuesPermissions.flatMap((item) => item.permissions);
-  
+
     // Verifica as permissões do usuário para cada venue e compara com a lista recebida
     const updatedPermissions = await this.getPermissions(permissionsNames, userId, venuesPermissions[0].venueId);
-  
+
     // Divide as permissões de volta em uma lista
     const finalPermissions = updatedPermissions.split(',');
-  
+
     // Cria um único UserOrganization
     const userOrganization = await this.prisma.userOrganization.create({
       data: {
@@ -85,7 +85,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
         },
       },
     });
-  
+
     return userOrganization;
   }
 
@@ -121,17 +121,17 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     })
   }
 
-  async list({organizationId,username}: ListUserOrganizationRequestQuerySchema): Promise<UserOrganization[] | null> {
+  async list({ userId, name }: ListUserOrganizationRequestQuerySchema): Promise<UserOrganization[] | null> {
     return await this.prisma.userOrganization.findMany({
       where: {
-        ...(username && {
-          user: {
-            username
+        ...(name && {
+          organization: {
+            name
           }
         }),
-        organizationId
+        userId
       },
-      include:{
+      include: {
         user: true,
         organization: true
       },
