@@ -8,6 +8,7 @@ class CreateProposalPerDayController {
 
     async handle(req: Request, resp: Response) {
         try {
+           
             const body: CreateProposalPerDayRequestParamsSchema = req.body;
             // Validate the request parms
             createProposalPerDayRequestParamsSchema.parse(body);

@@ -52,7 +52,6 @@ CREATE TABLE `userOrganization` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
     `organizationId` VARCHAR(191) NOT NULL,
-    `role` ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'ADMIN',
     `joinedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `userOrganization_organizationId_idx`(`organizationId`),
@@ -64,11 +63,13 @@ CREATE TABLE `userOrganization` (
 CREATE TABLE `UserPermission` (
     `id` VARCHAR(191) NOT NULL,
     `userOrganizationId` VARCHAR(191) NOT NULL,
-    `permissions` VARCHAR(191) NOT NULL,
+    `permissions` LONGTEXT NOT NULL,
     `venueId` VARCHAR(191) NULL,
+    `role` VARCHAR(191) NOT NULL DEFAULT 'ADMIN',
 
     INDEX `UserPermission_userOrganizationId_idx`(`userOrganizationId`),
     INDEX `UserPermission_venueId_idx`(`venueId`),
+    UNIQUE INDEX `UserPermission_userOrganizationId_venueId_key`(`userOrganizationId`, `venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -291,7 +292,7 @@ CREATE TABLE `ownerVenue` (
     `id` VARCHAR(191) NOT NULL,
     `ownerId` VARCHAR(191) NOT NULL,
     `venueId` VARCHAR(191) NOT NULL,
-    `role` ENUM('ADMIN', 'USER') NOT NULL DEFAULT 'ADMIN',
+    `role` VARCHAR(191) NOT NULL DEFAULT 'ADMIN',
     `joinedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `ownerVenue_venueId_idx`(`venueId`),

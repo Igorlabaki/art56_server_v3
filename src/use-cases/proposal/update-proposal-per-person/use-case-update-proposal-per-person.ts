@@ -9,6 +9,9 @@ import { HistoryRepositoryInterface } from "../../../repositories/interface/hist
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
+import { calcEventDuration } from "../../../functions/calc-event-duration";
+import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
+import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 class UpdateProposalPerPersonUseCase {
     constructor(
         private userRepository: UserRepositoryInterface,
@@ -28,9 +31,9 @@ class UpdateProposalPerPersonUseCase {
         }
         //
 
-        const { date, endHour, startHour, totalAmountInput, serviceIds,guestNumber,venueId,userId, ...rest } = param.data
-       
-        const venue = await this.venueRepository.getById({venueId: param.data.venueId})
+        const { date, endHour, startHour, totalAmountInput, serviceIds, guestNumber, venueId, userId, ...rest } = param.data
+
+        const venue = await this.venueRepository.getById({ venueId: param.data.venueId })
 
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
@@ -47,7 +50,7 @@ class UpdateProposalPerPersonUseCase {
             const { endDate, startDate } = transformDate({ date: date, endHour: endHour, startHour: startHour, divisor: "/" })
 
             updateProposalInDbParam = {
-                data:{
+                data: {
                     ...rest,
                     endDate,
                     startDate,
@@ -60,7 +63,7 @@ class UpdateProposalPerPersonUseCase {
                 proposalId: proposal.id
             }
 
-            if(serviceIds){
+            if (serviceIds) {
                 await this.proposalRepository.updateServices({
                     proposalId: proposal.id,
                     serviceIds
@@ -103,24 +106,25 @@ class UpdateProposalPerPersonUseCase {
         }
 
 
-        if(Number(totalAmountInput) === proposal.totalAmount && venue.pricePerPerson){
+        if (Number(totalAmountInput) === proposal.totalAmount && venue.pricingModel === "PER_PERSON" && venue.pricePerPerson) {
 
-            const { basePrice, endDate, extraHourPrice, extraHoursQty, startDate, totalAmount } =
-            calcStandartTotalAmount({
-                data: {
-                    date,
-                    endHour,
-                    startHour,
-                    type: param.data.type,
-                    guests: Number(guestNumber),
-                    perPersonPrice: venue.pricePerPerson,
-                    totalAmountService: totalAmountService || 0
-                },
-                divisor: "/",
+            const { endDate, startDate } = transformDate({
+                date,
+                endHour,
+                startHour,
             });
-          
+
+            const eventDurantion = calcEventDuration(endDate, startDate);
+
+            const basePrice = Number(guestNumber) * venue.pricePerPerson
+
+            const extraHourPrice = calcExtraHourPrice(basePrice);
+            const extraHoursQty = calcExtraHoursQty(eventDurantion);
+
+            const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
+
             updateProposalInDbParam = {
-                data:{
+                data: {
                     ...rest,
                     endDate,
                     startDate,
@@ -133,7 +137,78 @@ class UpdateProposalPerPersonUseCase {
                 proposalId: proposal.id
             }
 
-            if(serviceIds){
+            if (serviceIds) {
+                await this.proposalRepository.updateServices({
+                    proposalId: proposal.id,
+                    serviceIds
+                });
+            }
+
+            const updatedProposal = await this.proposalRepository.update(
+                updateProposalInDbParam
+            );
+
+            if (!updatedProposal) {
+                throw Error("Erro na conexao com o banco de dados")
+            }
+
+            if (userId) {
+                const user = await this.userRepository.getById(userId)
+
+                if (!user) {
+                    throw new HttpResourceNotFoundError("Usuario")
+                }
+
+                await this.historyRepository.create({
+                    userId: user.id,
+                    proposalId: updatedProposal.id,
+                    action: `${user.username} atualizou este orcamento`,
+                });
+            }
+
+            const formatedResponse = {
+                success: true,
+                message: `Orcamento attuaizado com sucesso`,
+                data: {
+                    ...updatedProposal
+                },
+                count: 1,
+                type: "Proposal"
+            }
+
+            return formatedResponse
+        }
+
+        if (Number(totalAmountInput) === proposal.totalAmount && venue.pricingModel === "PER_PERSON_HOUR" && venue.pricePerPersonHour) {
+
+            const { endDate, startDate } = transformDate({
+                date,
+                endHour,
+                startHour,
+            });
+
+            const eventDurantion = calcEventDuration(endDate, startDate);
+
+            const calcBasePrice = eventDurantion * (Number(guestNumber) * venue.pricePerPersonHour)
+
+            const extraHourPrice = calcBasePrice / eventDurantion;
+            const totalAmount = calcBasePrice + (totalAmountService || 0);
+
+            updateProposalInDbParam = {
+                data: {
+                    ...rest,
+                    endDate,
+                    startDate,
+                    totalAmount,
+                    extraHourPrice,
+                    extraHoursQty: 0,
+                    basePrice: calcBasePrice,
+                    guestNumber: Number(guestNumber)
+                },
+                proposalId: proposal.id
+            }
+
+            if (serviceIds) {
                 await this.proposalRepository.updateServices({
                     proposalId: proposal.id,
                     serviceIds
@@ -196,7 +271,7 @@ class UpdateProposalPerPersonUseCase {
         });
 
         updateProposalInDbParam = {
-            data:{
+            data: {
                 ...rest,
                 endDate,
                 startDate,
@@ -209,7 +284,7 @@ class UpdateProposalPerPersonUseCase {
             proposalId: proposal.id
         }
 
-        if(serviceIds){
+        if (serviceIds) {
             await this.proposalRepository.updateServices({
                 proposalId: proposal.id,
                 serviceIds

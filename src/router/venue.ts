@@ -7,6 +7,7 @@ import { getVenuebyidFactory } from "../use-cases/venue/get-by-id-venue/factory-
 import { updateVenueFactory } from "../use-cases/venue/update-venue/factory-update-venue";
 import { getVenueTrafficCountFactory } from "../use-cases/venue/get-traffic-count-venue/factory-get-traffic-count-venue";
 import { getVenueAnalysiByMonthFactory } from "../use-cases/venue/get-analysis-by-month-venue/factory-get-analysis-by-month-venue";
+import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-venues/factory-list-permitted-venue";
 
 const venueRoutes = Router()
 
@@ -23,6 +24,11 @@ venueRoutes.get("/list?:organizationId?/:name?", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
+venueRoutes.get("/permittedVenueList?:organizationId?/:name?/:userId?", async (req, res) => {
+    const controller = listPermittedVenueFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+
 // List
 venueRoutes.get("/trafficCount?:venueId/:year?/:approved?", async (req, res) => {
     const controller = getVenueTrafficCountFactory();  // Cria o controlador
@@ -36,7 +42,7 @@ venueRoutes.get("/analysisByMonth?:venueId/:year?/:approved?", async (req, res) 
 })
 
 // Get by Id
-venueRoutes.get("/getById/:venueId", async (req, res) => {
+venueRoutes.get("/getById?:venueId?/:userId?", async (req, res) => {
     const controller = getVenuebyidFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })

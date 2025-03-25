@@ -106,10 +106,72 @@ class UpdateProposalPerDayUseCase {
         }
 
 
-        if(Number(totalAmountInput) === proposal.totalAmount && venue.pricePerDay){
+        if(Number(totalAmountInput) === proposal.totalAmount && venue.pricingModel === "PER_DAY" && venue.pricePerDay){
 
             const daysBetween = differenceInCalendarDays(endDate, startDate);
             const basePrice = daysBetween * venue.pricePerDay
+            const totalAmount = basePrice + (totalAmountService || 0)
+          
+            updateProposalInDbParam = {
+                data:{
+                    ...rest,
+                    endDate,
+                    startDate,
+                    basePrice,
+                    totalAmount,
+                    extraHoursQty: 0,
+                    extraHourPrice: 0,
+                    guestNumber: Number(guestNumber)
+                },
+                proposalId: proposal.id
+            }
+
+            if(serviceIds){
+                await this.proposalRepository.updateServices({
+                    proposalId: proposal.id,
+                    serviceIds
+                });
+            }
+
+            const updatedProposal = await this.proposalRepository.update(
+                updateProposalInDbParam
+            );
+
+            if (!updatedProposal) {
+                throw Error("Erro na conexao com o banco de dados")
+            }
+
+            if (userId) {
+                const user = await this.userRepository.getById(userId)
+
+                if (!user) {
+                    throw new HttpResourceNotFoundError("Usuario")
+                }
+
+                await this.historyRepository.create({
+                    userId: user.id,
+                    proposalId: updatedProposal.id,
+                    action: `${user.username} atualizou este orcamento`,
+                });
+            }
+
+            const formatedResponse = {
+                success: true,
+                message: `Orcamento atuaizado com sucesso`,
+                data: {
+                    ...updatedProposal
+                },
+                count: 1,
+                type: "Proposal"
+            }
+
+            return formatedResponse
+        }
+
+        if(Number(totalAmountInput) === proposal.totalAmount && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay){
+
+            const daysBetween = differenceInCalendarDays(endDate, startDate);
+            const basePrice = daysBetween * (Number(guestNumber) * venue.pricePerPersonDay)
             const totalAmount = basePrice + (totalAmountService || 0)
           
             updateProposalInDbParam = {

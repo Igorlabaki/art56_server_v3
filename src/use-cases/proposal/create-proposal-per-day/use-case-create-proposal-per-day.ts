@@ -102,10 +102,89 @@ class CreateProposalPerDayUseCase {
             return formatedResponse
         }
 
-        if (Number(totalAmountInput) === 0 && venue.pricePerDay) {
+        if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_DAY" && venue.pricePerDay) {
 
             const daysBetween = differenceInCalendarDays(endDate, startDate);
             const basePrice = daysBetween * venue.pricePerDay
+            const totalAmount = basePrice + (totalAmountService || 0)
+
+            createProposalPerDayInDb = {
+                ...rest,
+                endDate,
+                startDate,
+                serviceIds,
+                basePrice,
+                totalAmount,
+                extraHoursQty: 0,
+                extraHourPrice: 0,
+                guestNumber: Number(guestNumber),
+            }
+
+            const newProposal = await this.proposalRepository.createPerDay(
+                createProposalPerDayInDb
+            );
+
+            if (!newProposal) {
+                throw Error("Erro na conexao com o banco de dados")
+            }
+
+            await this.notificationRepository.create({
+                venueId: params.venueId,
+                proposalId: newProposal.id,
+                content: `Novo orcamento do(a) ${newProposal.name
+                    } no valor de ${new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                }).format(newProposal.totalAmount)}, para data  ${format(
+                        newProposal?.startDate,
+                        "dd/MM/yyyy"
+                    )} ate  a data ${format(
+                        newProposal?.endDate,
+                        "dd/MM/yyyy"
+                    )}`,
+                type: "PROPOSAL",
+            });
+
+            if (userId) {
+                const user = await this.userRepository.getById(userId)
+
+                if (!user) {
+                    throw new HttpResourceNotFoundError("Usuario")
+                }
+
+                await this.historyRepository.create({
+                    userId: user.id,
+                    proposalId: newProposal.id,
+                    action: `${user.username} criou este orcamento`,
+                });
+            }
+
+            if(!userId){
+                await this.historyRepository.create({
+                    proposalId: newProposal.id,
+                    action: `Cliente criou este orcamento pelo site`,
+                });
+            }
+
+            const formatedResponse = {
+                success: true,
+                message: `Orcamento criado com sucesso`,
+                count: 1,
+                data: {
+                    ...newProposal
+                },
+                type: "Proposal"
+            }
+
+            return formatedResponse
+        }
+
+        if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay) {
+
+            const daysBetween = differenceInCalendarDays(endDate, startDate);
+            const basePrice = daysBetween * (Number(guestNumber) * venue.pricePerPersonDay)
             const totalAmount = basePrice + (totalAmountService || 0)
 
             createProposalPerDayInDb = {

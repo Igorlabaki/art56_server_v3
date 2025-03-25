@@ -8,13 +8,13 @@ class CreateUserOrganizationUseCase {
 
   async execute(params : CreateUserOrganizationRequestParams) {
 
-    const userOrganizationList = await this.userorganizationRepository.create(params);
+    const userOrganization = await this.userorganizationRepository.create(params);
 
     const formatedResponse = {
       success: true,
       message: `Usuario foi cadastrado na organizacao com sucesso.`,
       data: {
-        userOrganizationList: userOrganizationList
+        ...userOrganization
       },
       count: 1,
       type: "UserOrganization"

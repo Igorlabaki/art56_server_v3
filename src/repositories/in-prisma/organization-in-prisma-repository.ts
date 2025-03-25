@@ -19,12 +19,12 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
         userOrganizations: {
           create: {
             userId: userId,
-            role: "ADMIN", // Define o papel como ADMIN ou outro
             userPermissions: {
               create: [
                 {
+                  role: "ADMIN",
+                  venueId: null ,// Pode ser nulo ou você pode definir para um venue específico
                   permissions: permissions, // A permissão é agora uma string
-                  venueId: null // Pode ser nulo ou você pode definir para um venue específico
                 }
               ]
             }
@@ -101,7 +101,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     return await this.prisma.organization.findMany({
       where: {
         userOrganizations: {
-          every: {
+          some: {
             userId: userId
           }
         },

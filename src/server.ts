@@ -22,6 +22,7 @@ import { dateEventRoutes } from "./router/dateEvent";
 import { organizationRoutes } from "./router/organization";
 import { notificationRoutes } from "./router/notification";
 import { userorganizationRoutes } from "./router/userOrganization";
+import { userpermissionRoutes } from "./router/userPermission";
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use('/schedule', scheduleRoutes)
 app.use('/dateEvent', dateEventRoutes)
 app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
+app.use('/userPermission', userpermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
 
 app.listen(3000, () => {

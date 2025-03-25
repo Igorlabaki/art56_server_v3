@@ -19,7 +19,9 @@ export const createVenueSchema =  z.object({
         complement: z.string().optional(),
         pricePerDay: z.string().optional(),
         pricePerPerson: z.string().optional(),
-        pricingModel: z.enum(["PER_PERSON", "PER_DAY"]),
+        pricePerPersonDay: z.string().optional(),
+        pricePerPersonHour: z.string().optional(),
+        pricingModel: z.enum(["PER_PERSON", "PER_DAY", "PER_PERSON_DAY", "PER_PERSON_HOUR"]),
     }).refine(
         (data) => {
           if (data.hasOvernightStay) {

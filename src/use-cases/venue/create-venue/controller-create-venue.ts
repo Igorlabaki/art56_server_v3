@@ -20,7 +20,6 @@ class CreateVenueController {
         } catch (error) {
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
-
             // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }

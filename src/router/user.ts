@@ -3,6 +3,7 @@ import { Router } from "express"
 import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 import { updateUserFactory } from "../use-cases/user/update/factory-update-user";
 import { listUserFactory } from "../use-cases/user/list-user/factory-list-user";
+import { getByIdUserFactory } from "../use-cases/user/get-by-id/factory-get-by-id-user";
 
 const userRoutes = Router()
 
@@ -14,6 +15,12 @@ userRoutes.use(ensureAuthenticate)
 // Register
 userRoutes.put("/update", upload.single("file"), (req, res) => {
     const controller = updateUserFactory();
+    controller.handle(req, res);
+});
+
+// Register
+userRoutes.get("/getById", (req, res) => {
+    const controller = getByIdUserFactory();
     controller.handle(req, res);
 });
 

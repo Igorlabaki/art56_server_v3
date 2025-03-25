@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `venue` MODIFY `pricingModel` ENUM('PER_PERSON', 'PER_DAY', 'PER_PERSON_DAY', 'PER_PERSON_HOUR') NOT NULL;

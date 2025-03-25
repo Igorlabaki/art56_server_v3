@@ -21,11 +21,19 @@ class UpdateVenueUseCase {
             throw new HttpConflictError("Locacao")
         }
 
+        const formattedVenue = {
+            ...venue,
+            // @ts-ignore
+            permissions: venue.UserPermission
+              .map((up: { permissions: string }) => up.permissions) // 🔥 Extrai permissões
+              .join(",").split(",") // 🔥 Junta em uma única string separada por vírgula
+          };
+
         const formatedResponse = {
             success: true,
             message: `Locacao  ${updatedVenue.name} atualizado(a) com sucesso`,
             data: {
-                ...updatedVenue
+                ...formattedVenue
             },
             count: 1,
             type: "Venue"

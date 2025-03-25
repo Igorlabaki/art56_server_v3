@@ -46,9 +46,9 @@ model User {
   username          String
   password          String
   avatarUrl         String?
-  session           Session[]          // Relacionamento com sessões
-  histories         History[]          // Histórico de ações
-  refreshToken      RefreshToken[]     // Tokens de refresh
+  session           Session[] // Relacionamento com sessões
+  histories         History[] // Histórico de ações
+  refreshToken      RefreshToken[] // Tokens de refresh
   userOrganizations UserOrganization[] // Relacionamento com as organizações
 
   @@map("user")
@@ -58,11 +58,11 @@ model Organization {
   id                String             @id @default(uuid())
   name              String             @unique
   createdAt         DateTime           @default(now())
-  venues            Venue[]            // Locais (venues) da organização
-  owners            Owner[]            // Proprietários da organização
+  venues            Venue[] // Locais (venues) da organização
+  owners            Owner[] // Proprietários da organização
   userOrganizations UserOrganization[] // Relacionamento com usuários e suas permissões na organização
 
-  Clause Clause[]    // Cláusulas relacionadas à organização
+  Clause   Clause[] // Cláusulas relacionadas à organização
   Contract Contract[] // Contratos da organização
 
   @@map("organization")
@@ -72,34 +72,29 @@ model UserOrganization {
   id             String   @id @default(uuid())
   userId         String
   organizationId String
-  role           Role     @default(ADMIN)
   joinedAt       DateTime @default(now())
 
-  user         User             @relation(fields: [userId], references: [id])
-  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userPermissions  UserPermission[]  // Permissões diretamente relacionadas ao usuário na organização
+  user            User             @relation(fields: [userId], references: [id])
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userPermissions UserPermission[] // Permissões diretamente relacionadas ao usuário na organização
 
   @@unique([userId, organizationId]) // Garante que o mesmo usuário não pode ser duplicado na mesma organização
   @@index([organizationId])
   @@map("userOrganization")
 }
 
-enum Role {
-  ADMIN
-  USER
-}
-
 model UserPermission {
-  id                 String        @id @default(uuid())
+  id                 String           @id @default(uuid())
   userOrganizationId String
-  permissions        String        // Permissões como string separadas por vírgulas
-  venueId            String?       // Pode ser nulo se for uma permissão global
-
+  permissions        String           @db.LongText // Permissões como string separadas por vírgulas
+  venueId            String? // Pode ser nulo se for uma permissão global
+  role               String           @default("ADMIN")
   userOrganization   UserOrganization @relation(fields: [userOrganizationId], references: [id], onDelete: Cascade)
   venue              Venue?           @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
+  @@unique([userOrganizationId, venueId])
   @@index([userOrganizationId])
-  @@index([venueId])  // Permissões específicas por venue
+  @@index([venueId]) // Permissões específicas por venue
 }
 
 model Proposal {
@@ -367,40 +362,42 @@ model DateEvent {
 }
 
 model Venue {
-  id                  String                @id @default(uuid())
-  name                String                @unique
-  street              String
-  streetNumber        String
-  complement          String?
-  neighborhood        String
-  city                String
-  state               String
-  checkIn             String?               @default("12:00")
-  checkOut            String?               @default("12:00")
-  cep                 String
-  hasOvernightStay    Boolean
-  createdAt           DateTime              @default(now())
-  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId      String
-  pricingModel        PricingModel // Enum que define o tipo de cobrança
-  pricePerPerson      Float? // Valor por pessoa
-  pricePerDay         Float? // Valor por dia
-  maxGuest            Int
-  texts               Text[]
-  contacts            Contact[]
-  images              Image[]
-  expenses            Expense[]
-  services            Service[]
-  Payment             Payment[]
-  questions           Question[]
-  proposals           Proposal[]
-  DateEvent           DateEvent[]
-  ownerVenue          OwnerVenue[]
-  notifications       Notification[]
+  id               String           @id @default(uuid())
+  name             String           @unique
+  street           String
+  streetNumber     String
+  complement       String?
+  neighborhood     String
+  city             String
+  state            String
+  checkIn          String?          @default("12:00")
+  checkOut         String?          @default("12:00")
+  cep              String
+  hasOvernightStay Boolean
+  createdAt        DateTime         @default(now())
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+  pricingModel     PricingModel // Enum que define o tipo de cobrança
+  pricePerPerson   Float? // Valor por pessoa
+  pricePerDay      Float? // Valor por dia
+  pricePerPersonDay      Float? // Valor por dia
+  pricePerPersonHour      Float? // Valor por dia
+  maxGuest         Int
+  texts            Text[]
+  contacts         Contact[]
+  images           Image[]
+  expenses         Expense[]
+  services         Service[]
+  Payment          Payment[]
+  questions        Question[]
+  proposals        Proposal[]
+  DateEvent        DateEvent[]
+  ownerVenue       OwnerVenue[]
+  notifications    Notification[]
+  UserPermission   UserPermission[]
 
   @@index([organizationId])
   @@map("venue")
-  UserPermission UserPermission[]
 }
 
 model Contact {
@@ -419,7 +416,7 @@ model OwnerVenue {
   id       String   @id @default(uuid())
   ownerId  String
   venueId  String
-  role     Role     @default(ADMIN)
+  role     String   @default("ADMIN")
   joinedAt DateTime @default(now())
 
   owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -433,6 +430,8 @@ model OwnerVenue {
 enum PricingModel {
   PER_PERSON
   PER_DAY
+  PER_PERSON_DAY
+  PER_PERSON_HOUR
 }
 
 model Owner {

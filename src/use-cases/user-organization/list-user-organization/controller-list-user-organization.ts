@@ -10,6 +10,7 @@ class ListUserOrganizationController {
 
   async handle(req: Request, resp: Response) {
     try {
+     
       const query: ListUserOrganizationRequestQuerySchema = listUserOrganizationRequestQuerySchema
         .parse(req.query);
 

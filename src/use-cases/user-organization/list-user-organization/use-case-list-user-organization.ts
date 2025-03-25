@@ -1,38 +1,76 @@
-
-
+import { UserOrganization } from "@prisma/client";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { OrganizationRepositoryInterface } from "../../../repositories/interface/organization-repository-interface";
 import { UserOrganizationRepositoryInterface } from "../../../repositories/interface/user-organization-repository-interface";
-import { userorganizationRoutes } from "../../../router/userOrganization";
 import { ListUserOrganizationRequestQuerySchema } from "../../../zod/user-organization/list-user-organization-query-schema";
+import { HttpInvalidCredentialsError } from "../../../errors/errors-type/http-invalid-credentials-error";
 
-class ListUserOrganizationUseCase {
-  constructor(private userOrganizationRepository: UserOrganizationRepositoryInterface, private organizationRepository: OrganizationRepositoryInterface) { }
+export class ListUserOrganizationUseCase {
+  constructor(
+    private userOrganizationRepository: UserOrganizationRepositoryInterface,
+    private organizationRepository: OrganizationRepositoryInterface
+  ) { }
 
-  async execute({userId,name}: ListUserOrganizationRequestQuerySchema) {
+  // Função para transformar o campo userPermissions
+/*   private transformUserPermissions(userPermissions: any[]) {
+    const orgMap = new Map();
 
- /*    const userById = await this.organizationRepository.getById({organizationId})
+    userPermissions.forEach(item => {
+      const orgId = item.userOrganization.organizationId;
 
-    if(!userById){
-      throw new HttpResourceNotFoundError("Organizacao")
-    } */
+      if (!orgMap.has(orgId)) {
+        orgMap.set(orgId, {
+          organizationId: orgId,
+          organizationPermissions: [],
+          venueIds: [],
+          venuePermissions: []
+        });
+      }
 
-    const userOrganizationList = await this.userOrganizationRepository.list({userId,name});
+      const orgData = orgMap.get(orgId);
 
-    console.log(userOrganizationList)
+      if (item.venueId) {
+        if (!orgData.venueIds.includes(item.venueId)) {
+          orgData.venueIds.push(item.venueId);
+        }
+        orgData.venuePermissions.push({
+          venueId: item.venueId,
+          permissions: item.permissions.split(',')
+        });
+      } else {
+        item.permissions.split(',').forEach((permission: any) => {
+          if (!orgData.organizationPermissions.includes(permission)) {
+            orgData.organizationPermissions.push(permission);
+          }
+        });
+      }
+    });
 
+    return Array.from(orgMap.values());
+  } */
+
+  async execute({ userId, name }: ListUserOrganizationRequestQuerySchema) {
+    // Buscar as organizações e permissões associadas ao usuário
+    const userOrganizationList = await this.userOrganizationRepository.list({
+      userId,
+      name,
+    });
+
+    if (!userOrganizationList) {
+      throw new HttpInvalidCredentialsError()
+    }
+
+    // Retorna a resposta formatada
     const formatedResponse = {
       success: true,
-      message: `Lista de organizacoes com ${userOrganizationList?.length} items`,
+      message: `Lista de organizações com ${userOrganizationList.length} items`,
       data: {
-        userOrganizationList: userOrganizationList
+        userOrganizationList: userOrganizationList,
       },
-      count: userOrganizationList?.length,
-      type: "List"
-    }
+      count: userOrganizationList.length,
+      type: "List",
+    };
 
     return formatedResponse;
   }
 }
-
-export { ListUserOrganizationUseCase };

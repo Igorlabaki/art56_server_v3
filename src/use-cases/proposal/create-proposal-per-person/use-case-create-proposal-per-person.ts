@@ -10,6 +10,10 @@ import { HistoryRepositoryInterface } from "../../../repositories/interface/hist
 import { NotificationRepositoryInterface } from "../../../repositories/interface/notification-repository-interface";
 import { CreateProposalPerPersonRequestParamsSchema } from "../../../zod/proposal/create-proposal-per-person-params-schema"
 import { CreateProposalInDbParams, ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface"
+import { calcEventDuration } from "../../../functions/calc-event-duration";
+import { calcBasePrice } from "../../../functions/calc-base-price";
+import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
+import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 
 class CreateProposalPerPersonUseCase {
     constructor(
@@ -101,20 +105,21 @@ class CreateProposalPerPersonUseCase {
             return formatedResponse
         }
 
-        if (Number(totalAmountInput) === 0 && venue.pricePerPerson) {
-            const { basePrice, endDate, extraHourPrice, extraHoursQty, startDate, totalAmount } =
-                calcStandartTotalAmount({
-                    data: {
-                        date,
-                        endHour,
-                        startHour,
-                        type: params.type,
-                        guests: Number(guestNumber),
-                        perPersonPrice: venue.pricePerPerson,
-                        totalAmountService: totalAmountService || 0
-                    },
-                    divisor: "/",
-                });
+        if (Number(totalAmountInput) === 0 && venue.pricePerPerson && venue.pricingModel === "PER_PERSON") {
+            const { endDate, startDate } = transformDate({
+               date,
+               endHour,
+               startHour,
+            });
+          
+            const eventDurantion = calcEventDuration(endDate, startDate);
+                   
+            const basePrice = Number(guestNumber) * venue.pricePerPerson
+          
+            const extraHourPrice = calcExtraHourPrice(basePrice);
+            const extraHoursQty = calcExtraHoursQty(eventDurantion);
+
+            const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
 
             createProposalPerPersonInDb = {
                 ...rest,
@@ -124,6 +129,92 @@ class CreateProposalPerPersonUseCase {
                 serviceIds,
                 totalAmount,
                 extraHoursQty,
+                extraHourPrice,
+                guestNumber: Number(guestNumber)
+            }
+
+            const newProposal = await this.proposalRepository.createPerPerson(
+                createProposalPerPersonInDb
+            );
+
+            if (!newProposal) {
+                throw Error("Erro na conexao com o banco de dados")
+            }
+
+            await this.notificationRepository.create({
+                venueId: params.venueId,
+                proposalId: newProposal.id,
+                content: `Novo orcamento do(a) ${newProposal.name
+                    } no valor de ${new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                }).format(newProposal.totalAmount)}, para data  ${format(
+                        newProposal?.startDate,
+                        "dd/MM/yyyy"
+                    )}`,
+                type: "PROPOSAL",
+            });
+
+            if (userId) {
+                const user = await this.userRepository.getById(userId)
+
+                if (!user) {
+                    throw new HttpResourceNotFoundError("Usuario")
+                }
+
+                await this.historyRepository.create({
+                    userId: user.id,
+                    username: user.username,
+                    proposalId: newProposal.id,
+                    action: `${user.username} criou este orcamento`,
+                });
+            }
+
+            if(!userId){
+                await this.historyRepository.create({
+                    proposalId: newProposal.id,
+                    action: `Cliente criou este orcamento pelo site`,
+                });
+            }
+
+            const formatedResponse = {
+                success: true,
+                message: `Orcamento criado com sucesso`,
+                data: {
+                    ...newProposal
+                },
+                count: 1,
+                type: "Proposal"
+            }
+
+            return formatedResponse
+        }
+
+        if (Number(totalAmountInput) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
+
+           const { endDate, startDate } = transformDate({
+                date,
+                endHour,
+                startHour,
+             });
+           
+             const eventDurantion = calcEventDuration(endDate, startDate);
+
+             const calcBasePrice = eventDurantion * (Number(guestNumber) * venue.pricePerPersonHour)
+           
+             const extraHourPrice = calcBasePrice / eventDurantion;
+             const totalAmount = calcBasePrice + (totalAmountService || 0);
+
+            createProposalPerPersonInDb = {
+                ...rest,
+                endDate,
+                startDate,
+                basePrice : calcBasePrice,
+                serviceIds,
+                totalAmount,
+                extraHoursQty: 0,
                 extraHourPrice,
                 guestNumber: Number(guestNumber)
             }
