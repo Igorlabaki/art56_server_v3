@@ -13,7 +13,7 @@ export interface ValidateDateParam {
   venueId: string;
   endDate: string | Date;
   startDate: string | Date;
-  dataeEventId: string | undefined;
+  dataeEventId?: string | undefined;
 }
 
 export interface DateEventRepositoryInterface {

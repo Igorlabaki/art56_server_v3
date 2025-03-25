@@ -8,7 +8,6 @@ class CreateExpenseController {
 
     async handle(req: Request, resp: Response) {
         try {
-            console.log(req.body)
             const body: CreateExpenseRequestParams = req.body;
             // Validate the request parms
             createExpenseRequestParams.parse(body);

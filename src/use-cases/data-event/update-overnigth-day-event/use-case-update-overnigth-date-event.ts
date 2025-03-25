@@ -15,7 +15,6 @@ class UpdateOvernigthDateEventUseCase {
     ) { }
 
     async execute(params: UpdateOverNigthDateEventSchema) {
-        console.log("usecase")
         const { userId, username, dateEventId,proposalId,venueId, data } = params
         const { startDay,endDay, endHour, startHour, ...rest } = data
 

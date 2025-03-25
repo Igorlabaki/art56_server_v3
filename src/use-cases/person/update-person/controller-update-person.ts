@@ -10,7 +10,7 @@ class UpdatePersonController {
             const param = updatePersonSchema.parse(req.body);
 
             const personById = await this.updatePersonUseCase.execute(param);
-            console.log(personById)
+
             return resp.status(201).json(personById);
         } catch (error) {
             // Chamar o handleErrors para formatar o erro

@@ -15,6 +15,7 @@ class ListUserOrganizationController {
 
       // Esperar a execução do caso de uso
       const response = await this.listUserOrganizationsUseCase.execute(query);
+
       // Retornar o token
       return resp.status(200).json(response);
 

@@ -9,7 +9,7 @@ class AuthenticateUserController {
     async handle(req: Request, resp: Response) {
         try {
             const body: AuthenticateUserRequestParams = req.body
-
+  
             authenticateUserSchema.parse(body);
 
             const token = await this.authenticateUserUseCase.execute(body)
