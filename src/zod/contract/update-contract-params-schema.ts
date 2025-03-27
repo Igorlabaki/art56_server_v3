@@ -4,6 +4,7 @@ export const updateContractSchema = z.object({
     title: z.string(),
     name: z.string(),
     contractId: z.string(),
+    venueIds: z.array(z.string()),
     clauses: z.array(z.object({
         text: z.string(),
         title: z.string(),

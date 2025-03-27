@@ -7,7 +7,7 @@ import { UpdateContractRequestParams } from "../../zod/contract/update-contract-
 export class PrismaContractRepository implements ContractRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
-  async create({ clauses, organizationId, ...params }: CreateContractRequestParams): Promise<Contract | null> {
+  async create({ clauses, organizationId, venueIds, ...params }: CreateContractRequestParams): Promise<Contract | null> {
     return await this.prisma.contract.create({
       data: {
         organization: {
@@ -15,6 +15,11 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
             id: organizationId
           }
         },
+        ...(venueIds && {
+          venues: {
+            connect: venueIds?.map((id: string) => ({ id })), // Conecta os múltiplos venues
+          }
+        }),
         clauses: {
           create: clauses.map((data: { text: string, title: string, position: number }) => ({
             text: data.text,
@@ -64,12 +69,32 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
     });
   }
 
-  async update({ clauses, contractId,...rest }: UpdateContractRequestParams): Promise<Contract | null> {
+  async update({ clauses, contractId, venueIds, ...rest }: UpdateContractRequestParams): Promise<Contract | null> {
+    const existingVenues = await this.prisma.contract.findUnique({
+      where: { id: contractId },
+      select: { venues: { select: { id: true } } },
+    });
+
+    if (!existingVenues) {
+      throw new Error("Contrato não encontrado");
+    }
+
+    const existingVenueIds = existingVenues.venues.map(v => v.id);
+
+    const toConnect = venueIds.filter(id => !existingVenueIds.includes(id));
+    const toDisconnect = existingVenueIds.filter(id => !venueIds.includes(id));
+
     await this.prisma.contract.update({
-      where: { 
+      where: {
         id: contractId
-       },
-      data:{
+      },
+      data: {
+        ...(venueIds && {
+          venues: {
+            connect: toConnect.map(id => ({ id })), // Conectar os novos
+            disconnect: toDisconnect.map(id => ({ id })), // Desconectar os removidos
+          },
+        }),
         ...rest
       }
     });
@@ -127,12 +152,19 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
     // 8. Retornar o contrato atualizado com as cláusulas
     return await this.prisma.contract.findUnique({
       where: { id: contractId },
-      include: { clauses: true },
+      include: { 
+        clauses: true, 
+        venues: {
+          select: {
+            id: true,
+          }
+        }  
+      },
     });
   }
 
 
-  async list({ organizationId, title }: ListContractRequestQuerySchema): Promise<Contract[]> {
+  async list({ organizationId, title, venueId }: ListContractRequestQuerySchema): Promise<Contract[]> {
     return await this.prisma.contract.findMany({
       where: {
         ...(title && {
@@ -140,10 +172,18 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
             contains: title
           }
         }),
+        ...(venueId && {
+          venueId
+        }),
         organizationId,
       },
       include: {
-        clauses: true
+        clauses: true,
+        venues: {
+          select: {
+            id: true,
+          }
+        }
       }
     });
   }

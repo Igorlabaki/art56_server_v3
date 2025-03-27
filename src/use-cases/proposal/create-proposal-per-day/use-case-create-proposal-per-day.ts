@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isWithinInterval, parse, setYear } from "date-fns";
 import { differenceInCalendarDays } from 'date-fns';
 import { transformDate } from "../../../functions/transform-date";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
@@ -9,6 +9,8 @@ import { ServiceRepositoryInterface } from "../../../repositories/interface/serv
 import { NotificationRepositoryInterface } from "../../../repositories/interface/notification-repository-interface";
 import { CreateProposalPerDayRequestParamsSchema } from "../../../zod/proposal/create-proposal-per-day-params-schema";
 import { CreateProposalInDbParams, ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
+import { SeasonalFee, Venue } from "@prisma/client";
+
 
 class CreateProposalPerDayUseCase {
     constructor(
@@ -34,7 +36,7 @@ class CreateProposalPerDayUseCase {
         const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
         const { endDate } = transformDate({ date: params.endDay, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
 
-        const venue = await this.venueRepository.getById({ venueId: params.venueId })
+        const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
 
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
@@ -103,10 +105,47 @@ class CreateProposalPerDayUseCase {
         }
 
         if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_DAY" && venue.pricePerDay) {
-
+            const { seasonalFee } = venue
             const daysBetween = differenceInCalendarDays(endDate, startDate);
-            const basePrice = daysBetween * venue.pricePerDay
-            const totalAmount = basePrice + (totalAmountService || 0)
+            let totalAdjustment = 0;
+            let pricePerDay = venue.pricePerDay;
+
+            if (seasonalFee && seasonalFee.length > 0) {
+                const year = startDate.getFullYear();
+                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase(); // "friday"
+
+                seasonalFee.forEach((fee) => {
+                    const isSurcharge = fee.type === "SURCHARGE";
+                    const isDiscount = fee.type === "DISCOUNT";
+
+                    // Verifica se a data do evento está dentro do intervalo sazonal
+                    if (fee.startDay && fee.endDay) {
+                        const seasonalStart = setYear(parse(fee.startDay, "dd/MM", new Date()), year);
+                        const seasonalEnd = setYear(parse(fee.endDay, "dd/MM", new Date()), year);
+
+                        if (isWithinInterval(startDate, { start: seasonalStart, end: seasonalEnd })) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+
+                    // Verifica se a data do evento está dentro dos dias da semana afetados
+                    if (fee.affectedDays) {
+                        const affectedDaysArray = fee.affectedDays.split(",").map((day) => day.trim().toLowerCase());
+
+                        if (affectedDaysArray.includes(eventDayOfWeek) || affectedDaysArray.includes("all")) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+                });
+
+                // Aplica o ajuste total no preço por pessoa por hora
+                if (totalAdjustment !== 0) {
+                    pricePerDay += pricePerDay * (totalAdjustment / 100);
+                }
+            }
+
+            const basePrice = daysBetween * pricePerDay;
+            const totalAmount = basePrice + (totalAmountService || 0);
 
             createProposalPerDayInDb = {
                 ...rest,
@@ -133,11 +172,11 @@ class CreateProposalPerDayUseCase {
                 proposalId: newProposal.id,
                 content: `Novo orcamento do(a) ${newProposal.name
                     } no valor de ${new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                }).format(newProposal.totalAmount)}, para data  ${format(
+                        style: "currency",
+                        currency: "BRL",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }).format(newProposal.totalAmount)}, para data  ${format(
                         newProposal?.startDate,
                         "dd/MM/yyyy"
                     )} ate  a data ${format(
@@ -161,7 +200,7 @@ class CreateProposalPerDayUseCase {
                 });
             }
 
-            if(!userId){
+            if (!userId) {
                 await this.historyRepository.create({
                     proposalId: newProposal.id,
                     action: `Cliente criou este orcamento pelo site`,
@@ -183,8 +222,46 @@ class CreateProposalPerDayUseCase {
 
         if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay) {
 
+            const { seasonalFee } = venue
             const daysBetween = differenceInCalendarDays(endDate, startDate);
-            const basePrice = daysBetween * (Number(guestNumber) * venue.pricePerPersonDay)
+            let totalAdjustment = 0;
+            let pricePerPersonDay = venue.pricePerPersonDay;
+
+            if (seasonalFee && seasonalFee.length > 0) {
+                const year = startDate.getFullYear();
+                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase(); // "friday"
+
+                seasonalFee.forEach((fee) => {
+                    const isSurcharge = fee.type === "SURCHARGE";
+                    const isDiscount = fee.type === "DISCOUNT";
+
+                    // Verifica se a data do evento está dentro do intervalo sazonal
+                    if (fee.startDay && fee.endDay) {
+                        const seasonalStart = setYear(parse(fee.startDay, "dd/MM", new Date()), year);
+                        const seasonalEnd = setYear(parse(fee.endDay, "dd/MM", new Date()), year);
+
+                        if (isWithinInterval(startDate, { start: seasonalStart, end: seasonalEnd })) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+
+                    // Verifica se a data do evento está dentro dos dias da semana afetados
+                    if (fee.affectedDays) {
+                        const affectedDaysArray = fee.affectedDays.split(",").map((day) => day.trim().toLowerCase());
+
+                        if (affectedDaysArray.includes(eventDayOfWeek) || affectedDaysArray.includes("all")) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+                });
+
+                // Aplica o ajuste total no preço por pessoa por hora
+                if (totalAdjustment !== 0) {
+                    pricePerPersonDay += pricePerPersonDay * (totalAdjustment / 100);
+                }
+            }
+
+            const basePrice = daysBetween * (Number(guestNumber) * pricePerPersonDay)
             const totalAmount = basePrice + (totalAmountService || 0)
 
             createProposalPerDayInDb = {
@@ -212,11 +289,11 @@ class CreateProposalPerDayUseCase {
                 proposalId: newProposal.id,
                 content: `Novo orcamento do(a) ${newProposal.name
                     } no valor de ${new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                }).format(newProposal.totalAmount)}, para data  ${format(
+                        style: "currency",
+                        currency: "BRL",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }).format(newProposal.totalAmount)}, para data  ${format(
                         newProposal?.startDate,
                         "dd/MM/yyyy"
                     )} ate  a data ${format(
@@ -240,7 +317,7 @@ class CreateProposalPerDayUseCase {
                 });
             }
 
-            if(!userId){
+            if (!userId) {
                 await this.historyRepository.create({
                     proposalId: newProposal.id,
                     action: `Cliente criou este orcamento pelo site`,
@@ -316,7 +393,7 @@ class CreateProposalPerDayUseCase {
             });
         }
 
-        if(!userId){
+        if (!userId) {
             await this.historyRepository.create({
                 proposalId: newProposal.id,
                 action: `Cliente criou este orcamento pelo site`,

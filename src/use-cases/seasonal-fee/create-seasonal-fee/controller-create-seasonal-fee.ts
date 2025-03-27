@@ -1,30 +1,31 @@
 import { Request, Response } from "express";
-import { handleErrors } from "../../../errors/error-handler";
-import { CreateContractUseCase } from "./use-case-create-contract";
-import { CreateContractRequestParams, createContractSchema } from "../../../zod/contract/create-contract-params-schema";
 
-class CreateContractController {
-  constructor(private createContractUseCase: CreateContractUseCase) {}
+import { handleErrors } from "../../../errors/error-handler";
+import { CreateSeasonalFeeUseCase } from "./use-case-create-seasonal-fee";
+import { CreateSeasonalFeeRequestParams, createSeasonalFeeSchema } from "../../../zod/seasonalFee/create-seasonal-fee-params-schema";
+
+class CreateSeasonalFeeController {
+  constructor(private createSeasonalFeeUseCase: CreateSeasonalFeeUseCase) {}
 
   async handle(req: Request, resp: Response) {
     try {
-        const body: CreateContractRequestParams = req.body;
+        const body: CreateSeasonalFeeRequestParams = req.body;
         // Validate the request parms
-        createContractSchema.parse(body);
+        createSeasonalFeeSchema.parse(body);
 
         // Esperar a execução do caso de uso
-        const response = await this.createContractUseCase.execute(body);
+        const response = await this.createSeasonalFeeUseCase.execute(body);
         // Retornar o token
         return resp.status(201).json(response);
 
     } catch (error) {
         // Chamar o handleErrors para formatar o erro
         const errorResponse = handleErrors(error);
-        console.log(errorResponse)
+
         // Retornar a resposta formatada
         return resp.status(errorResponse.statusCode).json(errorResponse.body);
     }
 }
 }
 
-export { CreateContractController };
+export { CreateSeasonalFeeController };

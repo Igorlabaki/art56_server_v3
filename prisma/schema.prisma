@@ -362,42 +362,63 @@ model DateEvent {
 }
 
 model Venue {
-  id               String           @id @default(uuid())
-  name             String           @unique
-  street           String
-  streetNumber     String
-  complement       String?
-  neighborhood     String
-  city             String
-  state            String
-  checkIn          String?          @default("12:00")
-  checkOut         String?          @default("12:00")
-  cep              String
-  hasOvernightStay Boolean
-  createdAt        DateTime         @default(now())
-  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String
-  pricingModel     PricingModel // Enum que define o tipo de cobrança
-  pricePerPerson   Float? // Valor por pessoa
-  pricePerDay      Float? // Valor por dia
-  pricePerPersonDay      Float? // Valor por dia
-  pricePerPersonHour      Float? // Valor por dia
-  maxGuest         Int
-  texts            Text[]
-  contacts         Contact[]
-  images           Image[]
-  expenses         Expense[]
-  services         Service[]
-  Payment          Payment[]
-  questions        Question[]
-  proposals        Proposal[]
-  DateEvent        DateEvent[]
-  ownerVenue       OwnerVenue[]
-  notifications    Notification[]
-  UserPermission   UserPermission[]
+  id                 String           @id @default(uuid())
+  name               String           @unique
+  street             String
+  streetNumber       String
+  complement         String?
+  neighborhood       String
+  city               String
+  state              String
+  checkIn            String?          @default("12:00")
+  checkOut           String?          @default("12:00")
+  cep                String
+  hasOvernightStay   Boolean
+  createdAt          DateTime         @default(now())
+  organization       Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId     String
+  pricingModel       PricingModel // Enum que define o tipo de cobrança
+  pricePerPerson     Float? // Valor por pessoa
+  pricePerDay        Float? // Valor por dia
+  pricePerPersonDay  Float? // Valor por dia
+  pricePerPersonHour Float? // Valor por dia
+  maxGuest           Int
+  texts              Text[]
+  contacts           Contact[]
+  images             Image[]
+  expenses           Expense[]
+  services           Service[]
+  Payment            Payment[]
+  questions          Question[]
+  proposals          Proposal[]
+  DateEvent          DateEvent[]
+  ownerVenue         OwnerVenue[]
+  notifications      Notification[]
+  UserPermission     UserPermission[]
+  seasonalFee        SeasonalFee[]
+  contracts  Contract[] @relation("ContractVenues")
 
   @@index([organizationId])
   @@map("venue")
+}
+
+model SeasonalFee {
+  id           String          @id @default(uuid())
+  type         SeasonalFeeType
+  title        String
+  startDay     String? // Opcional, usado só para ajustes sazonais
+  endDay       String? // Opcional, usado só para ajustes sazonais
+  fee          Int
+  venue        Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venueId      String
+  affectedDays String? // Se for nulo, aplica-se ao período definido por startDay e endDay
+
+  @@index([venueId])
+}
+
+enum SeasonalFeeType {
+  SURCHARGE
+  DISCOUNT
 }
 
 model Contact {
@@ -522,10 +543,11 @@ model Contract {
   title          String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  venues     Venue[]  @relation("ContractVenues")
   clauses        Clause[]
 
   @@index([organizationId])
-  @@map("contract")
+  @@map("contract") 
 }
 
 model Clause {

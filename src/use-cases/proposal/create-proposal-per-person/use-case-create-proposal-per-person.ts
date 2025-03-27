@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isWithinInterval, parse, setYear } from "date-fns";
 import { transformDate } from "../../../functions/transform-date";
 import { calcCustomTotalAmount } from "../../../functions/calc-custom-total-amount";
 import { calcStandartTotalAmount } from "../../../functions/calc-standart-total-amount";
@@ -14,6 +14,7 @@ import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { calcBasePrice } from "../../../functions/calc-base-price";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
+import { SeasonalFee, Venue } from "@prisma/client";
 
 class CreateProposalPerPersonUseCase {
     constructor(
@@ -28,14 +29,15 @@ class CreateProposalPerPersonUseCase {
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {
         let createProposalPerPersonInDb: CreateProposalInDbParams;
 
-        const { date, endHour, startHour, totalAmountInput, serviceIds,guestNumber,userId, ...rest } = params
+        const { date, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId, ...rest } = params
 
         const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
             serviceIds,
             venueId: params.venueId,
         })
 
-        const venue = await this.venueRepository.getById({ venueId: params.venueId })
+        const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
+
 
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
@@ -107,15 +109,51 @@ class CreateProposalPerPersonUseCase {
 
         if (Number(totalAmountInput) === 0 && venue.pricePerPerson && venue.pricingModel === "PER_PERSON") {
             const { endDate, startDate } = transformDate({
-               date,
-               endHour,
-               startHour,
+                date,
+                endHour,
+                startHour,
             });
-          
+            const { seasonalFee } = venue
             const eventDurantion = calcEventDuration(endDate, startDate);
-                   
-            const basePrice = Number(guestNumber) * venue.pricePerPerson
-          
+
+            let totalAdjustment = 0;
+            let pricePerPerson = venue.pricePerPerson;
+        
+            if (seasonalFee && seasonalFee.length > 0) {
+                const year = startDate.getFullYear();
+                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase(); // "friday"
+        
+                seasonalFee.forEach((fee) => {
+                    const isSurcharge = fee.type === "SURCHARGE";
+                    const isDiscount = fee.type === "DISCOUNT";
+        
+                    // Verifica se a data do evento está dentro do intervalo sazonal
+                    if (fee.startDay && fee.endDay) {
+                        const seasonalStart = setYear(parse(fee.startDay, "dd/MM", new Date()), year);
+                        const seasonalEnd = setYear(parse(fee.endDay, "dd/MM", new Date()), year);
+        
+                        if (isWithinInterval(startDate, { start: seasonalStart, end: seasonalEnd })) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+        
+                    // Verifica se a data do evento está dentro dos dias da semana afetados
+                    if (fee.affectedDays) {
+                        const affectedDaysArray = fee.affectedDays.split(",").map((day) => day.trim().toLowerCase());
+        
+                        if (affectedDaysArray.includes(eventDayOfWeek) || affectedDaysArray.includes("all")) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+                });
+        
+                // Aplica o ajuste total no preço por pessoa por hora
+                if (totalAdjustment !== 0) {
+                    pricePerPerson += pricePerPerson * (totalAdjustment / 100);
+                }
+            }
+            const basePrice = Number(guestNumber) * pricePerPerson
+
             const extraHourPrice = calcExtraHourPrice(basePrice);
             const extraHoursQty = calcExtraHoursQty(eventDurantion);
 
@@ -146,11 +184,11 @@ class CreateProposalPerPersonUseCase {
                 proposalId: newProposal.id,
                 content: `Novo orcamento do(a) ${newProposal.name
                     } no valor de ${new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                }).format(newProposal.totalAmount)}, para data  ${format(
+                        style: "currency",
+                        currency: "BRL",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }).format(newProposal.totalAmount)}, para data  ${format(
                         newProposal?.startDate,
                         "dd/MM/yyyy"
                     )}`,
@@ -172,7 +210,7 @@ class CreateProposalPerPersonUseCase {
                 });
             }
 
-            if(!userId){
+            if (!userId) {
                 await this.historyRepository.create({
                     proposalId: newProposal.id,
                     action: `Cliente criou este orcamento pelo site`,
@@ -194,24 +232,62 @@ class CreateProposalPerPersonUseCase {
 
         if (Number(totalAmountInput) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
 
-           const { endDate, startDate } = transformDate({
+            const { endDate, startDate } = transformDate({
                 date,
                 endHour,
                 startHour,
-             });
-           
-             const eventDurantion = calcEventDuration(endDate, startDate);
+            });
 
-             const calcBasePrice = eventDurantion * (Number(guestNumber) * venue.pricePerPersonHour)
-           
-             const extraHourPrice = calcBasePrice / eventDurantion;
-             const totalAmount = calcBasePrice + (totalAmountService || 0);
+            const eventDurantion = calcEventDuration(endDate, startDate);
+            const { seasonalFee } = venue
+
+            let totalAdjustment = 0;
+            let pricePerPersonHour = venue.pricePerPersonHour;
+        
+            if (seasonalFee && seasonalFee.length > 0) {
+                const year = startDate.getFullYear();
+                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase(); // "friday"
+        
+                seasonalFee.forEach((fee) => {
+                    const isSurcharge = fee.type === "SURCHARGE";
+                    const isDiscount = fee.type === "DISCOUNT";
+        
+                    // Verifica se a data do evento está dentro do intervalo sazonal
+                    if (fee.startDay && fee.endDay) {
+                        const seasonalStart = setYear(parse(fee.startDay, "dd/MM", new Date()), year);
+                        const seasonalEnd = setYear(parse(fee.endDay, "dd/MM", new Date()), year);
+        
+                        if (isWithinInterval(startDate, { start: seasonalStart, end: seasonalEnd })) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+        
+                    // Verifica se a data do evento está dentro dos dias da semana afetados
+                    if (fee.affectedDays) {
+                        const affectedDaysArray = fee.affectedDays.split(",").map((day) => day.trim().toLowerCase());
+        
+                        if (affectedDaysArray.includes(eventDayOfWeek) || affectedDaysArray.includes("all")) {
+                            totalAdjustment += isSurcharge ? fee.fee : -fee.fee; // Soma ou subtrai a porcentagem
+                        }
+                    }
+                });
+        
+                // Aplica o ajuste total no preço por pessoa por hora
+                if (totalAdjustment !== 0) {
+                    pricePerPersonHour += pricePerPersonHour * (totalAdjustment / 100);
+                }
+            }
+
+            const calcBasePrice = eventDurantion * (Number(guestNumber) * pricePerPersonHour)
+
+            const extraHourPrice = calcBasePrice / eventDurantion;
+            const totalAmount = calcBasePrice + (totalAmountService || 0);
 
             createProposalPerPersonInDb = {
                 ...rest,
                 endDate,
                 startDate,
-                basePrice : calcBasePrice,
+                basePrice: calcBasePrice,
                 serviceIds,
                 totalAmount,
                 extraHoursQty: 0,
@@ -232,11 +308,11 @@ class CreateProposalPerPersonUseCase {
                 proposalId: newProposal.id,
                 content: `Novo orcamento do(a) ${newProposal.name
                     } no valor de ${new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                }).format(newProposal.totalAmount)}, para data  ${format(
+                        style: "currency",
+                        currency: "BRL",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }).format(newProposal.totalAmount)}, para data  ${format(
                         newProposal?.startDate,
                         "dd/MM/yyyy"
                     )}`,
@@ -258,7 +334,7 @@ class CreateProposalPerPersonUseCase {
                 });
             }
 
-            if(!userId){
+            if (!userId) {
                 await this.historyRepository.create({
                     proposalId: newProposal.id,
                     action: `Cliente criou este orcamento pelo site`,
@@ -312,7 +388,7 @@ class CreateProposalPerPersonUseCase {
                 guestNumber: Number(guestNumber),
             }
 
-       
+
             const newProposal = await this.proposalRepository.createPerPerson(
                 createProposalPerPersonInDb
             );
@@ -354,7 +430,7 @@ class CreateProposalPerPersonUseCase {
                 });
             }
 
-            if(!userId){
+            if (!userId) {
                 await this.historyRepository.create({
                     proposalId: newProposal.id,
                     action: `Cliente criou este orcamento pelo site`,

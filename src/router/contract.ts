@@ -15,7 +15,7 @@ contractRoutes.post("/create", async (req, res) => {
 })
 
 // List
-contractRoutes.get("/list/:venueId?/:name?", async (req, res) => {
+contractRoutes.get("/list/:venueId?/:venueId?/:name?", async (req, res) => {
     const controller = listContractFactory();  
     await controller.handle(req, res);       
 })

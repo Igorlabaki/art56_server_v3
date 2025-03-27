@@ -158,7 +158,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           select: {
             permissions: true
           }
-        }
+        },
+        seasonalFee: true,
+        contracts: true
       }
     });
   }
@@ -182,7 +184,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           include: {
             owner: true
           }
-        }
+        },
+        contracts: true
       }
     });
   }
