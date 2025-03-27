@@ -229,7 +229,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
   async updatePersonalInfo({proposalId,data}: UpdatePersonalInfoProposalSchema): Promise<Proposal | null> {
-    const {cep,cpf,city,completeName,neighborhood,state,street,streetNumber,rg} = data
+    const {cep,cpf,city,completeClientName,completeCompanyName,neighborhood,state,street,streetNumber,rg} = data
     return await this.prisma.proposal.update({
       where: {
         id: proposalId
@@ -240,7 +240,8 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         city,
         state,
         street,
-        completeName,
+        completeClientName,
+        completeCompanyName,
         streetNumber,
         neighborhood,
         rg: rg ?? null, 
@@ -248,7 +249,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
-  async list({ venueId, email, name, month, year, approved }: ListProposalRequestQuerySchema): Promise<ItemListProposalResponse[] | null> {
+  async list({ venueId, email, completeClientName, month, year, approved }: ListProposalRequestQuerySchema): Promise<ItemListProposalResponse[] | null> {
     return await this.prisma.proposal.findMany({
       where: {
         venueId,
@@ -257,9 +258,9 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
             contains: email,
           },
         }),
-        ...(name && {
-          name: {
-            contains: name,
+        ...(completeClientName && {
+          completeClientName: {
+            contains: completeClientName,
           },
         }),
         approved: approved ? true : false,
@@ -276,7 +277,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       },
       select: {
         id: true,
-        name: true,
+        completeClientName: true,
         email: true,
         endDate: true,
         startDate: true,

@@ -17,7 +17,7 @@ class GetProposalByIdUseCase {
 
         const formatedResponse = {
             success: true,
-            message: `Orcamento de ${proposal.name} encontrado com sucesso`,
+            message: `Orcamento de ${proposal.completeClientName} encontrado com sucesso`,
             data: {
                 ...proposal
             },

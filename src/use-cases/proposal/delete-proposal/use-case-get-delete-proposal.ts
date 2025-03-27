@@ -18,7 +18,7 @@ class DeleteProposalByIdUseCase {
 
         const formatedResponse = {
             success: true,
-            message: `Orcamento ${proposal.name} deletado com sucesso`,
+            message: `Orcamento ${proposal.completeClientName} deletado com sucesso`,
             data: {
                 ...proposal
             },

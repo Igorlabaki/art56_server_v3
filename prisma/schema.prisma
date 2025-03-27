@@ -100,8 +100,9 @@ model UserPermission {
 model Proposal {
   id                  String            @id @default(uuid())
   completeCompanyName String?
-  completeClientName  String?
+  completeClientName  String
   cpf                 String?
+  cnpj                 String?
   rg                  String?
   street              String?
   streetNumber        String?
@@ -115,7 +116,6 @@ model Proposal {
   knowsVenue          Boolean           @default(false)
   startDate           DateTime
   endDate             DateTime
-  name                String
   email               String
   whatsapp            String
   description         String            @db.LongText
@@ -145,7 +145,7 @@ model Proposal {
   @@index([venueId])
   @@index([trafficSource])
   @@index([email, startDate])
-  @@index([name, startDate])
+  @@index([completeClientName, startDate])
   @@map("proposal")
 }
 
@@ -364,6 +364,7 @@ model DateEvent {
 model Venue {
   id                 String           @id @default(uuid())
   name               String           @unique
+  email               String?           @unique
   street             String
   streetNumber       String
   complement         String?
@@ -396,7 +397,7 @@ model Venue {
   notifications      Notification[]
   UserPermission     UserPermission[]
   seasonalFee        SeasonalFee[]
-  contracts  Contract[] @relation("ContractVenues")
+  contracts          Contract[]       @relation("ContractVenues")
 
   @@index([organizationId])
   @@map("venue")
@@ -543,11 +544,11 @@ model Contract {
   title          String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  venues     Venue[]  @relation("ContractVenues")
-  clauses        Clause[]
+  venues         Venue[]      @relation("ContractVenues")
+  clauses        Clause[]     @relation("ContractClauses")
 
   @@index([organizationId])
-  @@map("contract") 
+  @@map("contract")
 }
 
 model Clause {
@@ -559,10 +560,8 @@ model Clause {
   updatedAt      DateTime      @updatedAt
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  contractId     String?
-  Contract       Contract?     @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  contracts       Contract[]    @relation("ContractClauses")
 
-  @@index([contractId])
   @@index([organizationId])
   @@map("clause")
 }

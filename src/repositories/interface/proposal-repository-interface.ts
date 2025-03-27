@@ -6,12 +6,12 @@ import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analy
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
 
 export interface CreateProposalInDbParams {
-  name: string
+  completeClientName: string
   endDate: Date
-  email: string
   guestNumber: number
   startDate: Date
   venueId: string
+  email: string
   whatsapp: string
   basePrice: number
   type: ProposalType
@@ -34,7 +34,7 @@ export type ProposalWithRelations = Proposal & {
 
 export interface ItemListProposalResponse{
   id: string,
-  name: string,
+  completeClientName: string,
   email: string,
   totalAmount: number,
 }

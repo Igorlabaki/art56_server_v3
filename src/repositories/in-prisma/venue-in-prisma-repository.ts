@@ -28,6 +28,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
     return await this.prisma.$transaction(async (prisma) => {
       // Criar a Venue
+      console.log("aqui")
       const newVenue = await prisma.venue.create({
         data: {
           ...rest,

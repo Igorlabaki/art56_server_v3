@@ -9,13 +9,11 @@ class ListSeasonalFeeController {
 
   async handle(req: Request, resp: Response) {
     try {
-     
       const query: ListSeasonalFeeRequestQuerySchema = listSeasonalFeeRequestQuerySchema
         .parse(req.query);
       // Esperar a execução do caso de uso
       const response = await this.listSeasonalFeesUseCase.execute(query);
 
-      console.log(response)
       // Retornar o token
       return resp.status(200).json(response);
     } catch (error) {

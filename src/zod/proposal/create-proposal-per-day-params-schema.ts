@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createProposalPerDayRequestParamsSchema = z.object({
-    name: z.string(),
+    completeClientName: z.string(),
     venueId: z.string(),
     endHour: z.string(),
     endDay: z.string(),

@@ -7,7 +7,6 @@ class UpdateProposalPerDayController {
     constructor(private updateProposalUseCase: UpdateProposalPerDayUseCase) { }
     async handle(req: Request, resp: Response) {
         try {
-            console.log(req.body)
             const param = updateProposalPerDayRequestParams.parse(req.body);
             
             const proposalPerDay = await this.updateProposalUseCase.execute(param);

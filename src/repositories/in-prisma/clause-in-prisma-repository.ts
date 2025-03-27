@@ -37,20 +37,12 @@ export class PrismaClauseRepository implements ClauseRepositoryInterface {
   }
 
   async update({ data, clauseId }: UpdateClauseRequestParams): Promise<Clause | null> {
-    const {title,...rest} = data
-     await this.prisma.clause.updateMany({
-      where: {
-        title: title,
-      },
-      data: {
-        title,
-        ...rest,
-      },
-    });
-
-    return this.prisma.clause.findUnique({
+     return await this.prisma.clause.update({
       where: {
         id: clauseId,
+      },
+      data: {
+        ...data,
       },
     });
   }

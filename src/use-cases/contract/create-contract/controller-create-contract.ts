@@ -20,7 +20,7 @@ class CreateContractController {
     } catch (error) {
         // Chamar o handleErrors para formatar o erro
         const errorResponse = handleErrors(error);
-        console.log(errorResponse)
+
         // Retornar a resposta formatada
         return resp.status(errorResponse.statusCode).json(errorResponse.body);
     }

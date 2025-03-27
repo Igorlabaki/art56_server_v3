@@ -5,6 +5,7 @@ export const createVenueSchema =  z.object({
     organizationId: z.string(),
     data: z.object({
         cep: z.string(),
+        email: z.string(),
         name: z.string(),
         city: z.string(),
         state: z.string(),

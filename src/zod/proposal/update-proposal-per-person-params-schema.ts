@@ -3,7 +3,8 @@ import { z } from "zod";
 export const updateProposalPerPersonRequestParams = z.object({
     proposalId: z.string(),
     data: z.object({
-        name: z.string(),
+        completeClientName: z.string(),
+        completeCompanyName: z.string(),
         date: z.string(),
         venueId: z.string(),
         endHour: z.string(),

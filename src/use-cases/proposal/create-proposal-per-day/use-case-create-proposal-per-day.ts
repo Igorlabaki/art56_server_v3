@@ -66,7 +66,7 @@ class CreateProposalPerDayUseCase {
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orcamento do(a) ${newProposal.name
+                content: `Novo orcamento do(a) ${newProposal.completeClientName
                     } de permuta, para data  ${format(
                         newProposal?.startDate,
                         "dd/MM/yyyy"
@@ -170,7 +170,7 @@ class CreateProposalPerDayUseCase {
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orcamento do(a) ${newProposal.name
+                content: `Novo orcamento do(a) ${newProposal.completeClientName
                     } no valor de ${new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -287,7 +287,7 @@ class CreateProposalPerDayUseCase {
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orcamento do(a) ${newProposal.name
+                content: `Novo orcamento do(a) ${newProposal.completeClientName
                     } no valor de ${new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -363,7 +363,7 @@ class CreateProposalPerDayUseCase {
         await this.notificationRepository.create({
             venueId: params.venueId,
             proposalId: newProposal.id,
-            content: `Novo orcamento do(a) ${newProposal.name
+            content: `Novo orcamento do(a) ${newProposal.completeClientName
                 } no valor de ${new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",

@@ -8,11 +8,13 @@ class ListContractController {
 
   async handle(req: Request, resp: Response) {
     try {
+
       const query: ListContractRequestQuerySchema = listContractRequestQuerySchema
         .parse(req.query);
       // Esperar a execução do caso de uso
       const response = await this.listContractsUseCase.execute(query);
       // Retornar o token
+
       return resp.status(200).json(response);
     } catch (error) {
       // Chamar o handleErrors para formatar o erro
