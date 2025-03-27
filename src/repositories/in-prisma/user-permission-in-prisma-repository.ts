@@ -20,7 +20,7 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
   }: CreateUserPermissionRequestParams): Promise<UserPermission | null> {
     return await this.prisma.userPermission.create({
       data: {
-        permissions: permissions.join(),
+        permissions: permissions.join(','),
         venue: {
           connect: {
             id: venueId
