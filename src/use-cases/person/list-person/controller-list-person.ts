@@ -8,6 +8,7 @@ class ListPersonController {
 
   async handle(req: Request, resp: Response) {
     try {
+      console.log(req.query)
       const query: ListPersonRequestQuerySchema = listPersonRequestQuerySchema
         .parse(req.query);
       // Esperar a execução do caso de uso

@@ -14,7 +14,7 @@ personRoutes.post("/create", async (req, res) => {
 })
 
 // List
-personRoutes.get("/list/:proposalId?/:type?", async (req, res) => {
+personRoutes.get("/list?:proposalId?/:type?/:name?", async (req, res) => {
     const controller = listPersonFactory();  
     await controller.handle(req, res);       
 })

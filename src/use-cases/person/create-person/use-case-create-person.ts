@@ -5,6 +5,7 @@ import { CreatePersonRequestParams } from "../../../zod/person/create-person-par
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { PersonRepositoryInterface } from "../../../repositories/interface/person-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
+import { SendAttendeceConfirmationEmailCase } from "../../email/send-attendence-confirmation-to-email/use-case-send-attendence-confirmation-to-email";
 
 class CreatePersonUseCase {
   constructor(
@@ -20,7 +21,7 @@ class CreatePersonUseCase {
       throw new HttpResourceNotFoundError("Orcamento")
     }
 
-    if(proposal.personList.filter((item:Person) => item.type === "GUEST") .length === proposal.guestNumber){
+    if(proposal.personList.filter((item:Person) => item.type === "GUEST").length === proposal.guestNumber){
       throw new HttpStandartError("Nao ha mais vaga na lista de convidados")
     }
 
@@ -28,6 +29,33 @@ class CreatePersonUseCase {
 
     if(!newPerson){
       throw new HttpBadRequestError("Convidado")
+    }
+
+    if(newPerson.type === "GUEST" && newPerson.email  && params.venueInfo){
+      const sendAttendeceConfirmationEmailCase = new SendAttendeceConfirmationEmailCase();
+      await sendAttendeceConfirmationEmailCase.execute({
+        guest:{
+          id: newPerson.id,
+          name: newPerson.name,
+          email: newPerson.email,
+        },
+        proposal:{
+          proposalId: proposal.id,
+          endDate: proposal.endDate,
+          startDate: proposal.startDate,
+          hostMessage: proposal?.hostMessage,
+          clientName: proposal.completeClientName,
+        },
+        venue:{
+          city: params.venueInfo.city,
+          state: params.venueInfo.state,
+          street: params.venueInfo.street,
+          name: params.venueInfo.name,
+          email: params.venueInfo.email,
+          neighborhood: params.venueInfo.neighborhood,
+          streetNumber: params.venueInfo.streetNumber,
+        },
+      })
     }
 
     const formatedResponse = {

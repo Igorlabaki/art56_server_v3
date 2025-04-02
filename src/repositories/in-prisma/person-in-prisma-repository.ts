@@ -8,7 +8,7 @@ import { UpdatePersonRequestParams } from "../../zod/person/update-person-params
 export class PrismaPersonRepository implements PersonRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
   
-  async create({proposalId,username,userId,...rest}: CreatePersonRequestParams): Promise<Person | null> {
+  async create({proposalId,username,userId,venueInfo,...rest}: CreatePersonRequestParams): Promise<Person | null> {
     return await this.prisma.person.create({
       data: {
         proposal :{

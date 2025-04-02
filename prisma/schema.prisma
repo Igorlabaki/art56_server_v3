@@ -119,6 +119,7 @@ model Proposal {
   email               String
   whatsapp            String
   description         String            @db.LongText
+  hostMessage         String?            @db.LongText
   basePrice           Float
   extraHoursQty       Int
   extraHourPrice      Float
@@ -171,6 +172,7 @@ model Person {
   name       String
   email      String?
   rg         String?
+  confirmAttendanceEmail Boolean    @default(false) // Campo para confirmar presença
   proposalId String
   proposal   Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 

@@ -64,7 +64,7 @@ class CreateDateEventUseCase {
 
             const typeNotification = types.find((item: { display: string, data: string }) => { return item.data === data.type })
 
-            if(typeNotification?.data === "EVENT"){
+            if(typeNotification?.data === "EVENT" || typeNotification?.data === "PRODUCTION" || typeNotification?.data === "BARTER" ){
                 await this.proposalRepository.update({
                     proposalId,
                     data:{

@@ -21,7 +21,7 @@ class DeleteDateEventUseCase {
         const deletedDateEvent = await this.dateeventRepository.delete(param)
 
         if (deletedDateEvent && deletedDateEvent.proposalId && deletedDateEvent?.type === "EVENT" || deletedDateEvent &&  deletedDateEvent.proposalId && deletedDateEvent?.type === "OVERNIGHT") {
-            const teste = await this.proposalRepository.update({
+            await this.proposalRepository.update({
                 proposalId: deletedDateEvent.proposalId,
                 data: {
                     approved: false

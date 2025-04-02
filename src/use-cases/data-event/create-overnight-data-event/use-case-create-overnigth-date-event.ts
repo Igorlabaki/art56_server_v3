@@ -64,7 +64,7 @@ class CreateOvernightDateEventUseCase {
 
             const typeNotification = types.find((item: { display: string, data: string }) => { return item.data === data.type })
 
-            if(typeNotification?.data === "OVERNIGHT"){
+            if(typeNotification?.data === "OVERNIGHT" ||  typeNotification?.data === "PRODUCTION" || typeNotification?.data === "BARTER" ){
                 await this.proposalRepository.update({
                     proposalId,
                     data:{
