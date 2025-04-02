@@ -77,8 +77,9 @@ CREATE TABLE `UserPermission` (
 CREATE TABLE `proposal` (
     `id` VARCHAR(191) NOT NULL,
     `completeCompanyName` VARCHAR(191) NULL,
-    `completeClientName` VARCHAR(191) NULL,
+    `completeClientName` VARCHAR(191) NOT NULL,
     `cpf` VARCHAR(191) NULL,
+    `cnpj` VARCHAR(191) NULL,
     `rg` VARCHAR(191) NULL,
     `street` VARCHAR(191) NULL,
     `streetNumber` VARCHAR(191) NULL,
@@ -92,10 +93,10 @@ CREATE TABLE `proposal` (
     `knowsVenue` BOOLEAN NOT NULL DEFAULT false,
     `startDate` DATETIME(3) NOT NULL,
     `endDate` DATETIME(3) NOT NULL,
-    `name` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `whatsapp` VARCHAR(191) NOT NULL,
     `description` LONGTEXT NOT NULL,
+    `hostMessage` LONGTEXT NULL,
     `basePrice` DOUBLE NOT NULL,
     `extraHoursQty` INTEGER NOT NULL,
     `extraHourPrice` DOUBLE NOT NULL,
@@ -112,7 +113,7 @@ CREATE TABLE `proposal` (
     INDEX `proposal_venueId_idx`(`venueId`),
     INDEX `proposal_trafficSource_idx`(`trafficSource`),
     INDEX `proposal_email_startDate_idx`(`email`, `startDate`),
-    INDEX `proposal_name_startDate_idx`(`name`, `startDate`),
+    INDEX `proposal_completeClientName_startDate_idx`(`completeClientName`, `startDate`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -138,6 +139,7 @@ CREATE TABLE `person` (
     `name` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NULL,
     `rg` VARCHAR(191) NULL,
+    `confirmAttendanceEmail` BOOLEAN NOT NULL DEFAULT false,
     `proposalId` VARCHAR(191) NOT NULL,
 
     INDEX `person_proposalId_idx`(`proposalId`),
@@ -253,6 +255,7 @@ CREATE TABLE `dataEvent` (
 CREATE TABLE `venue` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NULL,
     `street` VARCHAR(191) NOT NULL,
     `streetNumber` VARCHAR(191) NOT NULL,
     `complement` VARCHAR(191) NULL,
@@ -265,13 +268,31 @@ CREATE TABLE `venue` (
     `hasOvernightStay` BOOLEAN NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `organizationId` VARCHAR(191) NOT NULL,
-    `pricingModel` ENUM('PER_PERSON', 'PER_DAY') NOT NULL,
+    `pricingModel` ENUM('PER_PERSON', 'PER_DAY', 'PER_PERSON_DAY', 'PER_PERSON_HOUR') NOT NULL,
     `pricePerPerson` DOUBLE NULL,
     `pricePerDay` DOUBLE NULL,
+    `pricePerPersonDay` DOUBLE NULL,
+    `pricePerPersonHour` DOUBLE NULL,
     `maxGuest` INTEGER NOT NULL,
 
     UNIQUE INDEX `venue_name_key`(`name`),
+    UNIQUE INDEX `venue_email_key`(`email`),
     INDEX `venue_organizationId_idx`(`organizationId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SeasonalFee` (
+    `id` VARCHAR(191) NOT NULL,
+    `type` ENUM('SURCHARGE', 'DISCOUNT') NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `startDay` VARCHAR(191) NULL,
+    `endDay` VARCHAR(191) NULL,
+    `fee` INTEGER NOT NULL,
+    `venueId` VARCHAR(191) NOT NULL,
+    `affectedDays` VARCHAR(191) NULL,
+
+    INDEX `SeasonalFee_venueId_idx`(`venueId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -401,9 +422,7 @@ CREATE TABLE `clause` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `organizationId` VARCHAR(191) NULL,
-    `contractId` VARCHAR(191) NULL,
 
-    INDEX `clause_contractId_idx`(`contractId`),
     INDEX `clause_organizationId_idx`(`organizationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -431,4 +450,22 @@ CREATE TABLE `_ProposalToProposalCost` (
 
     UNIQUE INDEX `_ProposalToProposalCost_AB_unique`(`A`, `B`),
     INDEX `_ProposalToProposalCost_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `_ContractVenues` (
+    `A` VARCHAR(191) NOT NULL,
+    `B` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `_ContractVenues_AB_unique`(`A`, `B`),
+    INDEX `_ContractVenues_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `_ContractClauses` (
+    `A` VARCHAR(191) NOT NULL,
+    `B` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `_ContractClauses_AB_unique`(`A`, `B`),
+    INDEX `_ContractClauses_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
