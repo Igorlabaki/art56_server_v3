@@ -22,7 +22,7 @@ class UpdateVenueUseCase {
         }
 
         const formattedVenue = {
-            ...venue,
+            ...updatedVenue,
             // @ts-ignore
             permissions: venue.UserPermission
               .map((up: { permissions: string }) => up.permissions) // 🔥 Extrai permissões

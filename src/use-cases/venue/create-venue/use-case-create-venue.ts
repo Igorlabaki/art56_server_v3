@@ -21,7 +21,7 @@ class CreateVenueUseCase {
             success: true,
             message: "Locacao foi criada com sucesso",
             data: {
-                venue: newVenue
+                ...newVenue
             },
             count: 1,
             type: "Venue"

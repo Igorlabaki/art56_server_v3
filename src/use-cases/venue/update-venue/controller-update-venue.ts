@@ -11,7 +11,7 @@ class UpdateVenueController {
             const param = updateVenueSchema.parse(req.body);
             
             const venueById = await this.updateVenueUseCase.execute(param);
-            return resp.json(venueById)
+            return resp.status(201).json(venueById);
         } catch (error) {
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
