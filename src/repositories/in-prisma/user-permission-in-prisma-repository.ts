@@ -16,7 +16,8 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
     role,
     venueId,
     permissions,
-    userorganizationId,
+    organizationId,
+    userId
   }: CreateUserPermissionRequestParams): Promise<UserPermission | null> {
     return await this.prisma.userPermission.create({
       data: {
@@ -28,7 +29,10 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
         },
         userOrganization: {
           connect: {
-            id: userorganizationId
+           userId_organizationId: {
+            organizationId: organizationId,
+            userId: userId
+           }
           }
         },
 

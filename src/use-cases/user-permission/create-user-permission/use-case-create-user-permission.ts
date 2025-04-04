@@ -9,7 +9,12 @@ class CreateUserPermissionUseCase {
 
   async execute(params: CreateUserPermissionRequestParams) {
 
-    if (params.userorganizationId) {
+    const userOrganizationExists = await this.userOrganizationRepository.verifyByUserIdAndOrganizationId({
+      organizationId: params.organizationId,
+      userId: params.userId,
+    })
+
+    if (userOrganizationExists) {
       const userPermission = await this.userpermissionRepository.create(params);
 
       const formatedResponse = {
@@ -24,7 +29,9 @@ class CreateUserPermissionUseCase {
 
       return formatedResponse
     }
+
     const { userorganizationId, ...rest } = params
+    
     const newUserOrganization = await this.userOrganizationRepository.create({
       organizationId: params.organizationId,
       userId: params.userId,

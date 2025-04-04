@@ -283,7 +283,7 @@ model Expense {
   recurring   Boolean // Indicates if it's a recurring or one-time expense
   createdAt   DateTime        @default(now()) // Record creation date
   updatedAt   DateTime        @updatedAt
-  venue       Venue           @relation(fields: [venueId], references: [id]) // Allows deleting without losing the quote
+  venue       Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade) // Allows deleting without losing the quote
   venueId     String // Can be null for expenses not linked to specific events
 
   @@index([venueId])

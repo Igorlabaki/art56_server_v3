@@ -8,7 +8,7 @@ class GetByIdUserController {
     constructor(private getbyidUserUseCase: GetByIdUserUseCase) { }
     async handle(req: Request, resp: Response) {
         try {
-            const param = getbyidUserRequestParamSchema.parse(req.params);
+            const param = getbyidUserRequestParamSchema.parse(req.query);
             const userById = await this.getbyidUserUseCase.execute(param);
             
             return resp.json(userById)

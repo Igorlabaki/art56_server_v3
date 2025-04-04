@@ -4,6 +4,7 @@ import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 import { updateUserFactory } from "../use-cases/user/update/factory-update-user";
 import { listUserFactory } from "../use-cases/user/list-user/factory-list-user";
 import { getByIdUserFactory } from "../use-cases/user/get-by-id/factory-get-by-id-user";
+import { createNewUserFactory } from "../use-cases/user/create-new-user/factory-create-new-user-text";
 
 const userRoutes = Router()
 
@@ -19,7 +20,13 @@ userRoutes.put("/update", upload.single("file"), (req, res) => {
 });
 
 // Register
-userRoutes.get("/getById", (req, res) => {
+userRoutes.post("/createNewUser", (req, res) => {
+    const controller = createNewUserFactory();
+    controller.handle(req, res);
+});
+
+// Register
+userRoutes.get("/getById?:venueId?", (req, res) => {
     const controller = getByIdUserFactory();
     controller.handle(req, res);
 });

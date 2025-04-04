@@ -138,6 +138,28 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     })
   }
 
+  async verifyByUserIdAndOrganizationId({organizationId,userId}: {userId: string, organizationId: string}): Promise<UserOrganization | null> {
+    return await this.prisma.userOrganization.findFirst({
+      where: {
+        organizationId,
+        userId
+      },
+      include: {
+        user: true,
+        userPermissions: {
+          include:{
+            userOrganization: {
+              select:{
+                organizationId: true
+              }
+            },
+            venue: true
+          }
+        }
+      },
+    })
+  }
+
   async getByUserId(reference: string): Promise<UserOrganization | null> {
     return await this.prisma.userOrganization.findFirst({
       where: {
