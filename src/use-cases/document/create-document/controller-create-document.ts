@@ -8,7 +8,6 @@ import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-er
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
 import { CreateDocumentRequestParams, createDocumentSchema } from "../../../zod/document/create-document-params-schema";
-import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 
 class CreateDocumentController {
     constructor(private createDocumentUseCase: CreateDocumentUseCase, private documentRepository: DocumentRepositoryInterface) { }
@@ -16,51 +15,21 @@ class CreateDocumentController {
     async handle(req: Request, resp: Response) {
         try {
             const body: CreateDocumentRequestParams = req.body;
-            
-            // Validação dos parâmetros da requisição
-            const validation = createDocumentSchema.safeParse(body);
-            if (!validation.success) {
-                throw new HttpBadRequestError("Dados inválidos");
-            }
+            // Validate the request parms
+            createDocumentSchema.safeParse(body);
 
             if (!req.file) {
-                throw new HttpBadRequestError("Nenhum arquivo enviado");
+                throw new HttpResourceNotFoundError("Documento")
             }
 
-            // Validação do tipo de arquivo (aceita PDF e imagens)
-            const allowedMimeTypes = [
-                'application/pdf',
-                'image/jpeg',
-                'image/png',
-                'image/gif',
-                'image/webp'
-            ];
-
-            if (!allowedMimeTypes.includes(req.file.mimetype)) {
-                throw new HttpBadRequestError(
-                    "Tipo de arquivo não suportado. Envie um PDF ou imagem (JPEG, PNG, GIF, WEBP)"
-                );
-            }
-
-            // Validação do tamanho do arquivo (opcional - 2.5MB máximo)
-            const maxSize = 2.5 * 1024 * 1024; // 2.5MB
-            if (req.file.size > maxSize) {
-                throw new HttpBadRequestError(
-                    "Arquivo muito grande. Tamanho máximo permitido: 2.5MB"
-                );
-            }
-
-            // Verifica se já existe documento com o mesmo título
             const documentAlreadyExists = await this.documentRepository.getDocumentByTitle(body.title);
+
             if (documentAlreadyExists) {
-                throw new HttpConflictError("Já existe um documento com este nome.");
+                throw new HttpConflictError("Ja existe um documento com esta nome.")
             }
 
-            // Mantém a extensão original do arquivo
-            const fileExtension = req.file.originalname.split('.').pop();
-            const fileKey = `${Date.now()}-${randomUUID()}.${fileExtension}`;
+            const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
 
-            // Upload para o S3
             const params = {
                 Bucket: process.env.AWS_BUCKET_NAME!,
                 Key: fileKey,
@@ -73,16 +42,16 @@ class CreateDocumentController {
             // URL pública do arquivo
             const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
 
-            // Cria o documento no banco de dados
-            const { imageUrl, ...rest } = body;
-            const response = await this.createDocumentUseCase.execute({ 
-                imageUrl: fileUrl, 
-                ...rest 
-            });
-
+            const { imageUrl, ...rest } = body
+            // Esperar a execução do caso de uso
+            const response = await this.createDocumentUseCase.execute({ imageUrl: fileUrl, ...rest });
+            // Retornar o token
             return resp.status(201).json(response);
         } catch (error) {
+            // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
+
+            // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }
     }
