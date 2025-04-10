@@ -244,11 +244,11 @@ model Payment {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   imageUrl      String?
+  Document      Document[]
 
   @@index([proposalId])
   @@index([venueId])
   @@map("payment")
-  Document Document[]
 }
 
 enum PaymentMethod {
@@ -403,9 +403,24 @@ model Venue {
   seasonalFee        SeasonalFee[]
   contracts          Contract[]       @relation("ContractVenues")
   attachments        Attachment[]
+  goals              Goal[]
 
   @@index([organizationId])
   @@map("venue")
+}
+
+model Goal {
+  id               String          @id @default(uuid())
+  minValue        Float // valor inicial da arrecadação
+  maxValue        Float? // valor final (pode ser null = infinito)
+  increasePercent Float // percentual de acréscimo, ex: 0.10 para 10%
+  venue           Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  months          String
+  venueId         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([venueId])
 }
 
 model SeasonalFee {
@@ -518,21 +533,21 @@ model Text {
 }
 
 model Document {
-  id           String   @id @default(cuid())
-  imageUrl     String 
-  title        String 
-  createdAt    DateTime @default(now()) 
-  updatedAt    DateTime @updatedAt
+  id           String       @id @default(cuid())
+  imageUrl     String
+  title        String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   thumbnailUrl String?
   fileType     DocumentType
   proposalId   String
-  proposal     Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
-  paymentId   String?
-  payment     Payment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  proposal     Proposal     @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  paymentId    String?
+  payment      Payment?     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 
-  @@map("document")
   @@index([paymentId])
   @@index([proposalId])
+  @@map("document")
 }
 
 enum DocumentType {

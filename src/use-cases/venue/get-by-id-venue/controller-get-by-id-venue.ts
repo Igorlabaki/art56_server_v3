@@ -8,6 +8,7 @@ import { getSelectedVenueRequestParamSchema } from "../../../zod/venue/get-selec
 class GetVenueByIdController {
     constructor(private getVenueByIdUseCase: GetVenueByIdUseCase) { }
     async handle(req: Request, resp: Response) {
+        console.log(req.query)
         try {
             const query = getSelectedVenueRequestParamSchema.parse(req.query);
             const venueById = await this.getVenueByIdUseCase.execute(query);
