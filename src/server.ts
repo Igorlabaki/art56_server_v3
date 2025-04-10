@@ -25,6 +25,7 @@ import { userorganizationRoutes } from "./router/userOrganization";
 import { userpermissionRoutes } from "./router/userPermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { attachmentRoutes } from "./router/attachment";
+import { goalRoutes } from "./router/goal";
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }))
 app.use('/auth', authRoutes)
 app.use('/user', userRoutes)
 app.use('/text', textRoutes)
+app.use('/goal', goalRoutes)
 app.use('/image', imageRoutes)
 app.use('/venue', venueRoutes)
 app.use('/token', tokenRoutes)
