@@ -19,7 +19,7 @@ class CreateGoalUseCase {
 
     const newGoal = await this.goalRepository.create({
       venueId: params.venueId,
-      months: params.months.join(""),
+      months: params.months.join(","),
       maxValue: Number(params.maxValue),
       minValue: Number(params.minValue),
       increasePercent: Number(params.increasePercent),
