@@ -6,7 +6,7 @@ export const updateGoalSchema = z.object({
     data: z.object({
         minValue: z.number(),
         months: z.string(),
-        maxValue: z.number(),
+        maxValue: z.number().optional(),
         increasePercent: z.number(),
     }),
 });
