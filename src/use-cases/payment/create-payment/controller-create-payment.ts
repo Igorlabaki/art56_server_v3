@@ -34,7 +34,7 @@ class CreatePaymentController {
                 const response = await this.createPaymentUseCase.execute({ ...req.body, imageUrl: fileUrl });
 
                 if(response.success){
-                    await this.createDocumentUseCase.execute({ imageUrl: fileUrl, proposalId: body.proposalId, title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}` });
+                    await this.createDocumentUseCase.execute({paymentId:response.data.id , imageUrl: fileUrl,fileType: "IMAGE", proposalId: body.proposalId, title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}` });
                 }
           
                 return resp.status(201).json(response);

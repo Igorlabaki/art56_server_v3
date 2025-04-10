@@ -8,7 +8,6 @@ import { s3Client } from "../../../service/upload-config-sw";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { randomUUID } from "crypto";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
-
 class UpdateDocumentController {
     constructor(private updateDocumentUseCase: UpdateDocumentUseCase, private documentRepository: DocumentRepositoryInterface) { }
     async handle(req: Request, resp: Response) {

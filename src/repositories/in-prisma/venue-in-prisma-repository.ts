@@ -160,7 +160,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           }
         },
         seasonalFee: true,
-        contracts: true
+        contracts: true,
+        attachments: true
       }
     });
   }
@@ -185,7 +186,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             owner: true
           }
         },
-        contracts: true
+        contracts: true,
+        attachments: true
       }
     });
   }

@@ -62,8 +62,9 @@ model Organization {
   owners            Owner[] // Proprietários da organização
   userOrganizations UserOrganization[] // Relacionamento com usuários e suas permissões na organização
 
-  Clause   Clause[] // Cláusulas relacionadas à organização
-  Contract Contract[] // Contratos da organização
+  Clause      Clause[] // Cláusulas relacionadas à organização
+  Contract    Contract[] // Contratos da organização
+  attachments Attachment[]
 
   @@map("organization")
 }
@@ -102,7 +103,7 @@ model Proposal {
   completeCompanyName String?
   completeClientName  String
   cpf                 String?
-  cnpj                 String?
+  cnpj                String?
   rg                  String?
   street              String?
   streetNumber        String?
@@ -119,7 +120,7 @@ model Proposal {
   email               String
   whatsapp            String
   description         String            @db.LongText
-  hostMessage         String?            @db.LongText
+  hostMessage         String?           @db.LongText
   basePrice           Float
   extraHoursQty       Int
   extraHourPrice      Float
@@ -166,15 +167,15 @@ model History {
 }
 
 model Person {
-  id         String     @id @default(uuid())
-  attendance Boolean    @default(false)
-  type       PersonType
-  name       String
-  email      String?
-  rg         String?
+  id                     String     @id @default(uuid())
+  attendance             Boolean    @default(false)
+  type                   PersonType
+  name                   String
+  email                  String?
+  rg                     String?
   confirmAttendanceEmail Boolean    @default(false) // Campo para confirmar presença
-  proposalId String
-  proposal   Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposalId             String
+  proposal               Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
   @@map("person")
@@ -247,6 +248,7 @@ model Payment {
   @@index([proposalId])
   @@index([venueId])
   @@map("payment")
+  Document Document[]
 }
 
 enum PaymentMethod {
@@ -366,7 +368,7 @@ model DateEvent {
 model Venue {
   id                 String           @id @default(uuid())
   name               String           @unique
-  email               String?           @unique
+  email              String?          @unique
   street             String
   streetNumber       String
   complement         String?
@@ -400,6 +402,7 @@ model Venue {
   UserPermission     UserPermission[]
   seasonalFee        SeasonalFee[]
   contracts          Contract[]       @relation("ContractVenues")
+  attachments        Attachment[]
 
   @@index([organizationId])
   @@map("venue")
@@ -515,16 +518,26 @@ model Text {
 }
 
 model Document {
-  id         String   @id @default(cuid())
-  imageUrl   String // "area" permanece o mesmo
-  title      String // "titulo" para "title"
-  createdAt  DateTime @default(now()) // "created_at" para "createdAt"
-  updatedAt  DateTime @updatedAt
-  proposalId String
-  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  imageUrl     String 
+  title        String 
+  createdAt    DateTime @default(now()) 
+  updatedAt    DateTime @updatedAt
+  thumbnailUrl String?
+  fileType     DocumentType
+  proposalId   String
+  proposal     Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  paymentId   String?
+  payment     Payment? @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 
-  @@index([proposalId])
   @@map("document")
+  @@index([paymentId])
+  @@index([proposalId])
+}
+
+enum DocumentType {
+  PDF
+  IMAGE
 }
 
 model Question {
@@ -562,10 +575,26 @@ model Clause {
   updatedAt      DateTime      @updatedAt
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  contracts       Contract[]    @relation("ContractClauses")
+  contracts      Contract[]    @relation("ContractClauses")
 
   @@index([organizationId])
   @@map("clause")
+}
+
+model Attachment {
+  id             String        @id @default(cuid())
+  text           String        @db.LongText
+  title          String        @db.LongText
+  createdAt      DateTime      @default(now()) // "created_at" para "createdAt"
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  venueId        String?
+  venue          Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([venueId])
+  @@map("attachments")
 }
 
 model Schedule {

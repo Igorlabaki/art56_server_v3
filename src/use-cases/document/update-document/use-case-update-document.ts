@@ -1,7 +1,7 @@
 import { UpdateDocumentRequestParams } from "../../../zod/document/update-document-params-schema"
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
-import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface"
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
+import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface"
 
 class UpdateDocumentUseCase {
     constructor(private documentRepository: DocumentRepositoryInterface) { }

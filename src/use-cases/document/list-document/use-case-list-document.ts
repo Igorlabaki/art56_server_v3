@@ -1,6 +1,5 @@
-import { ListDocumentRequestQuerySchema } from "../../../zod/document/list-document-query-schema";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
-
+import { ListDocumentRequestQuerySchema } from "../../../zod/document/list-document-query-schema";
 class ListDocumentsUseCase {
   constructor(private documentRepository: DocumentRepositoryInterface) { }
 

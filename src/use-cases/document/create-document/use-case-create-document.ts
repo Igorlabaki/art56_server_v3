@@ -1,10 +1,14 @@
-import { CreateDocumentDbSchema } from "../../../zod/document/create-document-db-schema";
+
+
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
+import { CreateDocumentDbSchema } from "../../../zod/document/create-document-db-schema";
+import { CreateDocumentRequestParams } from "../../../zod/document/create-document-params-schema";
 
 class CreateDocumentUseCase {
   constructor(private documentRepository: DocumentRepositoryInterface) {}
 
-  async execute(params: CreateDocumentDbSchema) {
+  async execute(params: CreateDocumentDbSchema
+  ) {
     const newDocument = await this.documentRepository.create(params);
 
     const formatedResponse = {

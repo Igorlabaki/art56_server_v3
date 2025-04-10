@@ -4,9 +4,14 @@ import { s3Client } from "../../../service/upload-config-sw";
 import { DeleteDocumentRequestParamSchema } from "../../../zod/document/delete-document-param-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
-
+import { PaymentRepositoryInterface } from "../../../repositories/interface/payment-repository-interface";
+import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 class DeleteDocumentUseCase {
-    constructor(private documentRepository: DocumentRepositoryInterface) { }
+    constructor(
+        private documentRepository: DocumentRepositoryInterface, 
+        private paymentRepository: PaymentRepositoryInterface, 
+        private proposalRepository: ProposalRepositoryInterface
+    ) { }
 
     async execute({ documentId }: DeleteDocumentRequestParamSchema) {
 
@@ -14,11 +19,32 @@ class DeleteDocumentUseCase {
         const document = await this.documentRepository.getById(documentId)
 
         if (!document) {
-            throw new HttpResourceNotFoundError("Pergunta")
+            throw new HttpResourceNotFoundError("Documento")
         }
         //
 
         const deletedDocument = await this.documentRepository.delete(documentId)
+
+        if (deletedDocument?.paymentId) {
+            const deletedPayment = await this.paymentRepository.delete(deletedDocument.paymentId)
+
+            if(!deletedPayment){
+                throw new HttpResourceNotFoundError("Pagamento")
+            }
+
+            const proposal = await this.proposalRepository.getById(deletedPayment.proposalId)
+
+            if (!proposal) {
+                throw new HttpResourceNotFoundError("Orcamento")
+            }
+
+            await this.proposalRepository.update({
+                proposalId: proposal.id,
+                data: {
+                    amountPaid: (proposal.amountPaid || 0) - deletedPayment.amount
+                }
+            })
+        }
 
         const fileKey = deletedDocument?.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
         await s3Client.send(

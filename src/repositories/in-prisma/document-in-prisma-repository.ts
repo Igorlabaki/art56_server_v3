@@ -1,22 +1,29 @@
 import { PrismaClient, Document } from "@prisma/client";
-import { DocumentRepositoryInterface } from "../interface/document-repository-interface";
+
 import { CreateDocumentRequestParams } from "../../zod/document/create-document-params-schema";
 import { ListDocumentRequestQuerySchema } from "../../zod/document/list-document-query-schema";
 import { UpdateDocumentRequestParams } from "../../zod/document/update-document-params-schema";
 import { CreateDocumentDbSchema } from "../../zod/document/create-document-db-schema";
-
+import { DocumentRepositoryInterface } from "../interface/document-repository-interface";
 export class PrismaDocumentRepository implements DocumentRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
   async create(params: CreateDocumentDbSchema): Promise<Document | null> {
-    const {proposalId,...rest}  = params
+    const { proposalId, paymentId, ...rest } = params
     return await this.prisma.document.create({
       data: {
-        proposal:{
-          connect:{
+        proposal: {
+          connect: {
             id: proposalId
           }
         },
+        ...(paymentId && {
+          payment: {
+            connect: {
+              id: paymentId
+            }
+          },
+        }),
         ...rest,
       },
     });
@@ -35,6 +42,9 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
       where: {
         id: reference,
       },
+      include:{
+        payment: true
+      }
     });
   }
 
@@ -54,6 +64,9 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
       data: {
         ...data,
       },
+      include:{
+        payment: true
+      }
     });
   }
 
@@ -67,6 +80,9 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
         }),
         proposalId
       },
+      include:{
+        payment: true
+      }
     });
   }
 }

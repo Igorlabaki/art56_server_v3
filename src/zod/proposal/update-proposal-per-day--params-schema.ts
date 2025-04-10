@@ -4,7 +4,7 @@ export const updateProposalPerDayRequestParams = z.object({
     proposalId: z.string(),
     data: z.object({
         completeClientName: z.string(),
-        completeCompanyName: z.string(),
+        completeCompanyName: z.string().optional(),
         venueId: z.string(),
         endHour: z.string(),
         endDay: z.string(),
