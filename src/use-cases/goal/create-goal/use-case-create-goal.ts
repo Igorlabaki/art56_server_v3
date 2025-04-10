@@ -7,6 +7,7 @@ class CreateGoalUseCase {
   constructor(private goalRepository: GoalRepositoryInterface) {}
 
   async execute(params: CreateGoalRequestParams) {
+    console.log(params)
     const goalnAlreadyExists = await this.goalRepository.verifyIfGoalAlreadyExists({
       venueId: params.venueId,
       minValue: Number(params.minValue)
