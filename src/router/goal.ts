@@ -3,9 +3,11 @@ import { listGoalFactory } from "../use-cases/goal/list-goal/factory-list-goal";
 import { createGoalFactory } from "../use-cases/goal/create-goal/factory-create-goal";
 import { deleteGoalFactory } from "../use-cases/goal/delete-goal/factory-delete-goal";
 import { updateGoalFactory } from "../use-cases/goal/update-goal/factory-update-goal";
+import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 
 const goalRoutes = Router();
 
+goalRoutes.use(ensureAuthenticate)
 // Create
 goalRoutes.post("/create", async (req, res) => {
     const controller = createGoalFactory();  
