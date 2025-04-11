@@ -161,7 +161,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         },
         seasonalFee: true,
         contracts: true,
-        attachments: true
+        attachments: true,
+        Payment: true
       }
     });
   }

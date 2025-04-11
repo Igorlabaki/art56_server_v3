@@ -41,7 +41,6 @@ class CreateDocumentController {
     } */
 
     async handle(req: Request, resp: Response) {
-        console.log(req.body)
         try {
             const body = req.body
 
@@ -84,7 +83,6 @@ class CreateDocumentController {
 
             return resp.status(201).json(response);
         } catch (error) {
-            console.log(error);
             const errorResponse = handleErrors(error);
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }

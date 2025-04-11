@@ -7,21 +7,24 @@ import { PrismaServiceRepository } from "../../../repositories/in-prisma/service
 import { PrismaHistoryRepository } from "../../../repositories/in-prisma/history-in-prisma-repository";
 import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";
 import { PrismaNotificationRepository } from "../../../repositories/in-prisma/notification-in-prisma-repository";
+import { PrismaGoalRepository } from "../../../repositories/in-prisma/goal-in-prisma-repository";
 
 export const createProposalPerPersonFactory = (): CreateProposalPerPersonController => {
     const prismaUserRepository = new PrismaUserRepository(prismaClient);
     const prismaVenueRepository = new PrismaVenueRepository(prismaClient);
     const prismaHistoryRepository = new PrismaHistoryRepository(prismaClient);
     const prismaServiceRepository = new PrismaServiceRepository(prismaClient);
+    const prismaGoalRepository = new PrismaGoalRepository(prismaClient);
     const prismaProposalRepository = new PrismaProposalRepository(prismaClient);
     const prismaNotificationRepository = new PrismaNotificationRepository(prismaClient);
     const createProposalPerPersonUseCase = new CreateProposalPerPersonUseCase(
         prismaUserRepository,
+        prismaGoalRepository,
         prismaVenueRepository,
         prismaServiceRepository,
         prismaHistoryRepository,
         prismaProposalRepository,
-        prismaNotificationRepository
+        prismaNotificationRepository,
     );
     const createProposalPerPersonController = new CreateProposalPerPersonController(createProposalPerPersonUseCase);
 

@@ -8,32 +8,47 @@ class UpdateGoalUseCase {
 
     async execute(param: UpdateGoalRequestParams) {
 
-        // Validate if goal exists
+        // Valida se a meta existe
         const goal = await this.goalRepository.getById(param.goalId)
 
         if (!goal) {
             throw new HttpResourceNotFoundError("Meta")
         }
-        //
 
-        const goalAlreadyExists = await this.goalRepository.verifyIfGoalAlreadyExists({
+        // Verifica se a meta com o mesmo valor já está cadastrada, mas excluindo a meta atual
+        const goalList = await this.goalRepository.list({
             venueId: param.venueId,
-            minValue: param.data.minValue
+        }) || [];
+
+        const normalizedGoals = goalList.map(goal => ({
+            ...goal,
+            monthsArray: goal.months.split(","),
+        }));
+
+        const incomingMonths = new Set(param.data.months);
+
+        const goalAlreadyExists = normalizedGoals.some(existingGoal => {
+            // Verifica se a meta já existe, excluindo a meta atual (goal.id)
+            if (existingGoal.id === param.goalId) return false;
+            if (existingGoal.minValue !== Number(param.data.minValue)) return false;
+            return existingGoal.monthsArray.some(month => incomingMonths.has(month));
         });
 
         if (goalAlreadyExists) {
-            throw new HttpConflictError("Essa meta ja esta cadastrada.")
+            throw new HttpConflictError("Já existe uma meta para esses meses e esse valor.");
         }
 
+        // Realiza a atualização da meta
         const updatedGoal = await this.goalRepository.update(param)
 
         if (!updatedGoal) {
-            throw new HttpConflictError("Meta")
+            throw new HttpConflictError("Erro ao atualizar a meta.")
         }
 
+        // Formata a resposta de sucesso
         const formatedResponse = {
             success: true,
-            message: `Meta atualizado(a) com sucesso`,
+            message: `Meta atualizada com sucesso`,
             data: {
                 ...updatedGoal
             },

@@ -4,6 +4,7 @@ import { ListGoalRequestQuerySchema } from "../../zod/goal/list-goal-query-schem
 import { UpdateGoalRequestParams } from "../../zod/goal/update-goal-params-schema";
 import { CreateGoalDbRequestParams } from "../../zod/goal/create-goal-db-params-schema";
 import { VerifyGoalRequestParams } from "../../zod/goal/verify-goal-params-schema";
+import { ListGoalDbRequestQuerySchema } from "../../zod/goal/list-goal-db-query-schema";
 
 export class PrismaGoalRepository implements GoalRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
@@ -41,6 +42,25 @@ export class PrismaGoalRepository implements GoalRepositoryInterface {
     });
   }
 
+  async findByVenueAndRevenue(params : { venueId: string, monthlyRevenue: number,targetMonth: string}): Promise<Goal | null> {
+    const goals = await this.prisma.goal.findMany({
+      where: {
+        venueId: params.venueId,
+      },
+    });
+  
+    return goals.find(goal => {
+      const monthsArray = goal.months.split(',');
+      const minValue = goal.minValue;
+      const maxValue = goal.maxValue ?? Infinity;
+  
+      const isRevenueInRange = params.monthlyRevenue >= minValue && params.monthlyRevenue <= maxValue;
+      const isMonthIncluded = monthsArray.includes(params.targetMonth);
+
+      return isRevenueInRange && isMonthIncluded;
+    }) || null;
+  }
+
   async getByGoal({venueId,goalId,minValue}: {minValue: number, venueId: string, goalId: string | undefined}): Promise<Goal | null> {
     return await this.prisma.goal.findFirst({
       where: {
@@ -53,7 +73,6 @@ export class PrismaGoalRepository implements GoalRepositoryInterface {
             { id: goalId }
           ]
         }),
-        
       },
     });
   }
@@ -69,7 +88,7 @@ export class PrismaGoalRepository implements GoalRepositoryInterface {
     });
   }
 
-  async list({ venueId, minValue }: ListGoalRequestQuerySchema): Promise<Goal[]> {
+  async list({ venueId, minValue }: ListGoalDbRequestQuerySchema): Promise<Goal[]> {
     return await this.prisma.goal.findMany({
       where: {
         ...(minValue && {

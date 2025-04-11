@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient, Proposal } from "@prisma/client"
 import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
-import { CreateProposalInDbParams, ItemListProposalResponse, MonthProposalDataCount, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices } from "../interface/proposal-repository-interface"
+import { CreateProposalInDbParams, ItemListProposalResponse, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices } from "../interface/proposal-repository-interface"
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
@@ -135,7 +135,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
           approved: true,
         }),
         startDate: {
-          gte: new Date(year ? year : new Date().getFullYear(),0,1),
+          gte: new Date(year ? year : new Date().getFullYear(), 0, 1),
           lt: new Date(year ? year : new Date().getFullYear(), 12, 31),
         },
       },
@@ -228,8 +228,8 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
-  async updatePersonalInfo({proposalId,data}: UpdatePersonalInfoProposalSchema): Promise<Proposal | null> {
-    const {cep,cpf,city,completeClientName,completeCompanyName,neighborhood,state,street,streetNumber,rg} = data
+  async updatePersonalInfo({ proposalId, data }: UpdatePersonalInfoProposalSchema): Promise<Proposal | null> {
+    const { cep, cpf, city, completeClientName, completeCompanyName, neighborhood, state, street, streetNumber, rg } = data
     return await this.prisma.proposal.update({
       where: {
         id: proposalId
@@ -244,7 +244,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         completeCompanyName,
         streetNumber,
         neighborhood,
-        rg: rg ?? null, 
+        rg: rg ?? null,
       } as Prisma.ProposalUpdateInput,
     })
   }
@@ -286,7 +286,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
-  async analysisByMonth({ year,venueId,approved }: GetVenueAnalysisByMonthDbSchema): Promise<any> {
+  async analysisByMonth({ year, venueId, approved }: GetVenueAnalysisByMonthDbSchema): Promise<any> {
     return await this.prisma.proposal.findMany({
       where: {
         venueId,
@@ -294,7 +294,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
           approved: true,
         }),
         startDate: {
-          gte: new Date(year ? year : new Date().getFullYear(),0,1),
+          gte: new Date(year ? year : new Date().getFullYear(), 0, 1),
           lt: new Date(year ? year : new Date().getFullYear(), 12, 31),
         },
       },
@@ -309,6 +309,30 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         startDate: "asc",
       },
     });
+  }
+
+  async monthlyRevenueAnalysis({ year, month, venueId, approved }: MonthlyRevenueAnalysisParams): Promise<number> {
+    const startOfMonth = new Date(year, month - 1, 1);
+    const startOfNextMonth = new Date(year, month, 1);
+
+    const proposals = await this.prisma.proposal.findMany({
+      where: {
+        venueId,
+        ...(approved && { approved: true }),
+        startDate: {
+          gte: startOfMonth,
+          lt: startOfNextMonth,
+        },
+      },
+      select: {
+        totalAmount: true,
+      },
+    });
+  
+    const totalAmount = proposals.reduce((acc, proposal) => acc + proposal.totalAmount, 0);
+
+    return totalAmount
+
   }
 }
 

@@ -62,6 +62,12 @@ export interface TrafegoCountResponse {
 export interface MonthProposalDataCount{
   year: number
 }
+export interface MonthlyRevenueAnalysisParams{
+  year: number,
+  venueId: string,
+  month: number,
+  approved: boolean
+}
 
 type TrafficSource = "AIRBNB" | "GOOGLE" | "INSTAGRAM" | "TIKTOK" | "OTHER" | "FRIEND" | "FACEBOOK";
 
@@ -75,6 +81,7 @@ export interface ProposalRepositoryInterface {
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>
   createPerPerson: (params: CreateProposalInDbParams) => Promise<Proposal | null>
   analysisByMonth: (params: GetVenueAnalysisByMonthDbSchema) => Promise<Proposal[] | null>
+  monthlyRevenueAnalysis: (params: MonthlyRevenueAnalysisParams) => Promise<number | null>
   updatePersonalInfo: (params: UpdatePersonalInfoProposalSchema) => Promise<Proposal | null> 
   trafficCount: (params: GetTrafficCountVenueDbSchema) => Promise<TrafegoCountResponse | null>
   list: (params: ListProposalRequestQuerySchema) => Promise<ItemListProposalResponse[] | null>

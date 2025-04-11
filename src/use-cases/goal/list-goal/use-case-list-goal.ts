@@ -5,7 +5,10 @@ class ListGoalsUseCase {
   constructor(private goalRepository: GoalRepositoryInterface) { }
 
   async execute(query: ListGoalRequestQuerySchema) {
-    const goalList = await this.goalRepository.list(query);
+    const goalList = await this.goalRepository.list({
+      venueId: query.venueId,
+      minValue: Number(query.minValue)
+    });
 
     const formatedResponse = {
       success: true,
