@@ -32,7 +32,7 @@ userRoutes.get("/getById?:venueId?", (req, res) => {
     controller.handle(req, res);
 });
 // Register
-userRoutes.delete("/delete/:userId?", (req, res) => {
+userRoutes.delete("/delete?:userId?", (req, res) => {
     const controller = deleteUserFactory();
     controller.handle(req, res);
 });

@@ -75,7 +75,7 @@ model UserOrganization {
   organizationId String
   joinedAt       DateTime @default(now())
 
-  user            User             @relation(fields: [userId], references: [id])
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   userPermissions UserPermission[] // Permissões diretamente relacionadas ao usuário na organização
 
