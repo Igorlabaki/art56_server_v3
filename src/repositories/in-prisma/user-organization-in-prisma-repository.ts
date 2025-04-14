@@ -1,6 +1,6 @@
 
 import { PrismaClient, UserOrganization, UserPermission } from "@prisma/client"
-import { UserOrganizationRepositoryInterface } from "../interface/user-organization-repository-interface"
+import { UserOrganizationRepositoryInterface, UserOrganizationWithRelations } from "../interface/user-organization-repository-interface"
 import { CreateUserOrganizationRequestParams } from "../../zod/user-organization/create-user-organization-params-schema"
 import { ListUserOrganizationRequestQuerySchema } from "../../zod/user-organization/list-user-organization-query-schema"
 import { ListUserOrganizationByOrganizationRequestQuerySchema } from "../../zod/user-organization/list-user-organization-by-organization-query-schema";
@@ -117,7 +117,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     });
   }
 
-  async getById(reference: string): Promise<UserOrganization | null> {
+  async getById(reference: string): Promise<UserOrganizationWithRelations | null> {
     return await this.prisma.userOrganization.findFirst({
       where: {
         id: reference
