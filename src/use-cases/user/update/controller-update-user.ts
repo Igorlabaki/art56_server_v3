@@ -9,6 +9,7 @@ class UpdateUserController {
     constructor(private updateUseCase: UpdateUserCase) { }
     async handle(req: Request, resp: Response) {
         try {
+            console.log(req.body)
             const body: UpdateUserRequestParams = req.body
 
             updateUserSchema.parse(body);
@@ -43,6 +44,7 @@ class UpdateUserController {
             return resp.json(response);
 
         } catch (error) {
+            console.log(error)
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
 

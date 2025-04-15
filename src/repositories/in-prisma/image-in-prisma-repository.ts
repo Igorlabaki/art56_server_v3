@@ -67,12 +67,17 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
     });
   }
 
-  async list({ venueId, description }: ListImageRequestQuerySchema): Promise<Image[]> {
+  async list({ venueId, description, responsiveMode }: ListImageRequestQuerySchema): Promise<Image[]> {
     return await this.prisma.image.findMany({
       where: {
         ...(description && {
           description: {
             contains: description
+          }
+        }),
+        ...(responsiveMode && {
+          responsiveMode: {
+            contains: responsiveMode
           }
         }),
         venueId
