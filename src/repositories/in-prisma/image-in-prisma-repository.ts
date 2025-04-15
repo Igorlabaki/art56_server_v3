@@ -3,6 +3,7 @@ import { ImageRepositoryInterface } from "../interface/image-repository-interfac
 import { CreateImageRequestParams } from "../../zod/image/create-image-params-schema";
 import { ListImageRequestQuerySchema } from "../../zod/image/list-image-query-schema";
 import { UpdateImageRequestParams } from "../../zod/image/upload-image-params-schema";
+import { GetByTagImageRequestQuerySchema } from "../../zod/image/get-by-tag-image-query-schema";
 /* import { ListImageRequestQuerySchema } from "../../zod/image/list-image-query-schema";
 import { UpdateImageRequestParams } from "../../zod/image/update-image-params-schema"; */
 
@@ -36,6 +37,16 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
     return await this.prisma.image.findFirst({
       where: {
         id: reference,
+      },
+    });
+  }
+
+  async getByTag({venueId,responsiveMode,tag}: GetByTagImageRequestQuerySchema): Promise<Image[] | null> {
+    return await this.prisma.image.findMany({
+      where: {
+        tag,
+        venueId,
+        responsiveMode,
       },
     });
   }
