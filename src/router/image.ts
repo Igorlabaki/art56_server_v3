@@ -5,6 +5,7 @@ import { listImageFactory } from "../use-cases/image/list-image/factory-list-ima
 import { createImageFactory } from "../use-cases/image/create-image/factory-create-image";
 import { deleteImageFactory } from "../use-cases/image/delete-image/factory-delete-image";
 import { updateImageFactory } from "../use-cases/image/update-image/factory-update-question";
+import { getbytagImageFactory } from "../use-cases/image/get-by-tag-image/factory-get-by-tag-image";
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();
@@ -41,7 +42,7 @@ imageRoutes.delete("/delete/:imageId", async (req, res) => {
 
 // Delete
 imageRoutes.get("/getByTag?:venueId?/:responsiveMode?/:tag?", async (req, res) => {
-    const controller = deleteImageFactory();  // Cria o controlador
+    const controller = getbytagImageFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 // update

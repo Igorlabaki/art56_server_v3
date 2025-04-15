@@ -1,17 +1,17 @@
 import { Request, Response } from 'express';
-import { ListImagesUseCase } from './use-case-list-image';
+import { GetByTagImagesUseCase } from './use-case-get-by-tag-image';
 import { handleErrors } from '../../../errors/error-handler';
-import { listImageRequestQuerySchema, ListImageRequestQuerySchema } from '../../../zod/image/list-image-query-schema';
+import { getByTagImageRequestQuerySchema, GetByTagImageRequestQuerySchema } from '../../../zod/image/get-by-tag-image-query-schema';
 
-class ListImageController {
-  constructor(private listImagesUseCase: ListImagesUseCase) { }
+class GetByTagImageController {
+  constructor(private getbytagImagesUseCase: GetByTagImagesUseCase) { }
 
   async handle(req: Request, resp: Response) {
     try {
-      const query: ListImageRequestQuerySchema = listImageRequestQuerySchema
+      const query: GetByTagImageRequestQuerySchema = getByTagImageRequestQuerySchema
         .parse(req.query);
       // Esperar a execução do caso de uso
-      const response = await this.listImagesUseCase.execute(query);
+      const response = await this.getbytagImagesUseCase.execute(query);
       // Retornar o token
       return resp.status(200).json(response);
     } catch (error) {
@@ -23,4 +23,4 @@ class ListImageController {
   }
 }
 
-export { ListImageController };
+export { GetByTagImageController };
