@@ -9,10 +9,8 @@ import { updateServiceFactory } from "../use-cases/service/update-service/factor
 
 const serviceRoutes = Router()
 
-serviceRoutes.use(ensureAuthenticate)
-
 // Register
-serviceRoutes.post("/create", async (req, res) => {
+serviceRoutes.post("/create",ensureAuthenticate, async (req, res) => {
     const controller = createServiceFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -24,13 +22,13 @@ serviceRoutes.get("/list/:venueId?/:name?", async (req, res) => {
 })
 
 // Delete
-serviceRoutes.delete("/delete/:serviceId", async (req, res) => {
+serviceRoutes.delete("/delete/:serviceId",ensureAuthenticate, async (req, res) => {
     const controller = deleteServiceFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // Update
-serviceRoutes.put("/update", async (req, res) => {
+serviceRoutes.put("/update",ensureAuthenticate, async (req, res) => {
     const controller = updateServiceFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
