@@ -11,7 +11,7 @@ import { updateProposalPersonalInfoFactory } from "../use-cases/proposal/update-
 
 const proposalRoutes = Router()
 
-proposalRoutes.use(ensureAuthenticate)
+
 
 // Register
 proposalRoutes.post("/createPerPerson", async (req, res) => {
@@ -29,27 +29,27 @@ proposalRoutes.get("/byId/:proposalId", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-proposalRoutes.put("/updatePerPerson", async (req, res) => {
+proposalRoutes.put("/updatePerPerson",ensureAuthenticate, async (req, res) => {
     const controller = updateProposalPerPersonFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 }) 
 
-proposalRoutes.put("/updatePersonalInfo", async (req, res) => {
+proposalRoutes.put("/updatePersonalInfo",ensureAuthenticate, async (req, res) => {
     const controller = updateProposalPersonalInfoFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 }) 
 
-proposalRoutes.put("/updatePerDay", async (req, res) => {
+proposalRoutes.put("/updatePerDay",ensureAuthenticate, async (req, res) => {
     const controller = updateProposalPerDayFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 }) 
 
-proposalRoutes.get("/list?:venueId?/:name?/:month?/:year?/:approved?", async (req, res) => {
+proposalRoutes.get("/list?:venueId?/:name?/:month?/:year?/:approved?",ensureAuthenticate, async (req, res) => {
     const controller = listProposalFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-proposalRoutes.delete("/delete/:proposalId", async (req, res) => {
+proposalRoutes.delete("/delete/:proposalId",ensureAuthenticate, async (req, res) => {
     const controller = deleteProposalByidFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
