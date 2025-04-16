@@ -42,6 +42,7 @@ class CreateProposalPerPersonUseCase {
 
 
         if (!venue) {
+            console.log("Locacao nao encontrada")
             throw new HttpResourceNotFoundError("Locacao")
         }
 
