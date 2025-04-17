@@ -41,7 +41,7 @@ imageRoutes.delete("/delete/:imageId", async (req, res) => {
 })
 
 // Delete
-imageRoutes.get("/getByTag?:venueId?/:responsiveMode?/:tag?", async (req, res) => {
+imageRoutes.get("/getByTag?:venueId?/:tag?/:responsiveMode?", async (req, res) => {
     const controller = getbytagImageFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
