@@ -31,7 +31,7 @@ class CreatePersonUseCase {
       throw new HttpBadRequestError("Convidado")
     }
 
-    if(newPerson.type === "GUEST" && newPerson.email  && params.venueInfo){
+/*     if(newPerson.type === "GUEST" && newPerson.email  && params.venueInfo){
       const sendAttendeceConfirmationEmailCase = new SendAttendeceConfirmationEmailCase();
       await sendAttendeceConfirmationEmailCase.execute({
         guest:{
@@ -56,7 +56,7 @@ class CreatePersonUseCase {
           streetNumber: params.venueInfo.streetNumber,
         },
       })
-    }
+    } */
 
     const formatedResponse = {
       success: true,

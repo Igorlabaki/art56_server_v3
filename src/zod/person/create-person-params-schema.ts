@@ -18,7 +18,7 @@ export const createPersonSchema = z.object({
         streetNumber: z.string(),
     }).optional(), // Começa como opcional
 })
-    .refine(
+    /* .refine(
         (data) => {
             if (data.email && data.type === "GUEST") {
                 return data.venueInfo !== undefined;
@@ -29,6 +29,6 @@ export const createPersonSchema = z.object({
             message: "Se o e-mail for informado, venueInfo é obrigatório.",
             path: ["venueInfo"],
         }
-    );
+    ); */
 
 export type CreatePersonRequestParams = z.infer<typeof createPersonSchema>;
