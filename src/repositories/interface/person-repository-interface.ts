@@ -9,6 +9,6 @@ export interface PersonRepositoryInterface {
   getById: (params: string) => Promise<Person | null>;
   update: (params: UpdatePersonRequestParams) => Promise<Person | null>;
   create: (params: CreatePersonRequestParams) => Promise<Person | null>;
-  createMany: (params: CreateManyPersonSchema) => Promise<Person[] | null>;
   list: (params: ListPersonRequestQuerySchema) => Promise<Person[]  | null>;
+  createMany: (params: CreateManyPersonSchema) => Promise<{list: Person[], count: number} | null>;
 }

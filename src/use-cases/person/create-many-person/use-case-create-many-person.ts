@@ -60,11 +60,11 @@ class CreateManyPersonUseCase {
 
     const formatedResponse = {
       success: true,
-      message: `${personList.length} convidados foram cadastrados com sucesso"`,
+      message: `${personList.count} convidados foram cadastrados com sucesso"`,
       data:{
-        personList: personList
+        personList: personList.list
       },
-      count: personList.length,
+      count: personList.list.length,
       type: "Person"
   } 
 

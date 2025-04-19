@@ -22,7 +22,7 @@ export class PrismaPersonRepository implements PersonRepositoryInterface {
     });
   }
 
-  async createMany(personList: CreateManyPersonSchema): Promise<Person[]> {
+  async createMany(personList: CreateManyPersonSchema): Promise<{list: Person[], count: number} > {
     const { count } = await this.prisma.person.createMany({
       data: personList.map(person => ({
         ...person,
@@ -30,7 +30,7 @@ export class PrismaPersonRepository implements PersonRepositoryInterface {
       }))
     })
 
-     return await this.prisma.person.findMany({
+     const list = await this.prisma.person.findMany({
       where: {  
         type: personList[0].type,
         proposalId:personList[0].proposalId
@@ -39,6 +39,8 @@ export class PrismaPersonRepository implements PersonRepositoryInterface {
         name: "asc",
       },
     });
+
+    return {count, list}
   }
 
   async delete(reference: string): Promise<Person | null> {
