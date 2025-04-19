@@ -4,12 +4,19 @@ import { createPersonFactory } from "../use-cases/person/create-person/factory-c
 import { deletePersonFactory } from "../use-cases/person/delete-person/factory-delete-person";
 import { updatePersonFactory } from "../use-cases/person/update-person/factory-update-person";
 import { getByIdPersonFactory } from "../use-cases/person/get-by-id-person/factory-get-by-id-person";
+import { createmanyPersonFactory } from "../use-cases/person/create-many-person/factory-create-many-person";
 
 const personRoutes = Router();
 
 // Create
 personRoutes.post("/create", async (req, res) => {
     const controller = createPersonFactory();  
+    await controller.handle(req, res);       
+})
+
+// Create Many
+personRoutes.post("/createMany", async (req, res) => {
+    const controller = createmanyPersonFactory();  
     await controller.handle(req, res);       
 })
 
