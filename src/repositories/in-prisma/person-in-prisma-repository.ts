@@ -22,14 +22,23 @@ export class PrismaPersonRepository implements PersonRepositoryInterface {
     });
   }
 
-  async createMany(personList: CreateManyPersonSchema): Promise<Number> {
+  async createMany(personList: CreateManyPersonSchema): Promise<Person[]> {
     const { count } = await this.prisma.person.createMany({
       data: personList.map(person => ({
         ...person,
         proposalId: person.proposalId,
       }))
     })
-    return count;
+
+     return await this.prisma.person.findMany({
+      where: {  
+        type: personList[0].type,
+        proposalId:personList[0].proposalId
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
   }
 
   async delete(reference: string): Promise<Person | null> {

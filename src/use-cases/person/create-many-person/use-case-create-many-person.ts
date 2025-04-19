@@ -25,9 +25,9 @@ class CreateManyPersonUseCase {
       throw new HttpStandartError("Nao ha mais vaga na lista de convidados")
     }
 
-    const countNewPerson = await this.personRepository.createMany(params);
+    const personList = await this.personRepository.createMany(params);
 
-    if(!countNewPerson){
+    if(!personList){
       throw new HttpBadRequestError("Convidado")
     }
 
@@ -60,8 +60,11 @@ class CreateManyPersonUseCase {
 
     const formatedResponse = {
       success: true,
-      message: `${countNewPerson} convidados foram cadastrados com sucesso"`,
-      count: 1,
+      message: `${personList.length} convidados foram cadastrados com sucesso"`,
+      data:{
+        personList: personList
+      },
+      count: personList.length,
       type: "Person"
   } 
 
