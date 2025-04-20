@@ -5,6 +5,7 @@ import { deletePersonFactory } from "../use-cases/person/delete-person/factory-d
 import { updatePersonFactory } from "../use-cases/person/update-person/factory-update-person";
 import { getByIdPersonFactory } from "../use-cases/person/get-by-id-person/factory-get-by-id-person";
 import { createmanyPersonFactory } from "../use-cases/person/create-many-person/factory-create-many-person";
+import { listWebPersonFactory } from "../use-cases/person/web-list-person/factory-web-list-person";
 
 const personRoutes = Router();
 
@@ -23,6 +24,12 @@ personRoutes.post("/createMany", async (req, res) => {
 // List
 personRoutes.get("/list?:proposalId?/:type?/:name?", async (req, res) => {
     const controller = listPersonFactory();  
+    await controller.handle(req, res);       
+})
+
+// List
+personRoutes.get("/list?:proposalId?/:type?/:name?", async (req, res) => {
+    const controller = listWebPersonFactory();  
     await controller.handle(req, res);       
 })
 
