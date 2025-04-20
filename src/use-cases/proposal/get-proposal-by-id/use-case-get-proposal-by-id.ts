@@ -8,7 +8,7 @@ class GetProposalByIdUseCase {
     async execute(param: GetByIdProposalSchema) {
         
         // Validate if proposal exists
-            const proposal = await this.proposalRepository.getById(param)
+            const proposal = await this.proposalRepository.getById(param.proposalId)
 
             if (!proposal) {
                 throw new HttpResourceNotFoundError("Orcamento")

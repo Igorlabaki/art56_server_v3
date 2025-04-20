@@ -5,7 +5,6 @@ import { CreateProposalInDbParams, ItemListProposalResponse, MonthlyRevenueAnaly
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
-import { GetByIdProposalSchema } from "../../zod/proposal/get-by-id-proposal-params-schema";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -186,10 +185,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
 
-  async getById({ proposalId, personTypeList }: GetByIdProposalSchema): Promise<ProposalWithRelations | null> {
+  async getById(reference: string): Promise<ProposalWithRelations | null> {
     return await this.prisma.proposal.findFirst({
       where: {
-        id: proposalId
+        id: reference
       },
       include: {
         proposalServices: {
@@ -210,12 +209,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         personList: {
           orderBy: {
             name: "asc"
-          },
-          ...(personTypeList && {
-            where: {
-              type: personTypeList
-            }
-          }),
+          }
         },
         scheduleList: {
           orderBy: {
@@ -334,7 +328,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         totalAmount: true,
       },
     });
-
+  
     const totalAmount = proposals.reduce((acc, proposal) => acc + proposal.totalAmount, 0);
 
     return totalAmount

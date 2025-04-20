@@ -4,7 +4,6 @@ import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-d
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
-import { GetByIdProposalSchema } from "../../zod/proposal/get-by-id-proposal-params-schema";
 
 export interface CreateProposalInDbParams {
   completeClientName: string
@@ -76,7 +75,7 @@ type ProposalType = "EVENT" | "OTHER" | "BARTER" | "PRODUCTION" | "OVERNIGHT"
 
 export interface ProposalRepositoryInterface {
   delete: (params: string) => Promise<Proposal | null>
-  getById: (params: GetByIdProposalSchema) => Promise<ProposalWithRelations | null>
+  getById: (params: string) => Promise<ProposalWithRelations | null>
   update: (params: UpdateProposalInDbParam) => Promise<Proposal | null> 
   updateServices: (params: UpdateProposalServices) => Promise<Proposal | null> 
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>

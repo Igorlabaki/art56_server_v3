@@ -15,7 +15,7 @@ class CreatePersonUseCase {
 
   async execute(params: CreatePersonRequestParams) {
 
-    const proposal = await this.proposalRepository.getById(params);
+    const proposal = await this.proposalRepository.getById(params.proposalId);
 
     if(!proposal){
       throw new HttpResourceNotFoundError("Orcamento")

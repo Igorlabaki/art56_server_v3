@@ -15,9 +15,7 @@ class CreateManyPersonUseCase {
 
   async execute(params: CreateManyPersonSchema) {
 
-    const proposal = await this.proposalRepository.getById({
-      proposalId: params[0].proposalId,
-    });
+    const proposal = await this.proposalRepository.getById(params[0].proposalId);
 
     if(!proposal){
       throw new HttpResourceNotFoundError("Orcamento")
