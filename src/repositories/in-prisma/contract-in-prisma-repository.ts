@@ -155,7 +155,7 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
     return await this.prisma.contract.findMany({
       where: {
         ...(title && {
-          contract: {
+          title: {
             contains: title
           }
         }),
