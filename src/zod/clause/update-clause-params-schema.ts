@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const updateClauseSchema = z.object({
+    previoustitle: z.string(),
     clauseId: z.string(),
     data: z.object({
         text: z.string(),
