@@ -36,10 +36,10 @@ export class PrismaClauseRepository implements ClauseRepositoryInterface {
     });
   }
 
-  async update({ data, previoustitle,clauseId }: UpdateClauseRequestParams): Promise<Clause | null> {
+  async update({ data, previousTitle,clauseId }: UpdateClauseRequestParams): Promise<Clause | null> {
     await this.prisma.clause.updateMany({
       where: {
-        title: previoustitle,
+        title: previousTitle,
       },
       data: {
         ...data,
