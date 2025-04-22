@@ -51,7 +51,7 @@ export class PrismaClauseRepository implements ClauseRepositoryInterface {
     return await this.prisma.clause.findMany({
       where: {
         ...(title && {
-          clause: {
+          title: {
             contains: title
           }
         }),
