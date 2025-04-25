@@ -44,6 +44,14 @@ export class PrismaUserRepository implements UserRepositoryInterface {
     })
   }
 
+  async getByGoogleId(reference: string): Promise<User | null> {
+    return await this.prisma.user.findFirst({
+      where: {
+        googleId: reference
+      }
+    })
+  }
+
   async update({ userId, ...rest }: UpdateUserRequestParams): Promise<UserWithPartial | null> {
     return await this.prisma.user.update({
       where: {

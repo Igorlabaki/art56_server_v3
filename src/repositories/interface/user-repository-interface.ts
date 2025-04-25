@@ -11,6 +11,7 @@ export interface UserRepositoryInterface {
   delete: (params: string) => Promise<User | null>
   getById: (params: string) => Promise<User | null>
   getByEmail: (params: string) => Promise<User | null>
+  getByGoogleId: (params: string) => Promise<User | null>
   list: (params: ListUserRequestQuerySchema) => Promise<User[] | null>
   update: (params: UpdateUserRequestParams) => Promise<UserWithPartial | null>
   register: (params: RegisterUserRequestParams) => Promise<User | null>
