@@ -4,12 +4,18 @@ import { authenticateUserFactory } from "../use-cases/auth/authenticate-user/fac
 import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 import { updateUserPasswordFactory } from "../use-cases/user/update-password/factory-update-user-password";
 import { refreshTokenFactory } from "../use-cases/token/factory-refresh-token";
+import { registerGoogleUserFactory } from "../use-cases/auth/register-google-user/factory-register-google-user";
 
 const authRoutes = Router()
 
 // Register
 authRoutes.post("/register", async (req, res) => {
     const controller = registerUserFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+
+authRoutes.post("/register/google", async (req, res) => {
+    const controller = registerGoogleUserFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 

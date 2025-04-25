@@ -1,4 +1,5 @@
 import dayjs from "dayjs"
+import { hash } from "bcryptjs"
 import { AccessTokenProvider } from "../../../provider/access-token-provider"
 import { HttpTokenError } from "../../../errors/errors-type/http-token-error"
 import { GenerateRefreshToken } from "../../../provider/generate-refresh-token"
@@ -59,12 +60,14 @@ class RegisterGoogleUserUseCase {
             return { accessToken, session }
         }
 
+        const passwordHash = await hash(userData.password, 8)
         // Se não existe, registra novo usuário
         const newUser = await this.userRepository.register({
             email: userData.email,
             username: userData.name,
             googleId: userData.googleId,
-            avatarUrl: userData.picture
+            avatarUrl: userData.picture,
+            password: passwordHash
         })
 
         if (!newUser) {
