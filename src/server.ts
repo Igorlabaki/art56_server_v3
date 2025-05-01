@@ -26,6 +26,7 @@ import { userpermissionRoutes } from "./router/userPermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
+import { setupSocket } from './service/socket';
 
 const app = express();
 
@@ -67,6 +68,10 @@ app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
 app.use('/userPermission', userpermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
+
+const { httpServer, io } = setupSocket(app);
+
+export { app, httpServer, io };
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

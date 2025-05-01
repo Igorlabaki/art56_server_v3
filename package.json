@@ -47,6 +47,8 @@
     "pdf-lib": "^1.17.1",
     "pdf2pic": "^3.1.4",
     "sharp": "^0.33.5",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
     "vitest": "^2.1.5",

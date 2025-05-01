@@ -16,6 +16,7 @@ import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 import { Payment, SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
+import { NotificationService } from "../../../service/notification-service";
 
 class CreateProposalPerPersonUseCase {
     constructor(
@@ -26,6 +27,7 @@ class CreateProposalPerPersonUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
+        private notificationService: NotificationService,
     ) { }
 
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {
@@ -80,6 +82,13 @@ class CreateProposalPerPersonUseCase {
                     )}`,
                 type: "PROPOSAL",
             });
+
+            // Envia notificação em tempo real
+            await this.notificationService.sendProposalNotification(
+                params.venueId,
+                newProposal.id,
+                `Novo orçamento de permuta criado por ${newProposal.completeClientName}`
+            );
 
             if (userId) {
                 const user = await this.userRepository.getById(userId)
@@ -190,6 +199,13 @@ class CreateProposalPerPersonUseCase {
                     content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
                     type: "PROPOSAL",
                 });
+
+                // Envia notificação em tempo real
+                await this.notificationService.sendProposalNotification(
+                    params.venueId,
+                    newProposal.id,
+                    `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
+                );
     
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -246,6 +262,13 @@ class CreateProposalPerPersonUseCase {
                 content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
                 type: "PROPOSAL",
             });
+
+            // Envia notificação em tempo real
+            await this.notificationService.sendProposalNotification(
+                params.venueId,
+                newProposal.id,
+                `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
+            );
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
@@ -353,6 +376,13 @@ class CreateProposalPerPersonUseCase {
                     content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
                     type: "PROPOSAL",
                 });
+
+                // Envia notificação em tempo real
+                await this.notificationService.sendProposalNotification(
+                    params.venueId,
+                    newProposal.id,
+                    `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
+                );
     
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -408,6 +438,13 @@ class CreateProposalPerPersonUseCase {
                 content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
                 type: "PROPOSAL",
             });
+
+            // Envia notificação em tempo real
+            await this.notificationService.sendProposalNotification(
+                params.venueId,
+                newProposal.id,
+                `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
+            );
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
