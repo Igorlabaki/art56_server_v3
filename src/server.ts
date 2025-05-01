@@ -26,7 +26,6 @@ import { userpermissionRoutes } from "./router/userPermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
-import { setupSocket } from './service/socket';
 
 const app = express();
 
@@ -69,13 +68,6 @@ app.use('/organization', organizationRoutes)
 app.use('/userPermission', userpermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
 
-const { httpServer, io } = setupSocket(app);
-
-// Exporta o servidor HTTP para ser usado em outros lugares
-export { app, httpServer, io };
-
-// Inicia o servidor
-const port = process.env.PORT || 3000;
-httpServer.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
 });

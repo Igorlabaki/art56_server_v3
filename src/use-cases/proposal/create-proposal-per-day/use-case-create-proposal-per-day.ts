@@ -11,9 +11,9 @@ import { CreateProposalPerDayRequestParamsSchema } from "../../../zod/proposal/c
 import { CreateProposalInDbParams, ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 import { SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
-import { NotificationService } from "../../../service/notification-service";
 
-export class CreateProposalPerDayUseCase {
+
+class CreateProposalPerDayUseCase {
     constructor(
         private userRepository: UserRepositoryInterface,
         private goalRepository: GoalRepositoryInterface,
@@ -22,7 +22,6 @@ export class CreateProposalPerDayUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
-        private notificationService: NotificationService,
     ) { }
 
     async execute(params: CreateProposalPerDayRequestParamsSchema) {
@@ -69,7 +68,14 @@ export class CreateProposalPerDayUseCase {
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orcamento do(a) ${newProposal.completeClientName} de permuta, para data ${format(newProposal?.startDate, "dd/MM/yyyy")} até a data ${format(newProposal?.endDate, "dd/MM/yyyy")}`,
+                content: `Novo orcamento do(a) ${newProposal.completeClientName
+                    } de permuta, para data  ${format(
+                        newProposal?.startDate,
+                        "dd/MM/yyyy"
+                    )} ate  a data ${format(
+                        newProposal?.endDate,
+                        "dd/MM/yyyy"
+                    )}`,
                 type: "PROPOSAL",
             });
 
@@ -172,16 +178,9 @@ export class CreateProposalPerDayUseCase {
                 await this.notificationRepository.create({
                     venueId: params.venueId,
                     proposalId: newProposal.id,
-                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")} até ${format(newProposal.endDate, "dd/MM/yyyy")}`,
+                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
                     type: "PROPOSAL",
                 });
-
-                // Envia notificação em tempo real
-                await this.notificationService.sendProposalNotification(
-                    params.venueId,
-                    newProposal.id,
-                    `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
-                );
 
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -206,6 +205,7 @@ export class CreateProposalPerDayUseCase {
                     count: 1,
                     type: "Proposal",
                 };
+
             }
 
             // Calcula o preço base
@@ -235,13 +235,6 @@ export class CreateProposalPerDayUseCase {
                 content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")} até ${format(newProposal.endDate, "dd/MM/yyyy")}`,
                 type: "PROPOSAL",
             });
-
-            // Envia notificação em tempo real
-            await this.notificationService.sendProposalNotification(
-                params.venueId,
-                newProposal.id,
-                `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
-            );
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
@@ -343,13 +336,6 @@ export class CreateProposalPerDayUseCase {
                     type: "PROPOSAL",
                 });
 
-                // Envia notificação em tempo real
-                await this.notificationService.sendProposalNotification(
-                    params.venueId,
-                    newProposal.id,
-                    `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
-                );
-
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
                     if (!user) throw new HttpResourceNotFoundError("Usuário");
@@ -417,13 +403,6 @@ export class CreateProposalPerDayUseCase {
                     )}`,
                 type: "PROPOSAL",
             });
-
-            // Envia notificação em tempo real
-            await this.notificationService.sendProposalNotification(
-                params.venueId,
-                newProposal.id,
-                `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
-            );
 
             if (userId) {
                 const user = await this.userRepository.getById(userId)
@@ -501,13 +480,6 @@ export class CreateProposalPerDayUseCase {
             type: "PROPOSAL",
         });
 
-        // Envia notificação em tempo real
-        await this.notificationService.sendProposalNotification(
-            params.venueId,
-            newProposal.id,
-            `Novo orçamento criado por ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}`
-        );
-
         if (userId) {
             const user = await this.userRepository.getById(userId)
 
@@ -542,3 +514,5 @@ export class CreateProposalPerDayUseCase {
         return formatedResponse
     }
 }
+
+export { CreateProposalPerDayUseCase }
