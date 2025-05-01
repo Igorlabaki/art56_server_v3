@@ -7,7 +7,8 @@ import { updateProposalPerPersonFactory } from "../use-cases/proposal/update-pro
 import { createProposalPerPersonFactory } from "../use-cases/proposal/create-proposal-per-person/factory-create-proposal-per-person";
 import { updateProposalPerDayFactory } from "../use-cases/proposal/update-proposal-per-day/factory-update-proposal-per-day";
 import { updateProposalPersonalInfoFactory } from "../use-cases/proposal/update-personal-info-proposal/factory-update-proposal-personal-info";
-import { createProposalPerDayFactory } from "../use-cases/proposal/create-proposal-per-day/factory-create-proposal-per-day";
+import { createProposalPerDayFactory } from "../use-cases/proposal/create-proposal-per-day/factory-create-proposal-per-person";
+
 
 const proposalRoutes = Router()
 
