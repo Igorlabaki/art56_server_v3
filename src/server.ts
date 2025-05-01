@@ -71,8 +71,11 @@ app.use('/userOrganization', userorganizationRoutes)
 
 const { httpServer, io } = setupSocket(app);
 
+// Exporta o servidor HTTP para ser usado em outros lugares
 export { app, httpServer, io };
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+// Inicia o servidor
+const port = process.env.PORT || 3000;
+httpServer.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
