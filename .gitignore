@@ -1,2 +1,6 @@
 .env
 node_modules/
+
+# Credenciais e arquivos sensíveis
+src/config/*.json
+credentials/
