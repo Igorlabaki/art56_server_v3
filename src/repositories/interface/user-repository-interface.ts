@@ -16,4 +16,5 @@ export interface UserRepositoryInterface {
   update: (params: UpdateUserRequestParams) => Promise<UserWithPartial | null>
   register: (params: RegisterUserRequestParams) => Promise<User | null>
   updatePassword: (params: UpdateUserPasswordRequestParams ) => Promise<User | null>
+  updateFcmToken: (userId: string, fcmToken: string) => Promise<User | null>
 }

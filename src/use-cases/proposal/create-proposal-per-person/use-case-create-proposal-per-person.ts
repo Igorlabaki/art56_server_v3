@@ -16,6 +16,9 @@ import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 import { Payment, SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
+import { UserPermissionRepositoryInterface } from "../../../repositories/interface/user-permission-repository-interface";
+import { UserOrganizationRepositoryInterface } from "../../../repositories/interface/user-organization-repository-interface";
+import { FirebaseNotificationService } from "../../../services/firebase-notification-service";
 
 class CreateProposalPerPersonUseCase {
     constructor(
@@ -26,7 +29,40 @@ class CreateProposalPerPersonUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
+        private userPermissionRepository: UserPermissionRepositoryInterface,
+        private userOrganizationRepository: UserOrganizationRepositoryInterface,
     ) { }
+
+    private async sendNotificationToAdmins(venueId: string, proposalId: string, content: string) {
+        // Buscar a venue para obter a organização
+        const venue = await this.venueRepository.getById({ venueId });
+        if (!venue) return;
+
+        // Buscar todas as permissões de usuário para esta venue
+        const userPermissions = await this.userPermissionRepository.list({
+            userOrganizationId: venue.organizationId,
+            venueId,
+            role: "ADMIN"
+        });
+
+        if (!userPermissions) return;
+
+        const notificationService = FirebaseNotificationService.getInstance();
+
+        // Para cada permissão, buscar o usuário e enviar notificação se tiver token FCM
+        for (const permission of userPermissions) {
+            const userOrganization = await this.userOrganizationRepository.getById(permission.userOrganizationId);
+            if (!userOrganization?.user) continue;
+
+            if (userOrganization.user.fcmToken) {
+                await notificationService.sendNotification(
+                    userOrganization.user.fcmToken,
+                    "Novo Orçamento",
+                    content
+                );
+            }
+        }
+    }
 
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {
         let createProposalPerPersonInDb: CreateProposalInDbParams;
@@ -40,15 +76,12 @@ class CreateProposalPerPersonUseCase {
 
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] } & { Payment: Payment[] };
 
-
         if (!venue) {
-            console.log("Locacao nao encontrada")
             throw new HttpResourceNotFoundError("Locacao")
         }
 
         if (params.type === "BARTER") {
             const { endDate, startDate } = transformDate({ date: params.date, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
-
 
             createProposalPerPersonInDb = {
                 ...rest,
@@ -70,16 +103,18 @@ class CreateProposalPerPersonUseCase {
                 throw Error("Erro na conexao com o banco de dados")
             }
 
+            const notificationContent = `Novo orcamento do(a) ${newProposal.completeClientName} de permuta, para data ${format(newProposal?.startDate, "dd/MM/yyyy")}`;
+
+            // Criar notificação no banco
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orcamento do(a) ${newProposal.completeClientName
-                    } de permuta, para data  ${format(
-                        newProposal?.startDate,
-                        "dd/MM/yyyy"
-                    )}`,
+                content: notificationContent,
                 type: "PROPOSAL",
             });
+
+            // Enviar notificação para os administradores
+            await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
 
             if (userId) {
                 const user = await this.userRepository.getById(userId)
@@ -95,7 +130,6 @@ class CreateProposalPerPersonUseCase {
                     action: `${user.username} criou este orcamento`,
                 });
             }
-
 
             const formatedResponse = {
                 success: true,
@@ -150,15 +184,15 @@ class CreateProposalPerPersonUseCase {
                 month: startDate.getMonth() + 1,
                 approved: true
             })
-            
-            if(totalPerSelectMonth){
+
+            if (totalPerSelectMonth) {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
                     targetMonth: String(startDate.getMonth() + 1)
                 })
 
-                if(goal?.increasePercent){
+                if (goal?.increasePercent) {
                     pricePerPerson += pricePerPerson * goal?.increasePercent / 100
                 }
 
@@ -166,7 +200,7 @@ class CreateProposalPerPersonUseCase {
                 const extraHourPrice = calcExtraHourPrice(basePrice);
                 const extraHoursQty = calcExtraHoursQty(eventDuration);
                 const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
-    
+
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
                     ...rest,
@@ -179,18 +213,23 @@ class CreateProposalPerPersonUseCase {
                     extraHourPrice,
                     guestNumber: Number(guestNumber),
                 };
-    
+
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
-    
+
+                const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+
                 // Envia notificação e histórico
                 await this.notificationRepository.create({
                     venueId: params.venueId,
                     proposalId: newProposal.id,
-                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
+                    content: notificationContent,
                     type: "PROPOSAL",
                 });
-    
+
+                // Enviar notificação para os administradores
+                await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
                     if (!user) throw new HttpResourceNotFoundError("Usuário");
@@ -206,7 +245,7 @@ class CreateProposalPerPersonUseCase {
                         action: `Cliente criou este orçamento pelo site`,
                     });
                 }
-    
+
                 return {
                     success: true,
                     message: "Orçamento criado com sucesso",
@@ -239,13 +278,18 @@ class CreateProposalPerPersonUseCase {
             const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
             if (!newProposal) throw Error("Erro na conexao com o banco de dados");
 
+            const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+
             // Envia notificação e histórico
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
+                content: notificationContent,
                 type: "PROPOSAL",
             });
+
+            // Enviar notificação para os administradores
+            await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
@@ -313,15 +357,15 @@ class CreateProposalPerPersonUseCase {
                 month: startDate.getMonth() + 1,
                 approved: true
             })
-            
-            if(totalPerSelectMonth){
+
+            if (totalPerSelectMonth) {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
                     targetMonth: String(startDate.getMonth() + 1)
                 })
 
-                if(goal?.increasePercent){
+                if (goal?.increasePercent) {
                     pricePerPersonHour += pricePerPersonHour * goal?.increasePercent / 100
                 }
 
@@ -329,7 +373,7 @@ class CreateProposalPerPersonUseCase {
                 const extraHourPrice = calcExtraHourPrice(basePrice);
                 const extraHoursQty = calcExtraHoursQty(eventDuration);
                 const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
-    
+
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
                     ...rest,
@@ -342,18 +386,23 @@ class CreateProposalPerPersonUseCase {
                     extraHourPrice,
                     guestNumber: Number(guestNumber),
                 };
-    
+
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
-    
+
+                const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+
                 // Envia notificação e histórico
                 await this.notificationRepository.create({
                     venueId: params.venueId,
                     proposalId: newProposal.id,
-                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
+                    content: notificationContent,
                     type: "PROPOSAL",
                 });
-    
+
+                // Enviar notificação para os administradores
+                await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
                     if (!user) throw new HttpResourceNotFoundError("Usuário");
@@ -369,7 +418,7 @@ class CreateProposalPerPersonUseCase {
                         action: `Cliente criou este orçamento pelo site`,
                     });
                 }
-    
+
                 return {
                     success: true,
                     message: "Orçamento criado com sucesso",
@@ -401,13 +450,18 @@ class CreateProposalPerPersonUseCase {
             const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
             if (!newProposal) throw Error("Erro na conexão com o banco de dados");
 
+            const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+
             // Envia notificação e histórico
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
+                content: notificationContent,
                 type: "PROPOSAL",
             });
+
+            // Enviar notificação para os administradores
+            await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);

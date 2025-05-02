@@ -9,11 +9,9 @@ import { SessionRepositoryInterface } from "../../../repositories/interface/sess
 import { HttpTokenError } from "../../../errors/errors-type/http-token-error"
 import { AccessTokenProvider } from "../../../provider/access-token-provider"
 import dayjs from "dayjs"
+import { AuthenticateUserRequestParams } from "../../../zod/auth/authenticate-user-params-schema"
 
-interface IRequest {
-    password: string,
-    email: string
-}
+interface IRequest extends AuthenticateUserRequestParams {}
 
 class AuthenticateUserUseCase {
 
@@ -22,7 +20,7 @@ class AuthenticateUserUseCase {
         private sessionRepository: SessionRepositoryInterface
     ) { }
 
-    async execute({ password, email }: IRequest) {
+    async execute({ password, email, fcmToken }: IRequest) {
         // Validate if user exists
         const userAlreadyExists = await this.userRepository.getByEmail(email)
 
@@ -38,6 +36,11 @@ class AuthenticateUserUseCase {
             throw new HttpInvalidCredentialsError()
         }
         //
+
+        // Update FCM token if provided
+        if (fcmToken) {
+            await this.userRepository.updateFcmToken(userAlreadyExists.id, fcmToken)
+        }
 
         // Provide token to user
         const accessTokenProvider = new AccessTokenProvider()

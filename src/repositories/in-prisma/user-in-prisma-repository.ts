@@ -76,6 +76,16 @@ export class PrismaUserRepository implements UserRepositoryInterface {
     })
   }
 
+  async updateFcmToken(userId: string, fcmToken: string): Promise<User | null> {
+    return await this.prisma.user.update({
+      where: {
+        id: userId
+      },
+      data: {
+        fcmToken: fcmToken
+      }
+    })
+  }
 
   async list({email,organizationId}: ListUserRequestQuerySchema): Promise<User[] | null>{
     return await this.prisma.user.findMany({

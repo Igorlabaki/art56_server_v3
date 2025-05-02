@@ -8,6 +8,7 @@ export const authenticateUserSchema = z.object({
       }),             
     password: z.string()
     .min(1, "Este campo é obrigatório"),           
+    fcmToken: z.string().optional(),           
   });
 
 export type AuthenticateUserRequestParams = z.infer<typeof authenticateUserSchema>;
