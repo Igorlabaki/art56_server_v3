@@ -108,13 +108,19 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
     })
   }
 
-  async list({ userOrganizationId }: ListUserPermissionByUserRequestQuerySchema ): Promise<UserPermission[] | null> {
+  async list({ userOrganizationId,role,venueId }: ListUserPermissionByUserRequestQuerySchema ): Promise<UserPermission[] | null> {
     return await this.prisma.userPermission.findMany({
       where: {
        userOrganizationId,
        NOT: {
         venue: null
-      }
+      },
+      ...(role && {
+        role: role
+      }),
+      ...(venueId && {
+        venueId: venueId
+      }),
       },
       include: {
         venue:{
