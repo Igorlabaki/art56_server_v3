@@ -222,12 +222,11 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
         ...(venueId && {
           userPermissions: {
             some: {
-              venueId
+              venueId,
+              role
             }
+            
           }
-        }),
-        ...(role && {
-          role
         }),
         organizationId
       },
