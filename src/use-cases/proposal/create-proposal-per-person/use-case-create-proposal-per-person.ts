@@ -288,8 +288,10 @@ class CreateProposalPerPersonUseCase {
                 type: "PROPOSAL",
             });
 
+            
             // Enviar notificação para os administradores
-            await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+            const lognotification = await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+            console.log("lognotification", lognotification)
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);

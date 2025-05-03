@@ -21,7 +21,6 @@ class CreateProposalPerPersonController {
             console.log("Erros",error)
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
-            console.log("Erros",errorResponse)
             // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }
