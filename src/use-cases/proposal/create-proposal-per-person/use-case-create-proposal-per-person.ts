@@ -33,7 +33,7 @@ class CreateProposalPerPersonUseCase {
         private userOrganizationRepository: UserOrganizationRepositoryInterface,
     ) { }
 
-    private async sendNotificationToAdmins(venueId: string, proposalId: string, content: string) {
+    private async sendNotificationToAdmins({venueId, proposalId, content}:{venueId: string, proposalId: string, content: string}) {
         // Buscar a venue para obter a organização
         const venue = await this.venueRepository.getById({ venueId });
         if (!venue) return;
@@ -114,7 +114,7 @@ class CreateProposalPerPersonUseCase {
             });
 
             // Enviar notificação para os administradores
-            await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+            await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
             if (userId) {
                 const user = await this.userRepository.getById(userId)
@@ -228,7 +228,7 @@ class CreateProposalPerPersonUseCase {
                 });
 
                 // Enviar notificação para os administradores
-                await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+                await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -290,7 +290,7 @@ class CreateProposalPerPersonUseCase {
 
             
             // Enviar notificação para os administradores
-            const lognotification = await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+            const lognotification = await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
             console.log("lognotification", lognotification)
 
             if (userId) {
@@ -403,7 +403,7 @@ class CreateProposalPerPersonUseCase {
                 });
 
                 // Enviar notificação para os administradores
-                await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+                await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -463,7 +463,7 @@ class CreateProposalPerPersonUseCase {
             });
 
             // Enviar notificação para os administradores
-            await this.sendNotificationToAdmins(params.venueId, newProposal.id, notificationContent);
+            await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
