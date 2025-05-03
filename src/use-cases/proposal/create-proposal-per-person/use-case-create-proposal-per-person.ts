@@ -39,21 +39,18 @@ class CreateProposalPerPersonUseCase {
         if (!venue) return;
 
         // Buscar todas as permissões de usuário para esta venue
-        const userPermissions = await this.userPermissionRepository.list({
-            userOrganizationId: venue.organizationId,
+        const userOrganizations = await this.userOrganizationRepository.listByOrganization({
+            organizationId: venue.organizationId,
             venueId,
             role: "ADMIN"
         });
-        console.log("userPermissions", userPermissions)
-        if (!userPermissions) return;
+        console.log("userOrganizations", userOrganizations)
+        if (!userOrganizations) return;
 
         const notificationService = FirebaseNotificationService.getInstance();
         console.log("notificationService", notificationService)
         // Para cada permissão, buscar o usuário e enviar notificação se tiver token FCM
-        for (const permission of userPermissions) {
-            const userOrganization = await this.userOrganizationRepository.getById(permission.userOrganizationId);
-            if (!userOrganization?.user) continue;
-
+         userOrganizations.map(async (userOrganization) => {
             if (userOrganization.user.fcmToken) {
                 await notificationService.sendNotification(
                     userOrganization.user.fcmToken,
@@ -61,7 +58,7 @@ class CreateProposalPerPersonUseCase {
                     content
                 );
             }
-        }
+        })
     }
 
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {

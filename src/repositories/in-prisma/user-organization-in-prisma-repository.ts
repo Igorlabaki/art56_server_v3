@@ -211,13 +211,19 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     })
   }
 
-  async listByOrganization({ organizationId, username }: ListUserOrganizationByOrganizationRequestQuerySchema): Promise<UserOrganization[] | null> {
+  async listByOrganization({ organizationId, username, role, venueId }: ListUserOrganizationByOrganizationRequestQuerySchema): Promise<UserOrganizationWithRelations[] | null> {
     return await this.prisma.userOrganization.findMany({
       where: {
         ...(username && {
           user: {
             username
           }
+        }),
+        ...(venueId && {
+          venueId
+        }),
+        ...(role && {
+          role
         }),
         organizationId
       },

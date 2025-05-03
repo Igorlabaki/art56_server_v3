@@ -27,5 +27,5 @@ export interface UserOrganizationRepositoryInterface {
   update: (params: UpdateUserOrganizationRequestParams) => Promise<UserOrganization | null>
   list: (query: ListUserOrganizationRequestQuerySchema) => Promise<UserOrganization[]  | null>
   verifyByUserIdAndOrganizationId: (params: {userId: string, organizationId: string}) => Promise<UserOrganization | null>
-  listByOrganization: (query: ListUserOrganizationByOrganizationRequestQuerySchema) => Promise<UserOrganization[]  | null>
+  listByOrganization: (query: ListUserOrganizationByOrganizationRequestQuerySchema) => Promise<UserOrganizationWithRelations[]  | null>
 }

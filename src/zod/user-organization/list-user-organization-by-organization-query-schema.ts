@@ -2,7 +2,9 @@ import { z } from "zod";
 
 export const listUserOrganizationByOrganizationRequestQuerySchema = z.object({
     organizationId:z.string(),
-    username: z.string().optional()
+    username: z.string().optional(),
+    venueId: z.string().optional(),
+    role: z.string().optional(),
 })
 
 export type ListUserOrganizationByOrganizationRequestQuerySchema = z.infer<typeof listUserOrganizationByOrganizationRequestQuerySchema>;
