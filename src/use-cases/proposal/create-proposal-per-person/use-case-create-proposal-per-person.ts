@@ -44,11 +44,11 @@ class CreateProposalPerPersonUseCase {
             venueId,
             role: "ADMIN"
         });
-
+        console.log("userPermissions", userPermissions)
         if (!userPermissions) return;
 
         const notificationService = FirebaseNotificationService.getInstance();
-
+        console.log("notificationService", notificationService)
         // Para cada permissão, buscar o usuário e enviar notificação se tiver token FCM
         for (const permission of userPermissions) {
             const userOrganization = await this.userOrganizationRepository.getById(permission.userOrganizationId);
