@@ -9,7 +9,7 @@ class CreateProposalPerPersonController {
     async handle(req: Request, resp: Response) {
         try {
             const body: CreateProposalPerPersonRequestParamsSchema = req.body;
-            console.log(body)
+            
             // Validate the request parms
             createProposalPerPersonRequestParamsSchema.safeParse(body);
             // Esperar a execução do caso de uso
@@ -18,9 +18,10 @@ class CreateProposalPerPersonController {
             return resp.status(201).json(response);
 
         } catch (error) {
+            console.log("Erros",error)
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
-
+            console.log("Erros",errorResponse)
             // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }
