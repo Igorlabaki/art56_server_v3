@@ -9,6 +9,7 @@ class CreateProposalPerPersonController {
     async handle(req: Request, resp: Response) {
         try {
             const body: CreateProposalPerPersonRequestParamsSchema = req.body;
+            console.log(body)
             // Validate the request parms
             createProposalPerPersonRequestParamsSchema.safeParse(body);
             // Esperar a execução do caso de uso
