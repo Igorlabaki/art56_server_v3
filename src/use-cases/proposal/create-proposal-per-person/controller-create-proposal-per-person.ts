@@ -16,6 +16,7 @@ class CreateProposalPerPersonController {
             // Esperar a execução do caso de uso
             const response = await this.createProposalPerPersonUseCase.execute(body);
             // Retornar o token
+            console.log(response)
             return resp.status(201).json(response);
         } catch (error) {
             console.log("Erros",error)
