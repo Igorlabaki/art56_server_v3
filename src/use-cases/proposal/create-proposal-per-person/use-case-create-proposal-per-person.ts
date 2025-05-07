@@ -70,7 +70,7 @@ class CreateProposalPerPersonUseCase {
             serviceIds,
             venueId: params.venueId,
         })
-
+        const totalAmountInputFormated = totalAmountInput ? Number(totalAmountInput) : 0
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] } & { Payment: Payment[] };
         console.log("venue", venue)
         if (!venue) {
@@ -141,7 +141,7 @@ class CreateProposalPerPersonUseCase {
             return formatedResponse
         }
 
-        if (Number(totalAmountInput) === 0 && venue.pricePerPerson && venue.pricingModel === "PER_PERSON") {
+        if (Number(totalAmountInputFormated) === 0 && venue.pricePerPerson && venue.pricingModel === "PER_PERSON") {
             console.log("cheguei no if PER PERSON")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const { seasonalFee } = venue;
@@ -319,7 +319,7 @@ class CreateProposalPerPersonUseCase {
             };
         }
 
-        if (Number(totalAmountInput) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
+        if (Number(totalAmountInputFormated) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
             console.log("cheguei no if PER PERSON HOUR")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const eventDuration = calcEventDuration(endDate, startDate);
