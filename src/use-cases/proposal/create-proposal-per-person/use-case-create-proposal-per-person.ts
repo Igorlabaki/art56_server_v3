@@ -72,7 +72,7 @@ class CreateProposalPerPersonUseCase {
         })
 
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] } & { Payment: Payment[] };
-
+        console.log("venue", venue)
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
         }
@@ -145,7 +145,7 @@ class CreateProposalPerPersonUseCase {
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const { seasonalFee } = venue;
             const eventDuration = calcEventDuration(endDate, startDate);
-
+            console.log(endDate, startDate, eventDuration, venue.pricePerPerson, venue.pricingModel)
             let pricePerPerson = venue.pricePerPerson;
 
             // Aplica ajustes de sazonalidade no preço por pessoa
