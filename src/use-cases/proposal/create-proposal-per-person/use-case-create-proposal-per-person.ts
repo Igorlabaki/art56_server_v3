@@ -37,7 +37,7 @@ class CreateProposalPerPersonUseCase {
         // Buscar a venue para obter a organização
         const venue = await this.venueRepository.getById({ venueId });
         if (!venue) return;
-
+       
         // Buscar todas as permissões de usuário para esta venue
         const userOrganizations = await this.userOrganizationRepository.listByOrganization({
             organizationId: venue.organizationId,
@@ -63,7 +63,7 @@ class CreateProposalPerPersonUseCase {
 
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {
         let createProposalPerPersonInDb: CreateProposalInDbParams;
-
+        console.log("cheguei no usecase")
         const { date, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId, ...rest } = params
 
         const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
@@ -213,7 +213,7 @@ class CreateProposalPerPersonUseCase {
 
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
-
+                console.log("newProposal", newProposal)
                 const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
 
                 // Envia notificação e histórico
