@@ -10,13 +10,13 @@ class CreateProposalPerPersonController {
         try {
             const body: CreateProposalPerPersonRequestParamsSchema = req.body;
             
+            console.log(body)
             // Validate the request parms
             createProposalPerPersonRequestParamsSchema.safeParse(body);
             // Esperar a execução do caso de uso
             const response = await this.createProposalPerPersonUseCase.execute(body);
             // Retornar o token
             return resp.status(201).json(response);
-
         } catch (error) {
             console.log("Erros",error)
             // Chamar o handleErrors para formatar o erro
