@@ -320,7 +320,7 @@ class CreateProposalPerPersonUseCase {
         }
 
         if (Number(totalAmountInput) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
-
+            console.log("cheguei no if PER PERSON HOUR")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const eventDuration = calcEventDuration(endDate, startDate);
             const { seasonalFee } = venue;
@@ -492,7 +492,7 @@ class CreateProposalPerPersonUseCase {
         }
 
         if (totalAmountInput) {
-
+            console.log("cheguei no if CUSTOM")
             const {
                 basePrice,
                 endDate,
