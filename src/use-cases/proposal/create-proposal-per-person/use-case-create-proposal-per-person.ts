@@ -142,11 +142,15 @@ class CreateProposalPerPersonUseCase {
         }
 
         if (Number(totalAmountInput) === 0 && venue.pricePerPerson && venue.pricingModel === "PER_PERSON") {
+            console.log("cheguei no if PER PERSON")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const { seasonalFee } = venue;
             const eventDuration = calcEventDuration(endDate, startDate);
+
             console.log(endDate, startDate, eventDuration, venue.pricePerPerson, venue.pricingModel)
+
             let pricePerPerson = venue.pricePerPerson;
+
 
             // Aplica ajustes de sazonalidade no preço por pessoa
             if (seasonalFee?.length) {
