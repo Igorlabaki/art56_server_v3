@@ -30,7 +30,7 @@ userRoutes.post("/createNewUser", (req, res) => {
 });
 
 // Register
-userRoutes.get("/getById?:venueId?", (req, res) => {
+userRoutes.get("/getById?:userId?", (req, res) => {
     const controller = getByIdUserFactory();
     controller.handle(req, res);
 });
