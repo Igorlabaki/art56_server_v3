@@ -3,11 +3,11 @@ import { Router } from "express"
 import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 import { updateUserFactory } from "../use-cases/user/update/factory-update-user";
 import { listUserFactory } from "../use-cases/user/list-user/factory-list-user";
-import { getByIdUserFactory } from "../use-cases/user/get-by-id/factory-get-by-id-user";
-import { createNewUserFactory } from "../use-cases/user/create-new-user/factory-create-new-user-text";
 import { deleteUserFactory } from "../use-cases/user/delete-user/factory-delete-user";
+import { getByIdUserFactory } from "../use-cases/user/get-by-id/factory-get-by-id-user";
 import { updateFcmTokenFactory } from "../use-cases/user/update-fcm-token/factory-update-fcm-token";
-import { Request, Response } from "express";
+import { createNewUserFactory } from "../use-cases/user/create-new-user/factory-create-new-user-text";
+import { updateUserPasswordFactory } from "../use-cases/user/update-password/factory-update-user-password";
 
 
 const userRoutes = Router()
@@ -20,6 +20,11 @@ userRoutes.use(ensureAuthenticate)
 // Register
 userRoutes.put("/update", upload.single("file"), (req, res) => {
     const controller = updateUserFactory();
+    controller.handle(req, res);
+});
+
+userRoutes.put("/updatePassword", (req, res) => {
+    const controller = updateUserPasswordFactory();
     controller.handle(req, res);
 });
 
