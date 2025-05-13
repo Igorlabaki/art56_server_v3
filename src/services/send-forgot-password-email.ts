@@ -3,11 +3,10 @@ import nodemailer from "nodemailer";
 export async function sendForgotPasswordEmail(email: string, token: string) {
   // Configure seu transporter conforme seu provedor de e-mail
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
+    service: "gmail",
     auth: {
         user: "igorlabakig@gmail.com", // Seu endereço de e-mail
-        pass: process.env.EMAIL_PASSWORD, // Sua senha de e-mail
+        pass: process.env.EMAIL_GMAIL_PASSWORD, // Sua senha de e-mail
     },
   });
 
