@@ -6,7 +6,7 @@ export class HttpConflictError extends Error {
     constructor(message: string) {
         super(message);
         this.statusCode = 409;
-        this.name = "Conflict";
+        this.name = "Conflito";
         this.message = `${message} ja registrado.`;
     }
 }
