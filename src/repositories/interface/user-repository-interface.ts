@@ -2,7 +2,7 @@ import { User } from "@prisma/client";
 import { UpdateUserRequestParams } from "../../zod/user/update-user-params-schema";
 import { ListUserRequestQuerySchema } from "../../zod/user/list-user-query-schema";
 import { RegisterUserRequestParams } from "../../zod/auth/register-user-params-schema";
-import { UpdateUserPasswordRequestParams } from "../../zod/auth/update-user-password-params-schema";
+import { UpdatePasswordDbSchema } from "../../zod/auth/update-password-db-schema";
 
 export type UserWithoutPassword = Omit<User, "password">;
 
@@ -15,6 +15,6 @@ export interface UserRepositoryInterface {
   list: (params: ListUserRequestQuerySchema) => Promise<User[] | null>
   update: (params: UpdateUserRequestParams) => Promise<UserWithPartial | null>
   register: (params: RegisterUserRequestParams) => Promise<User | null>
-  updatePassword: (params: UpdateUserPasswordRequestParams ) => Promise<User | null>
+  updatePassword: (params: UpdatePasswordDbSchema ) => Promise<User | null>
   updateFcmToken: (userId: string, fcmToken: string) => Promise<User | null>
 }

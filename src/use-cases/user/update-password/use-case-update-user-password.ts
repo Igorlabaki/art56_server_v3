@@ -1,13 +1,13 @@
 import { HttpInvalidCredentialsError } from "../../../errors/errors-type/http-invalid-credentials-error";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
-import { UpdatePasswordRequestParams } from "../../../zod/user/update-password-params-schema";
+import { UpdatePasswordRequestParams } from "../../../zod/auth/update-password-params-schema";
 import { compare, hash } from "bcryptjs";
 
 class UpdateUserPasswordCase {
     constructor(private userRepository: UserRepositoryInterface) { }
 
-    async execute(params: UpdatePasswordRequestParams & { userId: string }) {
+    async execute(params: UpdatePasswordRequestParams) {
         const user = await this.userRepository.getById(params.userId);
 
         if (!user) {
