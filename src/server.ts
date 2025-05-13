@@ -68,4 +68,8 @@ app.use('/organization', organizationRoutes)
 app.use('/userPermission', userpermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
 
+app.get('/', (req, res) => {
+  res.send('API online!');
+});
+
 export default app;
