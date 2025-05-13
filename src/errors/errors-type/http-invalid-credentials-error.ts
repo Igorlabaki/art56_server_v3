@@ -3,10 +3,10 @@ export class HttpInvalidCredentialsError extends Error {
     name: string;
     message: string;
     
-    constructor() {
+    constructor(message?: string) {
         super();
         this.statusCode = 404;
         this.name = "Invalid credentials";
-        this.message = `Email ou senha estao incorretos.`;
+        this.message = message || `Email ou senha estao incorretos.`;
     }
 }

@@ -17,7 +17,7 @@ class UpdateUserPasswordCase {
         const passwordMatch = await compare(params.currentPassword, user.password);
 
         if (!passwordMatch) {
-            throw new HttpInvalidCredentialsError();
+            throw new HttpInvalidCredentialsError("Senha atual inválida");
         }
 
         const hashedPassword = await hash(params.newPassword, 8);
