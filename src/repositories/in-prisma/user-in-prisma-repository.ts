@@ -33,10 +33,10 @@ export class PrismaUserRepository implements UserRepositoryInterface {
     })
   }
 
-  async updatePassword({ password, email }: UpdateUserPasswordRequestParams): Promise<User | null> {
+  async updatePassword({ password, userId }: UpdateUserPasswordRequestParams): Promise<User | null> {
     return await this.prisma.user.update({
       where: {
-        email: email
+        id: userId
       },
       data: {
         password: password

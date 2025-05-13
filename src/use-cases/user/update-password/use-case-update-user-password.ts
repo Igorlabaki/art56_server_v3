@@ -1,38 +1,40 @@
-import { hash } from "bcryptjs"
+import { HttpInvalidCredentialsError } from "../../../errors/errors-type/http-invalid-credentials-error";
+import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
+import { UpdatePasswordRequestParams } from "../../../zod/user/update-password-params-schema";
+import { compare, hash } from "bcryptjs";
 
-import { UpdateUserPasswordRequestParams } from "../../../zod/auth/update-user-password-params-schema"
-import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface"
-import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
+class UpdateUserPasswordCase {
+    constructor(private userRepository: UserRepositoryInterface) { }
 
-class UpdateUserPasswordCase{
+    async execute(params: UpdatePasswordRequestParams & { userId: string }) {
+        const user = await this.userRepository.getById(params.userId);
 
-    constructor(
-        private userRepository: UserRepositoryInterface,
-    ) { }
+        if (!user) {
+            throw new HttpResourceNotFoundError("Usuário não encontrado");
+        }
 
-    async execute({password , email} : UpdateUserPasswordRequestParams){
+        const passwordMatch = await compare(params.currentPassword, user.password);
 
-        // Validate if user exists
-            const userAlreadyExists = await this.userRepository.getByEmail(email)
+        if (!passwordMatch) {
+            throw new HttpInvalidCredentialsError();
+        }
 
-            if(!userAlreadyExists){
-                throw new HttpResourceNotFoundError("Usuario")
+        const hashedPassword = await hash(params.newPassword, 8);
+
+        const updatedUser = await this.userRepository.updatePassword({
+            userId: params.userId,
+            password: hashedPassword
+        });
+
+        return {
+            success: true,
+            message: "Senha atualizada com sucesso",
+            data: {
+                user: updatedUser
             }
-        //
-
-        // Update userpassword user
-            const passwordHash = await hash(password, 8)
-
-            const userInput: UpdateUserPasswordRequestParams = {
-                email,         
-                password: passwordHash
-            }
-
-            await this.userRepository.updatePassword(userInput)
-        //
-
-        return 
+        };
     }
 }
 
-export {UpdateUserPasswordCase}
+export { UpdateUserPasswordCase };
