@@ -13,7 +13,7 @@ class UpdateUserPasswordController {
             const validatedData = updatePasswordSchema.parse(body);
 
 
-            const userByid = this.updatePasswordUseCase.execute(validatedData)
+            const userByid = await this.updatePasswordUseCase.execute(validatedData)
 
             return resp.status(200).json(userByid);
 
