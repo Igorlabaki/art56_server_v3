@@ -36,7 +36,7 @@ authRoutes.put("/reset-password", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-authRoutes.put("/forgot-password", async (req, res) => {
+authRoutes.post("/forgot-password", async (req, res) => {
     const controller = forgotPasswordFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
