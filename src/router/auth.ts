@@ -29,7 +29,7 @@ authRoutes.get("/refresh", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-authRoutes.post("/update/password",  ensureAuthenticate , async (req, res) => {
+authRoutes.put("/update/password",  ensureAuthenticate , async (req, res) => {
     const controller = updateUserPasswordFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
