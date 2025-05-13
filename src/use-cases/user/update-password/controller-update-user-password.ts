@@ -15,7 +15,7 @@ class UpdateUserPasswordController {
 
             const userByid = this.updatePasswordUseCase.execute(validatedData)
 
-            return resp.json(userByid)
+            return resp.status(200).json(userByid);
 
         } catch (error) {
             // Tratar os erros
