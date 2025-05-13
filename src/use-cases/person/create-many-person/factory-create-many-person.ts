@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateManyPersonUseCase } from "./use-case-create-many-person";
 import { CreateManyPersonController } from "./controller-create-many-person";
 import { PrismaPersonRepository } from "../../../repositories/in-prisma/person-in-prisma-repository";

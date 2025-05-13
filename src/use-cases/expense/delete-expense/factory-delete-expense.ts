@@ -1,5 +1,5 @@
 
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteExpenseUseCase } from "./use-case-delete-expense";
 import { DeleteExpenseController } from "./controller-delete-expense";
 import { PrismaExpenseRepository } from "../../../repositories/in-prisma/expense-in-prisma-repository";

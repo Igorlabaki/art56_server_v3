@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdatePaymentUseCase } from "./use-case-update-payment";
 import { UpdatePaymentController } from "./controller-update-payment";
 import { PrismaPaymentRepository } from "../../../repositories/in-prisma/payment-in-prisma-repository";

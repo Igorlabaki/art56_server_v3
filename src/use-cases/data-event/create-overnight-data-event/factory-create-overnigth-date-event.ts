@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateOvernightDateController } from "./controller-create-date-event";
 import { CreateOvernightDateEventUseCase } from "./use-case-create-overnigth-date-event";
 import { PrismaHistoryRepository } from "../../../repositories/in-prisma/history-in-prisma-repository";

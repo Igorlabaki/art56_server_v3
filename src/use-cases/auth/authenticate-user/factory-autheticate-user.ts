@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { AuthenticateUserUseCase } from "./use-case-authenticate-user";
 import { AuthenticateUserController } from "./controller-authenticate-user";

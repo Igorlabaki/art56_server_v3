@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";
 import { DeleteUserUseCase } from "../../user/delete-user/use-case-delete-user";

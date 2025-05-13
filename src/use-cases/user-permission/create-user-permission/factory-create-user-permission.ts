@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateUserPermissionUseCase } from "./use-case-create-user-permission";
 import { CreateUserPermissionController } from "./controller-create-user-permission";
 import { PrismaUserPermissionRepository } from "../../../repositories/in-prisma/user-permission-in-prisma-repository";

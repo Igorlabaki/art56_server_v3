@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteContractUseCase } from "./use-case-delete-contract";
 import { DeleteContractController } from "./controller-delete-contract";
 import { PrismaContractRepository } from "../../../repositories/in-prisma/contract-in-prisma-repository";

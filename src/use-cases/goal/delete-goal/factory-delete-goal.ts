@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteGoalUseCase } from "./use-case-delete-goal";
 import { DeleteGoalController } from "./controller-delete-goal";
 import { PrismaGoalRepository } from "../../../repositories/in-prisma/goal-in-prisma-repository";

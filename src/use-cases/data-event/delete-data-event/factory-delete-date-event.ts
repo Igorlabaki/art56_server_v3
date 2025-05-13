@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteDateEventUseCase } from "./use-case-delete-data-event";
 import { DeleteDateEventController } from "./controller-delete-date-event";
 import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";

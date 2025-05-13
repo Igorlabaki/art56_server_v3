@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListWebPersonsUseCase } from "./use-case-web-list-person";
 import { ListWebPersonController } from "./controller-web-list-person";
 import { PrismaPersonRepository } from "../../../repositories/in-prisma/person-in-prisma-repository";

@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { UpdateOvernigthDateEventUseCase } from "./use-case-update-overnigth-date-event";
 import { UpdateOverNigthDateEventController } from "./controller-update-overnigth-date-event";

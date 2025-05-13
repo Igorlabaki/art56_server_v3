@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreatePaymentUseCase } from "./use-case-create-payment";
 import { CreatePaymentController } from "./controller-create-payment";
 import { CreateDocumentUseCase } from "../../document/create-document/use-case-create-document";

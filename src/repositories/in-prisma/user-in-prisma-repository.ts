@@ -1,11 +1,12 @@
 import { PrismaClient, User } from "@prisma/client"
-import { UserRepositoryInterface, UserWithPartial } from "../interface/user-repository-interface"
-import { RegisterUserRequestParams } from "../../zod/auth/register-user-params-schema"
-
 import { UpdateUserRequestParams } from "../../zod/user/update-user-params-schema"
 import { ListUserRequestQuerySchema } from "../../zod/user/list-user-query-schema"
-import { UpdatePasswordRequestParams } from "../../zod/auth/update-password-params-schema"
 import { UpdatePasswordDbSchema } from "../../zod/auth/update-password-db-schema"
+import { ForgotPasswordDbParams } from "../../zod/auth/forgot-password-db-schema"
+import { RegisterUserRequestParams } from "../../zod/auth/register-user-params-schema"
+import { UserRepositoryInterface, UserWithPartial } from "../interface/user-repository-interface"
+import { ResetPasswordRequestParams } from "../../zod/auth/reset-password-params-schema"
+import { GetByPasswordResetToken } from "../../zod/auth/get-password-reset-token-params-schema copy"
 
 export class PrismaUserRepository implements UserRepositoryInterface {
 
@@ -26,6 +27,8 @@ export class PrismaUserRepository implements UserRepositoryInterface {
       }
     })
   }
+  
+  
 
   async getByEmail(reference: string): Promise<User | null> {
     return await this.prisma.user.findFirst({
@@ -63,7 +66,7 @@ export class PrismaUserRepository implements UserRepositoryInterface {
       data: {
         ...rest
       },
-      select:{
+      select: {
         avatarUrl: true,
         email: true,
         username: true,
@@ -90,7 +93,7 @@ export class PrismaUserRepository implements UserRepositoryInterface {
     })
   }
 
-  async list({email,organizationId}: ListUserRequestQuerySchema): Promise<User[] | null>{
+  async list({ email, organizationId }: ListUserRequestQuerySchema): Promise<User[] | null> {
     return await this.prisma.user.findMany({
       where: {
         ...(email && {
@@ -98,12 +101,43 @@ export class PrismaUserRepository implements UserRepositoryInterface {
             contains: email
           }
         }),
-        userOrganizations:{
-          none:{
+        userOrganizations: {
+          none: {
             organizationId
           }
         }
       }
     })
+  }
+
+  async forgotPassword({ email, passwordResetToken, passwordResetExpires }: ForgotPasswordDbParams): Promise<User | null> {
+    return await this.prisma.user.update({
+      where: {
+        email: email
+      },
+      data: {
+        passwordResetToken: passwordResetToken,
+        passwordResetExpires: passwordResetExpires
+      }
+    })
+  }
+
+  async getByPasswordResetToken({ token }: GetByPasswordResetToken): Promise<User | null> {
+    return await this.prisma.user.findFirst({
+      where: { passwordResetToken: token }
+    });
+  }
+
+  async resetPassword({ token, newPassword }: ResetPasswordRequestParams): Promise<User | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { passwordResetToken: token }
+    });
+    if (!user) return null;
+
+    // 2. Atualizar pelo id
+    return await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: newPassword }
+    });
   }
 }

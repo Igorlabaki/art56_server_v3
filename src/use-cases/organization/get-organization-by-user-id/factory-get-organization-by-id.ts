@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { GetOrganizationByIdUseCase } from "./use-case-get-organization-by-id";
 import { GetOrganizationByIdController } from "./controller-get-organization-by-id";

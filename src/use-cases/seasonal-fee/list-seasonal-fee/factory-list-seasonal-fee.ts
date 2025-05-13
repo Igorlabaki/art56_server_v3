@@ -1,5 +1,5 @@
 import { PrismaSeasonalFeeRepository } from "../../../repositories/in-prisma/seasonal-fee-in-prisma-repository";
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListSeasonalFeeController } from "./controller-list-seasonal-fee";
 import { ListSeasonalFeesUseCase } from "./use-case-list-seasonal-fee";
 

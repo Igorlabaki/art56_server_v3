@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateSessionUseCase } from "./use-case-create-session";
 import { CreateSessionController } from "./controller-create-session";
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";

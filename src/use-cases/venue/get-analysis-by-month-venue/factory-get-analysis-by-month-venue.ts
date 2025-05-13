@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { GetVenueAnalysisByMonthUseCase } from "./use-case-get-analysis-by-month-venue";
 import { GetVenueAnalysiByMonthController } from "./controller-get-analysis-by-month-venue";
 import { PrismaVenueRepository } from "../../../repositories/in-prisma/venue-in-prisma-repository";

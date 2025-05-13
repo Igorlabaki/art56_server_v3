@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { PrismaOwnerRepository } from "../../../repositories/in-prisma/owner-in-prisma-repository";
 import { CreateVenueOwnerUseCase } from "./use-case-create-venue-owner";

@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteDocumentUseCase } from "./use-case-delete-document";
 import { DeleteDocumentController } from "./controller-delete-document";
 import { PrismaDocumentRepository } from "../../../repositories/in-prisma/document-in-prisma-repository";

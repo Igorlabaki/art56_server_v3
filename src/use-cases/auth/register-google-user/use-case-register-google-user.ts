@@ -30,7 +30,7 @@ class RegisterGoogleUserUseCase {
                 // Se não tem Google vinculado, vincula
                 await this.userRepository.update({
                     userId: userAlreadyExists.id,
-                    googleId: userData.googleId
+                    googleId: userData.googleId,
                 })
             }
 

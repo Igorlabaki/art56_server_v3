@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateNotificationUseCase } from "./use-case-create-notification";
 import { CreateNotificationController } from "./controller-create-notification";
 import { PrismaNotificationRepository } from "../../../repositories/in-prisma/notification-in-prisma-repository";

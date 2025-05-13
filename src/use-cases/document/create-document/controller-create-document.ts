@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { Request, Response } from "express";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { CreateDocumentUseCase } from "./use-case-create-document";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";

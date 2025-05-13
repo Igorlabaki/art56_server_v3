@@ -4,7 +4,7 @@ import { UpdateDocumentUseCase } from "./use-case-update-document";
 import { updateDocumentSchema } from "../../../zod/document/update-document-params-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { randomUUID } from "crypto";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";

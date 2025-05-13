@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeletePaymentUseCase } from "./use-case-delete-payment";
 import { DeletePaymentController } from "./controller-delete-payment";
 import { PrismaPaymentRepository } from "../../../repositories/in-prisma/payment-in-prisma-repository";

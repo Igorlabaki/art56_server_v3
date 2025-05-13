@@ -4,7 +4,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { CreateImageUseCase } from "./use-case-create-image";
 import { handleErrors } from "../../../errors/error-handler";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { createImageRequestParams } from "../../../zod/image/create-image-params-schema";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";

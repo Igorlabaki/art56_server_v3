@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteNotificationUseCase } from "./use-case-delete-notification";
 import { DeleteNotificationController } from "./controller-delete-notification";
 import { PrismaNotificationRepository } from "../../../repositories/in-prisma/notification-in-prisma-repository";

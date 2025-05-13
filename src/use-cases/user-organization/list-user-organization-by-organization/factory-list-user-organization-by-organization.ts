@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListUserOrganizationByOrganizationUseCase } from "./use-case-list-user-organization-by-organization";
 import { PrismaOrganizationRepository } from "../../../repositories/in-prisma/organization-in-prisma-repository";
 import { ListUserOrganizationByOrganizationController } from "./controller-list-user-organization-by-organization";

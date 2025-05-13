@@ -1,6 +1,6 @@
 
 import { Request, Response } from 'express';
-import prismaClient from '../../../service/prisma-client';
+import prismaClient from '../../../services/prisma-client';
 import { SendOrcamentoEmailCase } from './use-case-send-proposal-to-email';
 import { PrismaUserRepository } from '../../../repositories/in-prisma/user-in-prisma-repository';
 import { PrismaHistoryRepository } from '../../../repositories/in-prisma/history-in-prisma-repository';

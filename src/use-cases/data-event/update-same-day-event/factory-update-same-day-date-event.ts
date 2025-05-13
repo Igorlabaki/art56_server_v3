@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdateSameDayDateEventUseCase } from "./use-case-update-same-day-date-event";
 import { UpdateSameDayDateEventController } from "./controller-update-same-day-date-event";
 import { PrismaHistoryRepository } from "../../../repositories/in-prisma/history-in-prisma-repository";

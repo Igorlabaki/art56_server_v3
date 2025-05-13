@@ -7,6 +7,8 @@ export const updateUserSchema = z.object({
     googleId: z.string().optional(),
     username: z.string().optional(),
     avatarUrl: z.string().optional(),
+    passwordResetToken: z.string().nullable().optional(),
+    passwordResetExpires: z.string().nullable().optional(),
 });
 
 export type UpdateUserRequestParams = z.infer<typeof updateUserSchema>;

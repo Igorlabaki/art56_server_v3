@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { Request, Response } from "express"
 import { handleErrors } from "../../../errors/error-handler";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { UpdateImageUseCase } from "../../image/update-image/use-case-update-image";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";

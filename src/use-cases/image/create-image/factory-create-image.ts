@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateImageUseCase } from "./use-case-create-image";
 import { CreateImageController } from "./controller-create-image";
 import { PrismaImageRepository } from "../../../repositories/in-prisma/image-in-prisma-repository";

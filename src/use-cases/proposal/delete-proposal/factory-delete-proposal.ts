@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteProposalByIdUseCase } from "./use-case-get-delete-proposal";
 import { DeleteProposalByIdController } from "./controller-delete-proposal";
 import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";

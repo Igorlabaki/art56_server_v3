@@ -1,5 +1,5 @@
 import { PrismaRefreshTokenRepository } from "../repositories/in-prisma/refresh-token-in-prisma-repository"
-import prismaClient from "../service/prisma-client"
+import prismaClient from "../services/prisma-client"
 
 class GenerateRefreshToken {
 

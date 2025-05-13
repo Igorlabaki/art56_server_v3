@@ -9,3 +9,4 @@ export const RegisterUserSchema = z.object({
 });
 
 export type RegisterUserRequestParams = z.infer<typeof RegisterUserSchema>;
+

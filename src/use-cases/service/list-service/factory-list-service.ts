@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { ListServicesUseCase } from "./use-case-list-venue";
 import { ListServiceController } from "./controller-list-service";

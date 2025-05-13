@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateScheduleUseCase } from "./use-case-create-schedule";
 import { CreateScheduleController } from "./controller-create-schedule";
 import { PrismaScheduleRepository } from "../../../repositories/in-prisma/schedule-in-prisma-repository";

@@ -1,5 +1,5 @@
 
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListExpensesUseCase } from "./use-case-list-expense";
 import { ListExpenseController } from "./controller-list-expense";
 import { PrismaExpenseRepository } from "../../../repositories/in-prisma/expense-in-prisma-repository";

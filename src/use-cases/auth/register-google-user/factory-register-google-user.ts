@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { RegisterGoogleUserUseCase } from "./use-case-register-google-user";
 import { RegisterGoogleUserController } from "./controller-register-google-user";
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";

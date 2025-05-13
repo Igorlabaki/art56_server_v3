@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdateProposalPerPersonUseCase } from "./use-case-update-proposal-per-person";
 import { UpdateProposalPerPersonController } from "./controller-update-proposal-per-person";
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { Request, Response } from "express";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { handleErrors } from "../../../errors/error-handler";
 import { CreatePaymentUseCase } from "./use-case-create-payment";
 import { CreatePaymentRequestParams, createPaymentSchema } from "../../../zod/payment/create-payment-params-schema";

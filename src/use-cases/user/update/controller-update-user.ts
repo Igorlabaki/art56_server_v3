@@ -3,7 +3,7 @@ import { UpdateUserCase } from "./use-case-update-user"
 import { handleErrors } from "../../../errors/error-handler";
 import { UpdateUserRequestParams, updateUserSchema } from "../../../zod/user/update-user-params-schema";
 import { randomUUID } from "crypto";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 class UpdateUserController {
     constructor(private updateUseCase: UpdateUserCase) { }

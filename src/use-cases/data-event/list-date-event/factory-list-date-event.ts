@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListDateEventsUseCase } from "./use-case-list-date-event";
 import { ListDateEventController } from "./controller-list-date-event";
 import { PrismaDateEventRepository } from "../../../repositories/in-prisma/date-event-in-prisma-repository";

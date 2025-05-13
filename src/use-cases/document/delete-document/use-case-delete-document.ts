@@ -1,6 +1,6 @@
 
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 import { DeleteDocumentRequestParamSchema } from "../../../zod/document/delete-document-param-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";

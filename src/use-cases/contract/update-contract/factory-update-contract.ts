@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdateContractUseCase } from "./use-case-update-contract";
 import { UpdateContractController } from "./controller-update-contract";
 import { PrismaContractRepository } from "../../../repositories/in-prisma/contract-in-prisma-repository";

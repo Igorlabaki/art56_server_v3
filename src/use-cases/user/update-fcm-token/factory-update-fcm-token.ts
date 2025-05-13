@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdateFcmTokenUseCase } from "./use-case-update-fcm-token";
 import { UpdateFcmTokenController } from "./controller-update-fcm-token";
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";

@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdateAttachmentUseCase } from "./use-case-update-attachment";
 import { UpdateAttachmentController } from "./controller-update-attachment";
 import { PrismaAttachmentRepository } from "../../../repositories/in-prisma/attachment-in-prisma-repository";

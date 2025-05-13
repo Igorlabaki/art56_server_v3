@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListDocumentsUseCase } from "./use-case-list-document";
 import { ListDocumentController } from "./controller-list-document";
 import { PrismaDocumentRepository } from "../../../repositories/in-prisma/document-in-prisma-repository";

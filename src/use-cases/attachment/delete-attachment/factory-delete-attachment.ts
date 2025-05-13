@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteAttachmentUseCase } from "./use-case-delete-attachment";
 import { DeleteAttachmentController } from "./controller-delete-attachment";
 import { PrismaAttachmentRepository } from "../../../repositories/in-prisma/attachment-in-prisma-repository";

@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { GetByTagImagesUseCase } from "./use-case-get-by-tag-image";
 import { GetByTagImageController } from "./controller-get-by-tag-image";
 import { PrismaImageRepository } from "../../../repositories/in-prisma/image-in-prisma-repository";

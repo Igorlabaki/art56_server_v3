@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteImageUseCase } from "./use-case-delete-image";
 import { DeleteImageController } from "./controller-delete-image";
 import { PrismaImageRepository } from "../../../repositories/in-prisma/image-in-prisma-repository";

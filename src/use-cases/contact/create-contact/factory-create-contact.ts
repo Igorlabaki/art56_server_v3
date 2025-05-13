@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { CreateContactUseCase } from "./use-case-create-contact";
 import { CreateContactController } from "./controller-create-contact";
 import { PrismaContactRepository } from "../../../repositories/in-prisma/contact-in-prisma-repository";

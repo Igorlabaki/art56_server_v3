@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 
 import { GetSessionByUserIdUseCase } from "./use-case-get-session-user-by-id";
 import { GetSessionByUserIdController } from "./controller-get-session-by-id";

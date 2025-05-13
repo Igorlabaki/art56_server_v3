@@ -1,7 +1,7 @@
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
-import { s3Client } from "../../../service/upload-config-sw";
+import { s3Client } from "../../../services/upload-config-sw";
 
 class DeleteImageUseCase {
     constructor(private imageRepository: ImageRepositoryInterface) { }

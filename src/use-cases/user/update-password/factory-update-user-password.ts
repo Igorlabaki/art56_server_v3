@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { UpdateUserPasswordCase } from "./use-case-update-user-password";
 import { UpdateUserPasswordController } from "./controller-update-user-password";
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";

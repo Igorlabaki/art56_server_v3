@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { GetByIdScheduleUseCase } from "./use-case-get-by-id-schedule";
 import { GetByIdScheduleController } from "./controller-get-by-id-schedule";
 import { PrismaScheduleRepository } from "../../../repositories/in-prisma/schedule-in-prisma-repository";

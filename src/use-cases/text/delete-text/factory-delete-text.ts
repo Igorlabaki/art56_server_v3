@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { DeleteTextUseCase } from "./use-case-delete-text";
 import { DeleteTextController } from "./controller-delete-text";
 import { PrismaTextRepository } from "../../../repositories/in-prisma/text-in-prisma-repository";

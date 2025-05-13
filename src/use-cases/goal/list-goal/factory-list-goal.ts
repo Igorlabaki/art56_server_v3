@@ -1,4 +1,4 @@
-import prismaClient from "../../../service/prisma-client";
+import prismaClient from "../../../services/prisma-client";
 import { ListGoalsUseCase } from "./use-case-list-goal";
 import { ListGoalController } from "./controller-list-goal";
 import { PrismaGoalRepository } from "../../../repositories/in-prisma/goal-in-prisma-repository";
