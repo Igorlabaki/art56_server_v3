@@ -18,10 +18,11 @@ class UpdateUserPasswordController {
             return resp.status(200).json(userByid);
 
         } catch (error) {
-            // Tratar os erros
+            // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
+            // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
-        }
+          }
     }
 }
 
