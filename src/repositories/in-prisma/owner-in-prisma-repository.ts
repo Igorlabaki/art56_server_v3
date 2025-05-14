@@ -85,7 +85,6 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
         data: {
           ...rest,
           ownerVenue: {
-            // Conecta ou cria apenas os novos
             ...(toConnect.length > 0 && {
               connectOrCreate: toConnect.map(venueId => ({
                 where: {
@@ -97,13 +96,12 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
                 }
               })),
             }),
-            // Desconecta apenas os removidos
             ...(toDisconnect.length > 0 && {
               disconnect: toDisconnect.map(venueId => ({
-                ownerId_venueId: { ownerId, venueId },
+                ownerId_venueId: { ownerId, venueId }
               })),
             }),
-          },
+          }
         },
       });
     }
