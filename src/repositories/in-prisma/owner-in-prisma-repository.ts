@@ -53,63 +53,33 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
   async update(reference: UpdateOwnerSchema): Promise<Owner | null> {
     const { ownerId, data: { venueIds, ...rest } } = reference;
   
-    // Caso venueIds seja passado e seja um array vazio, removemos todos os vínculos primeiro
-    if (venueIds && venueIds.length === 0) {
-      await this.prisma.ownerVenue.deleteMany({
-        where: { ownerId }
-      });
+    // Busca os vínculos atuais
+    const currentOwnerVenues = await this.prisma.ownerVenue.findMany({
+      where: { ownerId },
+      select: { venueId: true },
+    });
   
-      // Depois atualizamos os campos do Owner
-      return await this.prisma.owner.update({
-        where: { id: ownerId },
-        data: { ...rest }
-      });
-    }
+    const currentVenueIds = currentOwnerVenues.map((relation) => relation.venueId);
   
-    // Caso venueIds seja passado com valores, atualizamos os vínculos
-    if (venueIds) {
-      // Busca vínculos atuais
-      const existingVenues = await this.prisma.ownerVenue.findMany({
-        where: { ownerId },
-        select: { venueId: true },
-      });
+    const venuesToConnect = venueIds?.filter((id) => !currentVenueIds.includes(id)) || [];
+    const venuesToDisconnect = currentVenueIds.filter((id) => !venueIds?.includes(id)) || [];
   
-      const existingVenueIds = existingVenues.map(v => v.venueId);
-  
-      // Calcula os vínculos que precisam ser adicionados e removidos
-      const toConnect = venueIds.filter(id => !existingVenueIds.includes(id));
-      const toDisconnect = existingVenueIds.filter(id => !venueIds.includes(id));
-  
-      return await this.prisma.owner.update({
-        where: { id: ownerId },
-        data: {
-          ...rest,
-          ownerVenue: {
-            ...(toConnect.length > 0 && {
-              connectOrCreate: toConnect.map(venueId => ({
-                where: {
-                  ownerId_venueId: { ownerId, venueId }
-                },
-                create: {
-                  ownerId,
-                  venueId
-                }
-              })),
-            }),
-            ...(toDisconnect.length > 0 && {
-              disconnect: toDisconnect.map(venueId => ({
-                ownerId_venueId: { ownerId, venueId }
-              })),
-            }),
-          }
-        },
-      });
-    }
-  
-    // Se não vier venueIds, só atualiza os outros campos
     return await this.prisma.owner.update({
       where: { id: ownerId },
-      data: { ...rest }
+      data: {
+        ...rest,
+        ownerVenue: {
+          // Adiciona novos vínculos
+          create: venuesToConnect.map((venueId) => ({
+            venue: { connect: { id: venueId } }
+          })),
+          // Remove vínculos antigos
+          deleteMany: venuesToDisconnect.map((venueId) => ({
+            ownerId,
+            venueId
+          })),
+        }
+      }
     });
   }
 

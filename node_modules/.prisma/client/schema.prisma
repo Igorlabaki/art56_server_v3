@@ -188,6 +188,7 @@ model ProposalService {
   id         String   @id @default(uuid())
   proposalId String
   serviceId  String
+  teste      String?
   joinedAt   DateTime @default(now())
   service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
@@ -391,7 +392,7 @@ model OwnerVenue {
   owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   venue    Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
-  @@unique([ownerId, venueId])
+  @@unique([ownerId, venueId], name: "ownerId_venueId")
   @@index([venueId])
   @@map("ownerVenue")
 }
