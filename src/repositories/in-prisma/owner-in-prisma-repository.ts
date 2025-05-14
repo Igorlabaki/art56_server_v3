@@ -45,22 +45,27 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
 
   async update(reference: UpdateOwnerSchema): Promise<Owner | null> {
     const { ownerId, data: { venueIds, ...rest } } = reference
+    const existingVenues = await this.prisma.ownerVenue.findMany({
+      where: { ownerId: reference.ownerId },
+      select: { venueId: true },
+    })
+
+    const existingVenueIds = existingVenues.map(v => v.venueId)
+    const toConnect = venueIds?.filter(id => !existingVenueIds.includes(id)) ?? []
+    const toDisconnect = existingVenueIds.filter(id => !venueIds?.includes(id)) ?? []
+
     return await this.prisma.owner.update({
-      where: {
-        id: ownerId
-      },
+      where: { id: ownerId },
       data: {
         ...rest,
-        ...(venueIds && {
-          ownerVenue: {
-            set: venueIds.map((venueId) => ({
-              ownerId_venueId: {
-                ownerId: reference.ownerId,
-                venueId: venueId
-              }
-            }))
-          }
-        })
+        ownerVenue: {
+          connect: toConnect.map(venueId => ({
+            ownerId_venueId: { ownerId, venueId },
+          })),
+          disconnect: toDisconnect.map(venueId => ({
+            ownerId_venueId: { ownerId, venueId },
+          })),
+        }
       }
     })
   }
