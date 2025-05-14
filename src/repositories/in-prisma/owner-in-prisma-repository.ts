@@ -44,30 +44,51 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
   }
 
   async update(reference: UpdateOwnerSchema): Promise<Owner | null> {
-    const { ownerId, data: { venueIds, ...rest } } = reference
-    const existingVenues = await this.prisma.ownerVenue.findMany({
-      where: { ownerId: reference.ownerId },
-      select: { venueId: true },
-    })
-
-    const existingVenueIds = existingVenues.map(v => v.venueId)
-    const toConnect = venueIds?.filter(id => !existingVenueIds.includes(id)) ?? []
-    const toDisconnect = existingVenueIds.filter(id => !venueIds?.includes(id)) ?? []
-
+    const { ownerId, data: { venueIds, ...rest } } = reference;
+  
+    if (venueIds && venueIds.length === 0) {
+      // Remove todos os vínculos
+      await this.prisma.ownerVenue.deleteMany({
+        where: { ownerId }
+      });
+      // Atualiza só os outros campos
+      return await this.prisma.owner.update({
+        where: { id: ownerId },
+        data: { ...rest }
+      });
+    }
+  
+    if (venueIds) {
+      const existingVenues = await this.prisma.ownerVenue.findMany({
+        where: { ownerId },
+        select: { venueId: true },
+      });
+  
+      const existingVenueIds = existingVenues.map(v => v.venueId);
+      const toConnect = venueIds.filter(id => !existingVenueIds.includes(id));
+      const toDisconnect = existingVenueIds.filter(id => !venueIds.includes(id));
+  
+      return await this.prisma.owner.update({
+        where: { id: ownerId },
+        data: {
+          ...rest,
+          ownerVenue: {
+            connect: toConnect.map(venueId => ({
+              ownerId_venueId: { ownerId, venueId },
+            })),
+            disconnect: toDisconnect.map(venueId => ({
+              ownerId_venueId: { ownerId, venueId },
+            })),
+          }
+        }
+      });
+    }
+  
+    // Se não vier venueIds, só atualiza os outros campos
     return await this.prisma.owner.update({
       where: { id: ownerId },
-      data: {
-        ...rest,
-        ownerVenue: {
-          connect: toConnect.map(venueId => ({
-            ownerId_venueId: { ownerId, venueId },
-          })),
-          disconnect: toDisconnect.map(venueId => ({
-            ownerId_venueId: { ownerId, venueId },
-          })),
-        }
-      }
-    })
+      data: { ...rest }
+    });
   }
 
   async getById(reference: string): Promise<Owner | null> {
