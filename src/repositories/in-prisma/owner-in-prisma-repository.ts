@@ -11,7 +11,7 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
   async createOrganizationOwner(params: CreateOrganizationOwnerRequestParams): Promise<Owner | null> {
-    const { organizationId, ...rest } = params
+    const { organizationId,venueIds, ...rest } = params
     return await this.prisma.owner.create({
       data: {
         organization: {
@@ -19,6 +19,13 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
             id: organizationId
           }
         },
+        ...(venueIds && {
+          ownerVenue: {
+            create: venueIds.map(venueId => ({
+              venueId
+            }))
+          }
+        }),
         ...rest
       },
     })

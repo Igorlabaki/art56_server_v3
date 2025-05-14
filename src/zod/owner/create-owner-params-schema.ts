@@ -16,6 +16,7 @@ export const createOrganizationOwnerSchema = z.object({
     organizationId: z.string(),
     bankAccountNumber: z.string(),
     complement: z.string().optional(),
+    venueIds: z.array(z.string()).optional(),
 });
 
 export type CreateOrganizationOwnerRequestParams = z.infer<typeof createOrganizationOwnerSchema>;
