@@ -18,6 +18,7 @@ export const updateOwnerSchema = z.object({
         rg: z.string().optional().optional(),
         organizationId: z.string().optional(),
         bankAccountNumber: z.string().optional(),
+        venueIds: z.array(z.string()).optional(),
     }),
 });
 

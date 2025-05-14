@@ -25,7 +25,7 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
   }
 
   async createVenueOwner(params: CreateVenueOwnerRequestParams): Promise<Owner | null> {
-    const { organizationId,venueId, ...rest } = params
+    const { organizationId, venueId, ...rest } = params
     return await this.prisma.owner.create({
       data: {
         organization: {
@@ -33,8 +33,8 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
             id: organizationId
           }
         },
-        ownerVenue:{
-          create:{
+        ownerVenue: {
+          create: {
             venueId
           }
         },
@@ -44,12 +44,23 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
   }
 
   async update(reference: UpdateOwnerSchema): Promise<Owner | null> {
+    const { ownerId, data: { venueIds, ...rest } } = reference
     return await this.prisma.owner.update({
       where: {
-        id: reference.ownerId
+        id: ownerId
       },
       data: {
-        ...reference.data
+        ...rest,
+        ...(venueIds && {
+          ownerVenue: {
+            set: venueIds.map((venueId) => ({
+              ownerId_venueId: {
+                ownerId: reference.ownerId,
+                venueId: venueId
+              }
+            }))
+          }
+        })
       }
     })
   }
@@ -88,8 +99,20 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
           }
         })
       },
-      orderBy:{
+      orderBy: {
         completeName: "asc"
+      },
+      include: {
+        ownerVenue: {
+          include: {
+            venue: {
+              select: {
+                name: true,
+                id: true,
+              }
+            }
+          }
+        }
       }
     })
   }
@@ -105,8 +128,8 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
           completeName
         }
       },
-      orderBy:{
-        owner:{
+      orderBy: {
+        owner: {
           completeName: "asc"
         }
       }
@@ -122,7 +145,7 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
           in: ownerIds, // Filtra pelos IDs obtidos anteriormente
         },
       },
-      orderBy:{
+      orderBy: {
         completeName: "asc"
       }
     });
