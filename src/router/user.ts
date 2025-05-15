@@ -8,6 +8,7 @@ import { getByIdUserFactory } from "../use-cases/user/get-by-id/factory-get-by-i
 import { updateFcmTokenFactory } from "../use-cases/user/update-fcm-token/factory-update-fcm-token";
 import { createNewUserFactory } from "../use-cases/user/create-new-user/factory-create-new-user-text";
 import { updateUserPasswordFactory } from "../use-cases/user/update-password/factory-update-user-password";
+import { getByEmailUserFactory } from "../use-cases/user/get-by-email/factory-get-by-email-user";
 
 
 const userRoutes = Router()
@@ -37,6 +38,12 @@ userRoutes.post("/createNewUser", (req, res) => {
 // Register
 userRoutes.get("/getById?:userId?", (req, res) => {
     const controller = getByIdUserFactory();
+    controller.handle(req, res);
+});
+
+// Register
+userRoutes.get("/getByEmail?:email?", (req, res) => {
+    const controller = getByEmailUserFactory();
     controller.handle(req, res);
 });
 
