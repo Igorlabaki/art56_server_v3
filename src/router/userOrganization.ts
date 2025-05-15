@@ -38,7 +38,7 @@ userorganizationRoutes.get("/getById/:organizationId?", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-userorganizationRoutes.get("/delete/:userOrganizationId?", async (req, res) => {
+userorganizationRoutes.delete("/delete/:userOrganizationId?", async (req, res) => {
     const controller = deleteUserOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
