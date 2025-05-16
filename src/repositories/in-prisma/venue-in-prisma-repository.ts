@@ -321,25 +321,25 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
-  async getVenueAnalytics({ venueId, month, year }: GetVenueAnalyticsParams): Promise<VenueAnalyticsResponse | null> {
+  async getVenueAnalytics({ venueId, params }: GetVenueAnalyticsParams): Promise<VenueAnalyticsResponse | null> {
     const today = new Date();
     
     // Define o ano (se não for fornecido, usa o atual)
-    const selectedYear = year ? parseInt(year) : today.getFullYear();
+    const selectedYear = params?.year ? parseInt(params.year) : today.getFullYear();
     
     // Define o mês (se não for fornecido, usa o atual)
-    const selectedMonth = month === 'all' ? 0 : (month ? parseInt(month) - 1 : today.getMonth()); // -1 porque os meses em JS começam em 0
+    const selectedMonth = params?.month === 'all' ? 0 : (params?.month ? parseInt(params.month) - 1 : today.getMonth()); // -1 porque os meses em JS começam em 0
     
     const firstDayOfYear = new Date(selectedYear, 0, 1);
     const lastDayOfYear = new Date(selectedYear, 11, 31);
     
     // Se month for 'all', usamos o ano inteiro
-    const firstDayOfMonth = month === 'all' ? firstDayOfYear : new Date(selectedYear, selectedMonth, 1);
-    const lastDayOfMonth = month === 'all' ? lastDayOfYear : new Date(selectedYear, selectedMonth + 1, 0);
+    const firstDayOfMonth = params?.month === 'all' ? firstDayOfYear : new Date(selectedYear, selectedMonth, 1);
+    const lastDayOfMonth = params?.month === 'all' ? lastDayOfYear : new Date(selectedYear, selectedMonth + 1, 0);
     
     // Se month for 'all', usamos o ano anterior
-    const firstDayOfLastMonth = month === 'all' ? new Date(selectedYear - 1, 0, 1) : new Date(selectedYear, selectedMonth - 1, 1);
-    const lastDayOfLastMonth = month === 'all' ? new Date(selectedYear - 1, 11, 31) : new Date(selectedYear, selectedMonth, 0);
+    const firstDayOfLastMonth = params?.month === 'all' ? new Date(selectedYear - 1, 0, 1) : new Date(selectedYear, selectedMonth - 1, 1);
+    const lastDayOfLastMonth = params?.month === 'all' ? new Date(selectedYear - 1, 11, 31) : new Date(selectedYear, selectedMonth, 0);
 
     // Busca o venue com contagens e próximos eventos
     const venue = await this.prisma.venue.findUnique({
