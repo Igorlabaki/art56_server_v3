@@ -1,4 +1,3 @@
-
 import { PrismaClient, UserOrganization, UserPermission } from "@prisma/client"
 import { UserOrganizationRepositoryInterface, UserOrganizationWithRelations } from "../interface/user-organization-repository-interface"
 import { CreateUserOrganizationRequestParams } from "../../zod/user-organization/create-user-organization-params-schema"
@@ -186,6 +185,10 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
   }
 
   async list({ userId, name }: ListUserOrganizationRequestQuerySchema): Promise<UserOrganization[] | null> {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
     return await this.prisma.userOrganization.findMany({
       where: {
         ...(name && {
@@ -197,7 +200,37 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
       },
       include: {
         user: true,
-        organization: true,
+        organization: {
+          include: {
+            venues: {
+              include: {
+                DateEvent: {
+                  where: {
+                    startDate: {
+                      gte: today
+                    }
+                  },
+                  orderBy: {
+                    startDate: 'asc'
+                  },
+                  take: 1
+                },
+                _count: {
+                  select: {
+                    DateEvent: {
+                      where: {
+                        startDate: {
+                          gte: firstDayOfMonth,
+                          lte: lastDayOfMonth
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         userPermissions: {
           include:{
             userOrganization: {
