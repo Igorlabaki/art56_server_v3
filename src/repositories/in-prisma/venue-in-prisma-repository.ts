@@ -321,18 +321,25 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
-  async getVenueAnalytics({ venueId }: GetVenueAnalyticsParams): Promise<VenueAnalyticsResponse | null> {
+  async getVenueAnalytics({ venueId, month, year }: GetVenueAnalyticsParams): Promise<VenueAnalyticsResponse | null> {
     const today = new Date();
-    const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
-    const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
     
-    // Mês atual
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    // Define o ano (se não for fornecido, usa o atual)
+    const selectedYear = year ? parseInt(year) : today.getFullYear();
     
-    // Mês anterior
-    const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    // Define o mês (se não for fornecido, usa o atual)
+    const selectedMonth = month === 'all' ? 0 : (month ? parseInt(month) - 1 : today.getMonth()); // -1 porque os meses em JS começam em 0
+    
+    const firstDayOfYear = new Date(selectedYear, 0, 1);
+    const lastDayOfYear = new Date(selectedYear, 11, 31);
+    
+    // Se month for 'all', usamos o ano inteiro
+    const firstDayOfMonth = month === 'all' ? firstDayOfYear : new Date(selectedYear, selectedMonth, 1);
+    const lastDayOfMonth = month === 'all' ? lastDayOfYear : new Date(selectedYear, selectedMonth + 1, 0);
+    
+    // Se month for 'all', usamos o ano anterior
+    const firstDayOfLastMonth = month === 'all' ? new Date(selectedYear - 1, 0, 1) : new Date(selectedYear, selectedMonth - 1, 1);
+    const lastDayOfLastMonth = month === 'all' ? new Date(selectedYear - 1, 11, 31) : new Date(selectedYear, selectedMonth, 0);
 
     // Busca o venue com contagens e próximos eventos
     const venue = await this.prisma.venue.findUnique({
@@ -349,21 +356,21 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
                 },
                 type: 'EVENT'
               },
-              // Eventos do mês atual
+              // Eventos do período selecionado
               {
                 startDate: {
                   gte: firstDayOfMonth,
                   lte: lastDayOfMonth
                 }
               },
-              // Eventos do mês anterior
+              // Eventos do período anterior
               {
                 startDate: {
                   gte: firstDayOfLastMonth,
                   lte: lastDayOfLastMonth
                 }
               },
-              // Próximos eventos e visitas
+              // Próximos eventos e visitas (sempre em relação à data atual)
               {
                 startDate: {
                   gt: today
@@ -418,7 +425,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       event.type === 'VISIT'
     );
 
-    // Eventos do mês atual
+    // Eventos do período selecionado
     const eventsThisMonth = venue.DateEvent.filter(event => 
       event.startDate >= firstDayOfMonth && 
       event.startDate <= lastDayOfMonth &&
@@ -432,13 +439,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       event.type === 'EVENT'
     ).length;
 
-    // Propostas do mês atual
+    // Propostas do período selecionado
     const proposalsThisMonth = venue.proposals.filter(proposal => 
       proposal.createdAt >= firstDayOfMonth && 
       proposal.createdAt <= lastDayOfMonth
     ).length;
 
-    // Propostas do mês anterior
+    // Propostas do período anterior
     const proposalsLastMonth = venue.proposals.filter(proposal => 
       proposal.createdAt >= firstDayOfLastMonth && 
       proposal.createdAt <= lastDayOfLastMonth
@@ -450,14 +457,14 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       isPositive: proposalsThisMonth >= proposalsLastMonth
     };
 
-    // Visitas do mês atual
+    // Visitas do período selecionado
     const visitsThisMonth = venue.DateEvent.filter(event => 
       event.type === 'VISIT' && 
       event.startDate >= firstDayOfMonth && 
       event.startDate <= lastDayOfMonth
     ).length;
 
-    // Visitas do mês anterior
+    // Visitas do período anterior
     const visitsLastMonth = venue.DateEvent.filter(event => 
       event.type === 'VISIT' && 
       event.startDate >= firstDayOfLastMonth && 
@@ -470,7 +477,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       isPositive: visitsThisMonth >= visitsLastMonth
     };
 
-    // Receita do mês atual
+    // Receita do período selecionado
     const monthlyRevenue = venue.DateEvent
       .filter(event => 
         event.startDate >= firstDayOfMonth && 
@@ -479,7 +486,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       )
       .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
-    // Receita do mês anterior
+    // Receita do período anterior
     const lastMonthRevenue = venue.DateEvent
       .filter(event => 
         event.startDate >= firstDayOfLastMonth && 

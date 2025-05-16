@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
-export const getVenueAnalyticsParamsSchema = z.object({
-  venueId: z.string()
+export const GetVenueAnalyticsParamsSchema = z.object({
+  venueId: z.string(),
+  month: z.enum(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', 'all']).optional(),
+  year: z.string().optional()
 });
 
-export type GetVenueAnalyticsParams = z.infer<typeof getVenueAnalyticsParamsSchema>; 
+export type GetVenueAnalyticsParams = z.infer<typeof GetVenueAnalyticsParamsSchema>; 
