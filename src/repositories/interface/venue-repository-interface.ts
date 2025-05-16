@@ -25,6 +25,22 @@ export type ItemListVenueResponse = {
   };
 };
 
+export interface VenueAnalyticsResponse {
+  totalEventsInYear: number;
+  eventsThisMonth: number;
+  proposalsInMonth: number;
+  proposalsVariation: {
+    value: number;
+    isPositive: boolean;
+  };
+  totalVisits: number;
+  monthlyRevenue: number;
+  revenueVariation: {
+    value: number;
+    isPositive: boolean;
+  };
+}
+
 export interface VenueRepositoryInterface {
   delete: (params: string) => Promise<Venue | null>
   update: (params: UpdateVenueSchema) => Promise<Venue | null>
@@ -33,10 +49,5 @@ export interface VenueRepositoryInterface {
   getSelectedVenue: (params: GetSelectedVenueRequestParamSchema) => Promise<Venue | null>
   list: (query: ListVenueRequestQuerySchema) => Promise<ItemListVenueResponse[]  | null>
   listPermitted: (query: ListPermittedVenueRequestQuerySchema) => Promise<ItemListVenueResponse[]  | null>
-  getVenueAnalytics: (params: GetVenueAnalyticsParams) => Promise<{
-    totalEventsInYear: number;
-    proposalsInMonth: number;
-    totalVisits: number;
-    monthlyRevenue: number;
-  } | null>
+  getVenueAnalytics: (params: GetVenueAnalyticsParams) => Promise< VenueAnalyticsResponse| null>
 }

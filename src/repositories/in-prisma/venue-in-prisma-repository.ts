@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 
 import { PrismaClient, Venue, User } from "@prisma/client"
 import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema"
-import { ItemListVenueResponse, VenueRepositoryInterface } from "../interface/venue-repository-interface"
+import { ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface } from "../interface/venue-repository-interface"
 import { ListVenueRequestQuerySchema, } from "../../zod/venue/list-venue-query-schema"
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema"
 import { UpdateVenueSchema } from "../../zod/venue/update-venue-params-schema"
@@ -321,12 +321,18 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
-  async getVenueAnalytics({ venueId }: GetVenueAnalyticsParams) {
+  async getVenueAnalytics({ venueId }: GetVenueAnalyticsParams): Promise<VenueAnalyticsResponse | null> {
     const today = new Date();
     const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
     const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
+    
+    // Mês atual
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    // Mês anterior
+    const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
     const venue = await this.prisma.venue.findUnique({
       where: { id: venueId },
@@ -341,7 +347,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           include: {
             proposal: {
               select: {
-                totalAmount: true
+                totalAmount: true,
+                createdAt: true
               }
             }
           }
@@ -349,9 +356,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         proposals: {
           where: {
             createdAt: {
-              gte: firstDayOfMonth,
+              gte: firstDayOfLastMonth,
               lte: lastDayOfMonth
             }
+          },
+          select: {
+            totalAmount: true,
+            createdAt: true
           }
         }
       }
@@ -359,10 +370,36 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
     if (!venue) return null;
 
+    // Eventos do mês atual
+    const eventsThisMonth = venue.DateEvent.filter(event => 
+      event.startDate >= firstDayOfMonth && event.startDate <= lastDayOfMonth
+    ).length;
+
+    // Total de eventos no ano
     const totalEventsInYear = venue.DateEvent.length;
-    const proposalsInMonth = venue.proposals.length;
-    const totalVisits = venue.DateEvent.filter((event) => event.type === 'VISIT').length;
-    
+
+    // Propostas do mês atual
+    const proposalsThisMonth = venue.proposals.filter(proposal => 
+      proposal.createdAt >= firstDayOfMonth && proposal.createdAt <= lastDayOfMonth
+    ).length;
+
+    // Propostas do mês anterior
+    const proposalsLastMonth = venue.proposals.filter(proposal => 
+      proposal.createdAt >= firstDayOfLastMonth && proposal.createdAt <= lastDayOfLastMonth
+    ).length;
+
+    // Cálculo da variação de propostas
+    const proposalsVariation = {
+      value: proposalsLastMonth === 0 ? 100 : ((proposalsThisMonth - proposalsLastMonth) / proposalsLastMonth) * 100,
+      isPositive: proposalsThisMonth >= proposalsLastMonth
+    };
+
+    // Visitas futuras
+    const totalVisits = venue.DateEvent.filter(event => 
+      event.type === 'VISIT' && event.startDate > today
+    ).length;
+
+    // Receita do mês atual
     const monthlyRevenue = venue.DateEvent.reduce((total: number, event) => {
       if (event.proposal?.totalAmount) {
         return total + event.proposal.totalAmount;
@@ -370,11 +407,30 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       return total;
     }, 0);
 
+    // Receita do mês anterior
+    const lastMonthRevenue = venue.DateEvent.reduce((total: number, event) => {
+      if (event.proposal?.totalAmount && 
+          event.proposal.createdAt >= firstDayOfLastMonth && 
+          event.proposal.createdAt <= lastDayOfLastMonth) {
+        return total + event.proposal.totalAmount;
+      }
+      return total;
+    }, 0);
+
+    // Cálculo da variação de receita
+    const revenueVariation = {
+      value: lastMonthRevenue === 0 ? 100 : ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100,
+      isPositive: monthlyRevenue >= lastMonthRevenue
+    };
+
     return {
       totalEventsInYear,
-      proposalsInMonth,
+      eventsThisMonth,
+      proposalsInMonth: proposalsThisMonth,
+      proposalsVariation,
       totalVisits,
-      monthlyRevenue
+      monthlyRevenue,
+      revenueVariation
     };
   }
 }
