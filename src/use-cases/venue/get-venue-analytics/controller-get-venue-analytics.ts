@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { GetVenueAnalyticsUseCase } from './use-case-get-venue-analytics';
-import { getVenueAnalyticsParamsSchema } from '../../../zod/venue/get-venue-analytics-params-schema';
+import { GetVenueAnalyticsParamsSchema } from '../../../zod/venue/get-venue-analytics-params-schema';
 
 export class GetVenueAnalyticsController {
   constructor(private readonly getVenueAnalyticsUseCase: GetVenueAnalyticsUseCase) {}
 
   async handle(request: Request, response: Response) {
     try {
-      const { venueId } = getVenueAnalyticsParamsSchema.parse(request.params);
+      const { venueId } = GetVenueAnalyticsParamsSchema.parse(request.params);
 
       const analytics = await this.getVenueAnalyticsUseCase.execute({ venueId });
 
