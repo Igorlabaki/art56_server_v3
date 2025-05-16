@@ -203,6 +203,10 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async list({ organizationId, name }: ListVenueRequestQuerySchema): Promise<ItemListVenueResponse[] | null> {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
     return await this.prisma.venue.findMany({
       where: {
         organizationId,
@@ -218,11 +222,48 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             imageUrl: true
           }
         },
+        // Próximo evento
+        DateEvent: {
+          where: {
+            startDate: {
+              gte: today
+            }
+          },
+          orderBy: {
+            startDate: 'asc'
+          },
+          take: 1,
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+            type: true
+          }
+        },
+        // Contagem de eventos do mês
+        _count: {
+          select: {
+            DateEvent: {
+              where: {
+                startDate: {
+                  gte: firstDayOfMonth,
+                  lte: lastDayOfMonth
+                }
+              }
+            }
+          }
+        }
       }
-    })
+    });
   }
 
   async listPermitted({ organizationId, name, userId }: ListPermittedVenueRequestQuerySchema): Promise<ItemListVenueResponse[] | null> {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    
     return await this.prisma.venue.findMany({
       where: {
         organizationId,
@@ -243,6 +284,37 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             imageUrl: true
           }
         },
+        DateEvent: {
+          where: {
+            startDate: {
+              gte: today
+            }
+          },
+          orderBy: {
+            startDate: 'asc'
+          },
+          take: 1,
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+            type: true
+          }
+        },
+        // Contagem de eventos do mês
+        _count: {
+          select: {
+            DateEvent: {
+              where: {
+                startDate: {
+                  gte: firstDayOfMonth,
+                  lte: lastDayOfMonth
+                }
+              }
+            }
+          }
+        }
       }
     });
   }
