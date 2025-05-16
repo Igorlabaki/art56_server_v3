@@ -339,7 +339,11 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             }
           },
           include: {
-            proposal: true
+            proposal: {
+              select: {
+                totalAmount: true
+              }
+            }
           }
         },
         proposals: {
@@ -360,8 +364,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const totalVisits = venue.DateEvent.filter((event) => event.type === 'VISIT').length;
     
     const monthlyRevenue = venue.DateEvent.reduce((total: number, event) => {
-      if (event.proposal) {
-        return total + (event.proposal.totalAmount || 0);
+      if (event.proposal?.totalAmount) {
+        return total + event.proposal.totalAmount;
       }
       return total;
     }, 0);
