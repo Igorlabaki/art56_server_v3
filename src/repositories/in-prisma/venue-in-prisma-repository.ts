@@ -400,22 +400,22 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     ).length;
 
     // Receita do mês atual
-    const monthlyRevenue = venue.DateEvent.reduce((total: number, event) => {
-      if (event.proposal?.totalAmount) {
-        return total + event.proposal.totalAmount;
-      }
-      return total;
-    }, 0);
+    const monthlyRevenue = venue.DateEvent
+      .filter(event => 
+        event.startDate >= firstDayOfMonth && 
+        event.startDate <= lastDayOfMonth && 
+        event.proposal?.totalAmount
+      )
+      .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
     // Receita do mês anterior
-    const lastMonthRevenue = venue.DateEvent.reduce((total: number, event) => {
-      if (event.proposal?.totalAmount && 
-          event.proposal.createdAt >= firstDayOfLastMonth && 
-          event.proposal.createdAt <= lastDayOfLastMonth) {
-        return total + event.proposal.totalAmount;
-      }
-      return total;
-    }, 0);
+    const lastMonthRevenue = venue.DateEvent
+      .filter(event => 
+        event.startDate >= firstDayOfLastMonth && 
+        event.startDate <= lastDayOfLastMonth && 
+        event.proposal?.totalAmount
+      )
+      .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
     // Cálculo da variação de receita
     const revenueVariation = {
