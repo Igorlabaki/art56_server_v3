@@ -7,9 +7,19 @@ export class GetVenueAnalyticsController {
 
   async handle(request: Request, response: Response) {
     try {
-      const { venueId } = GetVenueAnalyticsParamsSchema.parse(request.params);
+      const { venueId } = request.params;
+      const { month, year } = request.query;
 
-      const analytics = await this.getVenueAnalyticsUseCase.execute({ venueId });
+      // Validar os parâmetros usando o schema
+      const validatedParams = GetVenueAnalyticsParamsSchema.parse({
+        venueId,
+        params: {
+          month: month as '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | 'all' | undefined,
+          year: year as string | undefined
+        }
+      });
+
+      const analytics = await this.getVenueAnalyticsUseCase.execute(validatedParams);
 
       return response.json(analytics);
     } catch (error) {
