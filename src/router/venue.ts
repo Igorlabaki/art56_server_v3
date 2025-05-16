@@ -8,6 +8,7 @@ import { updateVenueFactory } from "../use-cases/venue/update-venue/factory-upda
 import { getVenueTrafficCountFactory } from "../use-cases/venue/get-traffic-count-venue/factory-get-traffic-count-venue";
 import { getVenueAnalysiByMonthFactory } from "../use-cases/venue/get-analysis-by-month-venue/factory-get-analysis-by-month-venue";
 import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-venues/factory-list-permitted-venue";
+import { makeGetVenueAnalyticsController } from "../use-cases/venue/get-venue-analytics/factory-get-venue-analytics";
 
 const venueRoutes = Router()
 
@@ -58,5 +59,11 @@ venueRoutes.delete("/delete/:venueId", async (req, res) => {
     const controller = deleteVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+
+// Analytics
+venueRoutes.get("/analytics/:venueId", async (req, res) => {
+    const controller = makeGetVenueAnalyticsController();
+    await controller.handle(req, res);
+});
 
 export { venueRoutes }

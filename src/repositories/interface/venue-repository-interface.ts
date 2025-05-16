@@ -5,6 +5,7 @@ import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-
 import { ListVenueRequestQuerySchema } from "../../zod/venue/list-venue-query-schema";
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema";
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema";
+import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema";
 
 export type ItemListVenueResponse = {
   id: string;
@@ -32,4 +33,10 @@ export interface VenueRepositoryInterface {
   getSelectedVenue: (params: GetSelectedVenueRequestParamSchema) => Promise<Venue | null>
   list: (query: ListVenueRequestQuerySchema) => Promise<ItemListVenueResponse[]  | null>
   listPermitted: (query: ListPermittedVenueRequestQuerySchema) => Promise<ItemListVenueResponse[]  | null>
+  getVenueAnalytics: (params: GetVenueAnalyticsParams) => Promise<{
+    totalEventsInYear: number;
+    proposalsInMonth: number;
+    totalVisits: number;
+    monthlyRevenue: number;
+  } | null>
 }

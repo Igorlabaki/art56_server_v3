@@ -8,6 +8,7 @@ import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-
 import { UpdateVenueSchema } from "../../zod/venue/update-venue-params-schema"
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema"
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
+import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema"
 
 
 
@@ -318,5 +319,58 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         }
       }
     });
+  }
+
+  async getVenueAnalytics({ venueId }: GetVenueAnalyticsParams) {
+    const today = new Date();
+    const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
+    const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    const venue = await this.prisma.venue.findUnique({
+      where: { id: venueId },
+      include: {
+        DateEvent: {
+          where: {
+            startDate: {
+              gte: firstDayOfYear,
+              lte: lastDayOfYear
+            }
+          },
+          include: {
+            proposal: true
+          }
+        },
+        proposals: {
+          where: {
+            createdAt: {
+              gte: firstDayOfMonth,
+              lte: lastDayOfMonth
+            }
+          }
+        }
+      }
+    });
+
+    if (!venue) return null;
+
+    const totalEventsInYear = venue.DateEvent.length;
+    const proposalsInMonth = venue.proposals.length;
+    const totalVisits = venue.DateEvent.filter((event) => event.type === 'VISIT').length;
+    
+    const monthlyRevenue = venue.DateEvent.reduce((total: number, event) => {
+      if (event.proposal) {
+        return total + (event.proposal.totalAmount || 0);
+      }
+      return total;
+    }, 0);
+
+    return {
+      totalEventsInYear,
+      proposalsInMonth,
+      totalVisits,
+      monthlyRevenue
+    };
   }
 }
