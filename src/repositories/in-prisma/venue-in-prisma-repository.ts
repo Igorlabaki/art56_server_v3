@@ -387,25 +387,12 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             proposal: {
               select: {
                 id: true,
-                totalAmount: true,
-                createdAt: true
+                totalAmount: true
               }
             }
           },
           orderBy: {
             startDate: 'asc'
-          }
-        },
-        proposals: {
-          where: {
-            createdAt: {
-              gte: firstDayOfLastMonth,
-              lte: lastDayOfMonth
-            }
-          },
-          select: {
-            totalAmount: true,
-            createdAt: true
           }
         }
       }
@@ -439,16 +426,18 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       event.type === 'EVENT'
     ).length;
 
-    // Propostas do período selecionado
-    const proposalsThisMonth = venue.proposals.filter(proposal => 
-      proposal.createdAt >= firstDayOfMonth && 
-      proposal.createdAt <= lastDayOfMonth
+    // Propostas do período selecionado (baseado na startDate do evento)
+    const proposalsThisMonth = venue.DateEvent.filter(event => 
+      event.startDate >= firstDayOfMonth && 
+      event.startDate <= lastDayOfMonth &&
+      event.proposal
     ).length;
 
-    // Propostas do período anterior
-    const proposalsLastMonth = venue.proposals.filter(proposal => 
-      proposal.createdAt >= firstDayOfLastMonth && 
-      proposal.createdAt <= lastDayOfLastMonth
+    // Propostas do período anterior (baseado na startDate do evento)
+    const proposalsLastMonth = venue.DateEvent.filter(event => 
+      event.startDate >= firstDayOfLastMonth && 
+      event.startDate <= lastDayOfLastMonth &&
+      event.proposal
     ).length;
 
     // Cálculo da variação de propostas
@@ -477,7 +466,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       isPositive: visitsThisMonth >= visitsLastMonth
     };
 
-    // Receita do período selecionado
+    // Receita do período selecionado (baseado na startDate do evento)
     const monthlyRevenue = venue.DateEvent
       .filter(event => 
         event.startDate >= firstDayOfMonth && 
@@ -486,7 +475,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       )
       .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
-    // Receita do período anterior
+    // Receita do período anterior (baseado na startDate do evento)
     const lastMonthRevenue = venue.DateEvent
       .filter(event => 
         event.startDate >= firstDayOfLastMonth && 
