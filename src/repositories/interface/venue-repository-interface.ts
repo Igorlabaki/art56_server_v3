@@ -34,11 +34,31 @@ export interface VenueAnalyticsResponse {
     isPositive: boolean;
   };
   totalVisits: number;
+  visitsVariation: {
+    value: number;
+    isPositive: boolean;
+  };
   monthlyRevenue: number;
   revenueVariation: {
     value: number;
     isPositive: boolean;
   };
+  nextEvent: {
+    id: string;
+    title: string;
+    startDate: Date;
+    endDate: Date;
+    type: string;
+    proposalId: string | null;
+  } | null;
+  nextVisit: {
+    id: string;
+    title: string;
+    startDate: Date;
+    endDate: Date;
+    type: string;
+    proposalId: string | null;
+  } | null;
 }
 
 export interface VenueRepositoryInterface {
