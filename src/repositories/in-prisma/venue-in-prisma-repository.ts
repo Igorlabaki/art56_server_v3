@@ -387,7 +387,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             proposal: {
               select: {
                 id: true,
-                totalAmount: true
+                totalAmount: true,
+                startDate: true
               }
             }
           },
@@ -426,18 +427,18 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       event.type === 'EVENT'
     ).length;
 
-    // Propostas do período selecionado (baseado na startDate do evento)
+    // Propostas do período selecionado (baseado na startDate da proposta)
     const proposalsThisMonth = venue.DateEvent.filter(event => 
-      event.startDate >= firstDayOfMonth && 
-      event.startDate <= lastDayOfMonth &&
-      event.proposal
+      event.proposal?.startDate && 
+      event.proposal.startDate >= firstDayOfMonth && 
+      event.proposal.startDate <= lastDayOfMonth
     ).length;
 
-    // Propostas do período anterior (baseado na startDate do evento)
+    // Propostas do período anterior (baseado na startDate da proposta)
     const proposalsLastMonth = venue.DateEvent.filter(event => 
-      event.startDate >= firstDayOfLastMonth && 
-      event.startDate <= lastDayOfLastMonth &&
-      event.proposal
+      event.proposal?.startDate && 
+      event.proposal.startDate >= firstDayOfLastMonth && 
+      event.proposal.startDate <= lastDayOfLastMonth
     ).length;
 
     // Cálculo da variação de propostas
