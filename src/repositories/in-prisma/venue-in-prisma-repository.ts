@@ -17,7 +17,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
   async create(params: CreateVenueRequestParams): Promise<Venue | null> {
     const { data, organizationId, userId } = params; // createdBy = ID do usuário que criou a venue
-    const { owners, pricePerDay, pricePerPerson, maxGuest,pricePerPersonDay,pricePerPersonHour, ...rest } = data;
+    const { owners, pricePerDay, pricePerPerson, maxGuest, pricePerPersonDay, pricePerPersonHour, ...rest } = data;
 
     // Formatando os valores de preço e maxGuest
     const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
@@ -61,9 +61,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           "EDIT_CALENDARS", "EDIT_INFOS", "EDIT_IMAGES", "EDIT_TEXTS",
           "EDIT_EXPENSES", "EDIT_SERVICES", "EDIT_PAYMENTS", "EDIT_DATES",
           "VIEW_NOTIFICATIONS", "VIEW_INFO", "VIEW_IMAGES", "VIEW_AMOUNTS",
-          "EDIT_EVENT", "EDIT_PROPOSAL", "EDIT_ORGANIZATION", "EDIT_VENUE","EDIT_SCHEDULE",
-          "VIEW_EVENTS", "VIEW_PROPOSALS", "VIEW_ANALYSIS", "VIEW_CALENDAR","EDIT_DOCUMENTS",
-          "EDIT_ATTENDANCE_LIST", "EDIT_PROPOSALS", "EDIT_QUESTIONS", "EDIT_VENUES","SEND_CLIENT"
+          "EDIT_EVENT", "EDIT_PROPOSAL", "EDIT_ORGANIZATION", "EDIT_VENUE", "EDIT_SCHEDULE",
+          "VIEW_EVENTS", "VIEW_PROPOSALS", "VIEW_ANALYSIS", "VIEW_CALENDAR", "EDIT_DOCUMENTS",
+          "EDIT_ATTENDANCE_LIST", "EDIT_PROPOSALS", "EDIT_QUESTIONS", "EDIT_VENUES", "SEND_CLIENT"
         ]
 
         // Concatenando as permissões em uma única string
@@ -222,17 +222,17 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             imageUrl: true
           }
         },
-        // Próximo evento
+        // Próximo evento (qualquer data futura)
         DateEvent: {
           where: {
             startDate: {
-              gte: today
+              gte: today // Apenas eventos futuros
             }
           },
           orderBy: {
-            startDate: 'asc'
+            startDate: 'asc' // Ordena do mais próximo para o mais distante
           },
-          take: 1,
+          take: 1, // Pega apenas o primeiro (mais próximo)
           select: {
             id: true,
             title: true,
@@ -241,7 +241,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             type: true
           }
         },
-        // Contagem de eventos do mês
+        // Contagem de eventos do mês atual
         _count: {
           select: {
             DateEvent: {
@@ -263,7 +263,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    
+
     return await this.prisma.venue.findMany({
       where: {
         organizationId,
@@ -284,16 +284,17 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             imageUrl: true
           }
         },
+        // Próximo evento (qualquer data futura)
         DateEvent: {
           where: {
             startDate: {
-              gte: today
+              gte: today // Apenas eventos futuros
             }
           },
           orderBy: {
-            startDate: 'asc'
+            startDate: 'asc' // Ordena do mais próximo para o mais distante
           },
-          take: 1,
+          take: 1, // Pega apenas o primeiro (mais próximo)
           select: {
             id: true,
             title: true,
@@ -302,7 +303,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             type: true
           }
         },
-        // Contagem de eventos do mês
+        // Contagem de eventos do mês atual
         _count: {
           select: {
             DateEvent: {
