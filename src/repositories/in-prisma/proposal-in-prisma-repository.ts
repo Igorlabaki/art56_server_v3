@@ -191,6 +191,11 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         id: reference
       },
       include: {
+        proposalServices: {
+          include: {
+            service: true
+          }
+        },
         histories: {
           orderBy: {
             createdAt: "asc"
