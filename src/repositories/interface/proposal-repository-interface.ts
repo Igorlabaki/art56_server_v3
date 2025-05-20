@@ -28,8 +28,6 @@ export type ProposalWithRelations = Proposal & {
   proposalServices: {
     service: Service;
   }[];
-  payments: Payment[]; 
-  personList: Person[];
 };
 
 export interface ItemListProposalResponse{

@@ -196,16 +196,6 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
             service: true
           }
         },
-        payments: {
-          orderBy: {
-            createdAt: "asc"
-          }
-        },
-        personList: {
-          orderBy: {
-            name: "asc"
-          }
-        },
       }
     })
   }
