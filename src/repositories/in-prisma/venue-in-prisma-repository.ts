@@ -512,6 +512,25 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       isPositive: monthlyRevenue >= lastMonthRevenue
     };
 
+    // Se month for 'all', calcula a receita de cada mês
+    const monthlyRevenueList = params?.month === 'all' ? Array.from({ length: 12 }, (_, monthIndex) => {
+      const monthStart = new Date(selectedYear, monthIndex, 1);
+      const monthEnd = new Date(selectedYear, monthIndex + 1, 0);
+
+      const monthRevenue = venue.DateEvent
+        .filter(event => 
+          event.startDate >= monthStart && 
+          event.startDate <= monthEnd && 
+          event.proposal?.totalAmount
+        )
+        .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
+
+      return {
+        month: monthIndex + 1,
+        revenue: monthRevenue
+      };
+    }) : null;
+
     return {
       totalEventsInYear,
       eventsThisMonth,
@@ -521,6 +540,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       visitsVariation,
       monthlyRevenue,
       revenueVariation,
+      monthlyRevenueList,
       nextEvent: nextEvent ? {
         id: nextEvent.id,
         title: nextEvent.title,

@@ -43,6 +43,10 @@ export interface VenueAnalyticsResponse {
     value: number;
     isPositive: boolean;
   };
+  monthlyRevenueList: {
+    month: number;
+    revenue: number;
+  }[] | null;
   nextEvent: {
     id: string;
     title: string;
