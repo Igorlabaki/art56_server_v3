@@ -3,7 +3,7 @@ import { z } from "zod";
 export const updateUserSchema = z.object({
     userId: z.string(),
     name: z.string().optional(),
-    email: z.string().optional(),
+    email: z.string().email().optional(),
     googleId: z.string().optional(),
     username: z.string().optional(),
     avatarUrl: z.string().optional(),
