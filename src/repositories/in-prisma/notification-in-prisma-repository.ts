@@ -59,7 +59,8 @@ export class PrismaNotificationRepository implements NotificationRepositoryInter
       },
       orderBy:{
         createdAt: "desc"
-      }
+      },
+      take:25
     })
   }
 }
