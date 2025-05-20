@@ -25,9 +25,8 @@ export interface CreateProposalInDbParams {
 }
 
 export type ProposalWithRelations = Proposal & {
-  proposalServices: {
-    service: Service;
-  }[];
+  payments: Payment[]; 
+  personList: Person[];
 };
 
 export interface ItemListProposalResponse{
@@ -73,7 +72,7 @@ type ProposalType = "EVENT" | "OTHER" | "BARTER" | "PRODUCTION" | "OVERNIGHT"
 
 export interface ProposalRepositoryInterface {
   delete: (params: string) => Promise<Proposal | null>
-  getById: (params: string) => Promise<Proposal | null>
+  getById: (params: string) => Promise<ProposalWithRelations | null>
   update: (params: UpdateProposalInDbParam) => Promise<Proposal | null> 
   updateServices: (params: UpdateProposalServices) => Promise<Proposal | null> 
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>
