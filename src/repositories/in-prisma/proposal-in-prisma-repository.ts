@@ -185,18 +185,11 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
 
-  async getById(reference: string): Promise<ProposalWithRelations | null> {
+  async getById(reference: string): Promise<Proposal | null> {
     return await this.prisma.proposal.findUnique({
       where: {
         id: reference
       },
-      include: {
-        proposalServices: {
-          include: {
-            service: true
-          }
-        },
-      }
     })
   }
 
