@@ -5,6 +5,11 @@ import { GetByIdOrganizationSchema } from "../../zod/organization/get-by-id-orga
 import { CreateOrganizationRequestParams } from "../../zod/organization/create-organization-params-schema"
 import { OrganizationRepositoryInterface, UpdateOrganizationRequestParams } from "../interface/organization-repository-interface"
 
+type OrganizationWithVenueCount = Organization & {
+  _count: {
+    venues: number
+  }
+}
 
 export class PrismaOrganizationRepository implements OrganizationRepositoryInterface {
 
@@ -97,7 +102,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     })
   }
 
-  async list({ userId, name }: ListOrganizationQuerySchema): Promise<Organization[] | null> {
+  async list({ userId, name }: ListOrganizationQuerySchema): Promise<OrganizationWithVenueCount[] | null> {
     return await this.prisma.organization.findMany({
       where: {
         userOrganizations: {
@@ -111,6 +116,13 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
           },
         }),
       },
+      include: {
+        _count: {
+          select: {
+            venues: true
+          }
+        }
+      }
     })
   }
 }
