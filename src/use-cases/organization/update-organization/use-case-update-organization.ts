@@ -26,9 +26,7 @@ class UpdateOrganizationUseCase {
         const formatedResponse = {
             success: true,
             message: `Organizacao  ${updatedOrganization.name} atualizada com sucesso`,
-            data: {
-                organization: updatedOrganization
-            },
+            data: updatedOrganization,
             count: 1,
             type: "Organization"
         }
