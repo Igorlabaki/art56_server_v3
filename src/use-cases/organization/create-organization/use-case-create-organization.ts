@@ -37,9 +37,7 @@ class CreateOrganizationUseCase {
         const formatedResponse = {
             success: true,
             message: `Organizacao ${newOrganization.name} criada com sucesso`,
-            data: {
-                organization:newOrganization
-            },
+            data: newOrganization,
             count: 1,
             type: "Organization"
         }
