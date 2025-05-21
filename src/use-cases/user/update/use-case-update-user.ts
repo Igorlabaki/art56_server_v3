@@ -28,7 +28,7 @@ class UpdateUserCase {
 
         const formatedResponse = {
             success: true,
-            message: `Usuario ${updatedUser?.username} foi atualizado com sucesso`,
+            message: `Usuario foi atualizado com sucesso`,
             data: {
              ...updatedUser
             },
