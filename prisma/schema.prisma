@@ -378,9 +378,16 @@ model Contact {
   whatsapp String
   venueId  String
   venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  email    String?
+  type     ContactType? @default(TEAM_MEMBER)
 
   @@index([venueId])
   @@map("contact")
+}
+
+enum ContactType {
+  TEAM_MEMBER // Membro da equipe
+  SUPPLIER    // Fornecedor
 }
 
 model OwnerVenue {

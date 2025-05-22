@@ -14,7 +14,7 @@ contactRoutes.post("/create", async (req, res) => {
 })
 
 // List
-contactRoutes.get("/list/:venueId?/:name?", async (req, res) => {
+contactRoutes.get("/list/:venueId?/:name?/:type?", async (req, res) => {
     const controller = listContactFactory();  
     await controller.handle(req, res);       
 })
