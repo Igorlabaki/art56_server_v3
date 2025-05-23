@@ -18,9 +18,7 @@ class GetOrganizationByIdUseCase {
         const formatedResponse = {
             success: true,
             message: `Organizacao ${organization.name} encontrada com sucesso`,
-            data: {
-                organization
-            },
+            data: organization,
             count: 1,
             type: "Organization"
         }
