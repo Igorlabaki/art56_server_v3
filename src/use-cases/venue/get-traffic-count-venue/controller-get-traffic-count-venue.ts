@@ -10,7 +10,7 @@ class GetVenueTrafficCountController {
             console.log("req.query", req.query)
             const param = getTrafficCountVenueSchema.parse(req.query);
             const trafficCountData = await this.getVenueTrafficCountUseCase.execute(param);
-            
+            console.log("trafficCountData", trafficCountData)
             return resp.status(200).json(trafficCountData);
         } catch (error) {
             // Chamar o handleErrors para formatar o erro

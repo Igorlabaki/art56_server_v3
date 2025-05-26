@@ -10,7 +10,7 @@ class GetVenueAnalysiByMonthController {
             console.log("req.query", req.query)
             const param = getVenueAnalysisByMonthSchema.parse(req.query);
             const analysiByMonthData = await this.getVenueAnalysiByMonthUseCase.execute(param);
-            
+            console.log("analysiByMonthData", analysiByMonthData)
             return resp.status(200).json(analysiByMonthData);
         } catch (error) {
             // Chamar o handleErrors para formatar o erro
