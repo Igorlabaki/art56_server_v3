@@ -7,6 +7,7 @@ class GetVenueAnalysiByMonthController {
     constructor(private getVenueAnalysiByMonthUseCase: GetVenueAnalysisByMonthUseCase) { }
     async handle(req: Request, resp: Response) {
         try {
+            console.log("req.query", req.query)
             const param = getVenueAnalysisByMonthSchema.parse(req.query);
             const analysiByMonthData = await this.getVenueAnalysiByMonthUseCase.execute(param);
             

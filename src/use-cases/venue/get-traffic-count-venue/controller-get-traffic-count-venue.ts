@@ -7,6 +7,7 @@ class GetVenueTrafficCountController {
     constructor(private getVenueTrafficCountUseCase: GetVenueTrafficCountUseCase) { }
     async handle(req: Request, resp: Response) {
         try {
+            console.log("req.query", req.query)
             const param = getTrafficCountVenueSchema.parse(req.query);
             const trafficCountData = await this.getVenueTrafficCountUseCase.execute(param);
             
