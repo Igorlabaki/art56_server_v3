@@ -12,7 +12,7 @@ class ListGoalsUseCase {
 
     const formatedResponse = {
       success: true,
-      message: `Lista de perguntas com ${goalList?.length} items`,
+      message: `Lista de metas com ${goalList?.length} items`,
       data: {
         goalList: goalList
       },

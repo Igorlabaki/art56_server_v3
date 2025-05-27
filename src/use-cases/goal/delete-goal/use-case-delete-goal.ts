@@ -20,7 +20,7 @@ class DeleteGoalUseCase {
 
         const formatedResponse = {
             success: true,
-            message: `Pergunta deletada com sucesso`,
+            message: `Meta deletada com sucesso`,
             data: {
                 ...deletedGoal
             },
