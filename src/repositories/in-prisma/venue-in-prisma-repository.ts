@@ -106,7 +106,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const perPersonDay = Number(pricePerPersonDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const perPersonHour = Number(pricePerPersonHour?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-
+    console.log(perPersonHour)
     return await this.prisma.venue.update({
       where: {
         id: reference.venueId,
