@@ -102,10 +102,10 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const ownersToConnect = owners?.filter((id) => !currentOwnerIds.includes(id)) || [];
     const ownersToDisconnect = currentOwnerIds.filter((id) => !owners?.includes(id)) || [];
 
-    const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perPersonDay = Number(pricePerPersonDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perPersonHour = Number(pricePerPersonHour?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    const perPerson = typeof pricePerPerson === 'string' ? Number(pricePerPerson.replace(/[^\d,.-]/g, "").replace(",", ".")) : Number(pricePerPerson) || 0;
+    const perDay = typeof pricePerDay === 'string' ? Number(pricePerDay.replace(/[^\d,.-]/g, "").replace(",", ".")) : Number(pricePerDay) || 0;
+    const perPersonDay = typeof pricePerPersonDay === 'string' ? Number(pricePerPersonDay.replace(/[^\d,.-]/g, "").replace(",", ".")) : Number(pricePerPersonDay) || 0;
+    const perPersonHour = typeof pricePerPersonHour === 'string' ? Number(pricePerPersonHour.replace(/[^\d,.-]/g, "").replace(",", ".")) : Number(pricePerPersonHour) || 0;
     console.log(perPersonHour)
     return await this.prisma.venue.update({
       where: {
