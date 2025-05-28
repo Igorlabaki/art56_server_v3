@@ -9,14 +9,14 @@ class UpdateVenueUseCase {
     async execute(param: UpdateVenueSchema) {
         // Validate if venue exists
         const venue = await this.venueRepository.getById({venueId: param.venueId})
-        console.log(param)
+        console.log(param, "params" )
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
         }
         //
 
         const updatedVenue = await this.venueRepository.update(param)
-
+        console.log(updatedVenue, "updatedVenue")
         if (!updatedVenue) {
             throw new HttpConflictError("Locacao")
         }
@@ -28,7 +28,7 @@ class UpdateVenueUseCase {
               .map((up: { permissions: string }) => up.permissions) // 🔥 Extrai permissões
               .join(",").split(",") // 🔥 Junta em uma única string separada por vírgula
           };
-
+          console.log(formattedVenue, "formattedVenue")
         const formatedResponse = {
             success: true,
             message: `Locacao  ${updatedVenue.name} atualizado(a) com sucesso`,
