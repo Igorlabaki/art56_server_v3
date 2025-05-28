@@ -9,7 +9,7 @@ class UpdateVenueUseCase {
     async execute(param: UpdateVenueSchema) {
         // Validate if venue exists
         const venue = await this.venueRepository.getById({venueId: param.venueId})
-
+        console.log(param)
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
         }
