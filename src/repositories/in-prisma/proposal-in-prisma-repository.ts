@@ -277,7 +277,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         endDate: true,
         startDate: true,
         totalAmount: true,
-      }
+      },
+      orderBy: {
+        startDate: "asc",
+      },
     })
   }
 
