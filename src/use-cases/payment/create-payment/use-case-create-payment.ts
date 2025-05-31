@@ -19,7 +19,7 @@ class CreatePaymentUseCase {
     const { proposalId, userId, venueId, username, amount, paymentDate, imageUrl } = params
 
     const proposalById = await this.proposalRepository.getById(proposalId);
-    
+    console.log(proposalById, "proposalById")
     if (!proposalById) {
       throw new HttpResourceNotFoundError("Orcamento")
     }
@@ -28,8 +28,9 @@ class CreatePaymentUseCase {
       throw new HttpBadRequestError("Valor pago maior do que o montante devedor.")
     }
 
+    console.log(paymentDate, "paymentDate")
     const data = parse(paymentDate, "dd/MM/yyyy", new Date());
-
+    console.log(data, "data")
     const newPayment = await this.paymentRepository.create({
       venueId,
       proposalId,
@@ -37,7 +38,7 @@ class CreatePaymentUseCase {
       paymentDate: data,
       imageUrl
     });
-
+    console.log(newPayment, "newPayment")
     if (!newPayment) {
       throw new HttConfigurationError("Erro ao cadastrar pagamento.")
     }
@@ -48,6 +49,7 @@ class CreatePaymentUseCase {
         amountPaid: (proposalById.amountPaid || 0) + newPayment.amount
       }
     })
+    console.log("update")
 
     await this.historyRepository.create({
       userId: userId,
@@ -64,7 +66,7 @@ class CreatePaymentUseCase {
       count: 1,
       type: "Payment"
     }
-
+    console.log(formatedResponse, "formatedResponse")
     return formatedResponse
   }
 }
