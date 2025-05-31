@@ -19,18 +19,19 @@ class CreatePaymentController {
             if (req.file) {
                 // Gerando um nome único para o arquivo
                 const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
-
+                console.log(fileKey)
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
                     Key: fileKey,
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype,
                 };
-
+                console.log(params)
                 await s3Client.send(new PutObjectCommand(params));
 
                 // URL pública do arquivo
                 const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+                console.log(fileUrl)
                 // Salva no banco com a URL da imagem
                 const response = await this.createPaymentUseCase.execute({ ...req.body, imageUrl: fileUrl });
                 console.log(response)

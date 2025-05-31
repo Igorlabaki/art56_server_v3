@@ -15,11 +15,11 @@ class CreatePaymentUseCase {
   ) { }
 
   async execute(params: CreatePaymentRequestParams) {
- 
+    console.log("usecase")
     const { proposalId, userId, venueId, username, amount, paymentDate, imageUrl } = params
 
     const proposalById = await this.proposalRepository.getById(proposalId);
-  
+    
     if (!proposalById) {
       throw new HttpResourceNotFoundError("Orcamento")
     }
