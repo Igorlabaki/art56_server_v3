@@ -13,8 +13,9 @@ class CreatePaymentController {
 
     async handle(req: Request, resp: Response) {
         try {
+            console.log(req.body)
             const body: CreatePaymentRequestParams = req.body;
-
+            console.log(body)
             if (req.file) {
                 // Gerando um nome único para o arquivo
                 const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
