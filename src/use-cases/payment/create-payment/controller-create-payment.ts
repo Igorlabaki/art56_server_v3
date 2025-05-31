@@ -33,7 +33,7 @@ class CreatePaymentController {
                 const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
                 // Salva no banco com a URL da imagem
                 const response = await this.createPaymentUseCase.execute({ ...req.body, imageUrl: fileUrl });
-
+                console.log(response)
                 if(response.success){
                     await this.createDocumentUseCase.execute({paymentId:response.data.id , imageUrl: fileUrl,fileType: "IMAGE", proposalId: body.proposalId, title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}` });
                 }
