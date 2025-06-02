@@ -56,10 +56,10 @@ class UpdatePaymentController {
                 // Atualiza o pagamento com a nova URL da imagem
                 const response = await this.updatePaymentUseCase.execute({
                     ...param,
-                    data: {
-                        ...param.data,
-                        imageUrl: fileUrl
-                    }
+                    imageUrl: fileUrl,
+                    paymentMethod: param.paymentMethod,
+                    paymentDate: param.paymentDate,
+                    amount: Number(param.amount)
                 });
 
                 if(response.success){
