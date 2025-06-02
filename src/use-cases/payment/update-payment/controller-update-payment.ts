@@ -67,11 +67,11 @@ class UpdatePaymentController {
                     amount: param.amount
                 });
 
-                if (response.success) {
+                if (response.success && currentPayment?.imageUrl) {
                     // Busca o documento existente pelo paymentId
                     const existingDocument = await this.documentRepository.list({
                         proposalId: param.proposalId,
-                       
+                        imageUrl: currentPayment?.imageUrl 
                     });
 
                     if (existingDocument && existingDocument.length > 0) {
