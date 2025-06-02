@@ -9,6 +9,7 @@ import { UpdateDocumentUseCase } from "../../document/update-document/use-case-u
 import { format } from "date-fns";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
 import { PaymentRepositoryInterface } from "../../../repositories/interface/payment-repository-interface";
+import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 
 class UpdatePaymentController {
     constructor(
@@ -28,14 +29,17 @@ class UpdatePaymentController {
                 const currentPayment = await this.paymentRepository.getById(param.paymentId);
                 
                 if (currentPayment?.imageUrl) {
-                    // Extrai o nome do arquivo da URL antiga
-                    const oldFileKey = currentPayment.imageUrl.split('/').pop();
-                    if (oldFileKey) {
-                        // Deleta o arquivo antigo do S3
-                        await s3Client.send(new DeleteObjectCommand({
+                    const fileKeyDelete = currentPayment.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
+
+                    const imageDeleted = await s3Client.send(
+                        new DeleteObjectCommand({
                             Bucket: process.env.AWS_BUCKET_NAME!,
-                            Key: oldFileKey
-                        }));
+                            Key: fileKeyDelete!,
+                        })
+                    );
+        
+                    if (!imageDeleted) {
+                        throw new HttpConflictError("Erro ao deletar imagem da aws.");
                     }
                 }
 
