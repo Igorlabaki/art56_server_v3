@@ -70,15 +70,11 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
     });
   }
 
-  async list({ proposalId, document }: ListDocumentRequestQuerySchema): Promise<Document[]> {
+  async list({ proposalId, imageUrl }: { proposalId: string, imageUrl?: string }): Promise<Document[]> {
     return await this.prisma.document.findMany({
       where: {
-        ...(document && {
-          document: {
-            contains: document
-          }
-        }),
-        proposalId
+        proposalId,
+        ...(imageUrl && { imageUrl }),
       },
       include:{
         payment: true

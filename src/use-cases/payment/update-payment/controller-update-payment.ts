@@ -71,7 +71,7 @@ class UpdatePaymentController {
                     // Busca o documento existente pelo paymentId
                     const existingDocument = await this.documentRepository.list({
                         proposalId: param.proposalId,
-                        document: `Comprovante-${format(new Date(), "dd/MM/yyyy")}`
+                       
                     });
 
                     if (existingDocument && existingDocument.length > 0) {
