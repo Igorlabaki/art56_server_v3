@@ -8,6 +8,7 @@ export const updatePaymentSchema = z.object({
     data: z.object({
         amount: z.number(),
         paymentDate: z.string(),
+        imageUrl: z.string().optional(),
     }),
 });
 

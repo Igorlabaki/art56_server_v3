@@ -5,6 +5,7 @@ export const updatePaymentIndBSchema = z.object({
     data: z.object({
         amount: z.number(),
         paymentDate: z.date(),
+        imageUrl: z.string().optional(),
     }),
 });
 
