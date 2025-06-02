@@ -27,7 +27,7 @@ class UpdatePaymentController {
                 console.log("req.file", req.file);
                 // Busca o pagamento atual para pegar a URL da imagem antiga
                 const currentPayment = await this.paymentRepository.getById(param.paymentId);
-                
+
                 if (currentPayment?.imageUrl) {
                     const fileKeyDelete = currentPayment.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
 
@@ -37,18 +37,18 @@ class UpdatePaymentController {
                             Key: fileKeyDelete!,
                         })
                     );
-        
+
                     if (!imageDeleted) {
                         throw new HttpConflictError("Erro ao deletar imagem da aws.");
                     }
                 }
 
                 // Gerando um nome único para o arquivo
-                const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
-                
+                const fileKeyUpload = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
+
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
-                    Key: fileKey,
+                    Key: fileKeyUpload,
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype,
                 };
@@ -56,8 +56,8 @@ class UpdatePaymentController {
                 await s3Client.send(new PutObjectCommand(params));
 
                 // URL pública do arquivo
-                const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-                
+                const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
+
                 // Atualiza o pagamento com a nova URL da imagem
                 const response = await this.updatePaymentUseCase.execute({
                     ...param,
@@ -67,7 +67,7 @@ class UpdatePaymentController {
                     amount: param.amount
                 });
 
-                if(response.success){
+                if (response.success) {
                     // Busca o documento existente pelo paymentId
                     const existingDocument = await this.documentRepository.list({
                         proposalId: param.proposalId,
