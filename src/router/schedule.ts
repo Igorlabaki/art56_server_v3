@@ -14,7 +14,7 @@ scheduleRoutes.post("/create", async (req, res) => {
 })
 
 // List
-scheduleRoutes.get("/list?venueId:venueId?&name:name?", async (req, res) => {
+scheduleRoutes.get("/list?:venueId?/:name?", async (req, res) => {
     const controller = listScheduleFactory();  
     await controller.handle(req, res);       
 })
