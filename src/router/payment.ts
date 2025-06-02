@@ -30,9 +30,9 @@ paymentRoutes.delete("/delete/:paymentId", async (req, res) => {
 })
 
 // Update
-paymentRoutes.put("/update", async (req, res) => {
+paymentRoutes.put("/update", upload.single("file"), (req, res) => {
     const controller = updatePaymentFactory();  
-    await controller.handle(req, res);       
+    controller.handle(req, res);       
 })
 
 
