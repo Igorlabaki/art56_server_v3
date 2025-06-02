@@ -47,7 +47,6 @@ class UpdatePaymentController {
                     Key: fileKey,
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype,
-                    ACL: ObjectCannedACL.public_read,
                 };
 
                 await s3Client.send(new PutObjectCommand(params));
