@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { randomUUID } from "crypto";
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import { s3Client } from "../../../services/upload-config-sw";
 import { handleErrors } from "../../../errors/error-handler";
 import { UpdatePaymentUseCase } from "./use-case-update-payment";
@@ -23,6 +23,7 @@ class UpdatePaymentController {
             const param = updatePaymentSchema.parse(req.body);
 
             if (req.file) {
+                console.log("req.file", req.file);
                 // Busca o pagamento atual para pegar a URL da imagem antiga
                 const currentPayment = await this.paymentRepository.getById(param.paymentId);
                 
@@ -46,6 +47,7 @@ class UpdatePaymentController {
                     Key: fileKey,
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype,
+                    ACL: ObjectCannedACL.public_read,
                 };
 
                 await s3Client.send(new PutObjectCommand(params));
