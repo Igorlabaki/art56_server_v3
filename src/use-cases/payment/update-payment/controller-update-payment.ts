@@ -59,7 +59,7 @@ class UpdatePaymentController {
                     imageUrl: fileUrl,
                     paymentMethod: param.paymentMethod,
                     paymentDate: param.paymentDate,
-                    amount: Number(param.amount)
+                    amount: param.amount
                 });
 
                 if(response.success){

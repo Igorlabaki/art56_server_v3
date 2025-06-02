@@ -15,8 +15,7 @@ class UpdatePaymentUseCase {
     ) { }
 
     async execute(param: UpdatePaymentRequestParams) {
-        const { userId, username, proposalId, paymentId, data } = param;
-        const { amount, paymentDate } = data;
+        const { userId, username, proposalId, paymentId, amount, paymentDate, imageUrl, paymentMethod } = param;
 
         // Verifica se a proposta existe
         const proposalById = await this.proposalRepository.getById(proposalId);
@@ -31,7 +30,7 @@ class UpdatePaymentUseCase {
         }
 
         // Verifica se o valor pago excede o montante devido
-        const novoTotalPago = (proposalById.amountPaid || 0) - paymentById.amount + amount;
+        const novoTotalPago = (proposalById.amountPaid || 0) - paymentById.amount + Number(amount);
         if (novoTotalPago > proposalById.totalAmount) {
             throw new HttpBadRequestError("Valor pago maior do que o montante devedor.");
         }
@@ -46,7 +45,7 @@ class UpdatePaymentUseCase {
         const updatedPayment = await this.paymentRepository.update({
             paymentId,
             data: {
-                amount,
+                amount: Number(amount),
                 paymentDate: formattedDate,
             },
         });

@@ -6,7 +6,7 @@ export const updatePaymentSchema = z.object({
     username: z.string(),
     paymentId: z.string(),
     proposalId: z.string(),
-    amount: z.number(),
+    amount: z.string(),
     paymentDate: z.string(),
     imageUrl: z.string().optional(),
     paymentMethod: z.nativeEnum(PaymentMethod).optional(),
