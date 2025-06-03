@@ -6,7 +6,7 @@ import { handleErrors } from "../../../errors/error-handler";
 import { CreatePaymentUseCase } from "./use-case-create-payment";
 import { CreatePaymentRequestParams, createPaymentSchema } from "../../../zod/payment/create-payment-params-schema";
 import { CreateDocumentUseCase } from "../../document/create-document/use-case-create-document";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 class CreatePaymentController {
     constructor(private createPaymentUseCase: CreatePaymentUseCase, private createDocumentUseCase : CreateDocumentUseCase) { }
@@ -18,7 +18,7 @@ class CreatePaymentController {
             console.log(body)
             if (req.file) {
                 // Gerando um nome único para o arquivo
-                const fileKey = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
+                const fileKey = `${body.paymentDate}-${randomUUID()}-${req.file.originalname}`;
                 console.log(fileKey)
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
@@ -36,7 +36,8 @@ class CreatePaymentController {
                 const response = await this.createPaymentUseCase.execute({ ...req.body, imageUrl: fileUrl });
                 console.log(response)
                 if(response.success){
-                    await this.createDocumentUseCase.execute({paymentId:response.data.id , imageUrl: fileUrl,fileType: "IMAGE", proposalId: body.proposalId, title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}` });
+                    const parsedDate = parse(body.paymentDate, "dd/MM/yyyy", new Date());
+                    await this.createDocumentUseCase.execute({title: `Comprovante-${format(parsedDate, "dd/MM/yyyy")}` ,paymentId:response.data.id , imageUrl: fileUrl,fileType: "IMAGE", proposalId: body.proposalId});
                 }
           
                 return resp.status(201).json(response);

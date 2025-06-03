@@ -6,7 +6,7 @@ import { handleErrors } from "../../../errors/error-handler";
 import { UpdatePaymentUseCase } from "./use-case-update-payment";
 import { updatePaymentSchema } from "../../../zod/payment/update-payment-params-schema";
 import { UpdateDocumentUseCase } from "../../document/update-document/use-case-update-document";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
 import { PaymentRepositoryInterface } from "../../../repositories/interface/payment-repository-interface";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
@@ -44,7 +44,7 @@ class UpdatePaymentController {
                 }
 
                 // Gerando um nome único para o arquivo
-                const fileKeyUpload = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
+                const fileKeyUpload = `${param.paymentDate}-${randomUUID()}-${req.file.originalname}`;
 
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
@@ -76,21 +76,24 @@ class UpdatePaymentController {
 
                     if (existingDocument && existingDocument.length > 0) {
                         // Atualiza o documento existente
+                        const parsedDate = parse(param.paymentDate, "dd/MM/yyyy", new Date());
+
                         await this.updateDocumentUseCase.execute({
                             documentId: existingDocument[0].id,
                             data: {
-                                title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}`,
+                                title: `Comprovante-${format(parsedDate, "dd/MM/yyyy")}`,
                                 imageUrl: fileUrl
                             }
                         });
                     } else {
+                        const parsedDate = parse(param.paymentDate, "dd/MM/yyyy", new Date());
                         // Se não encontrar o documento, cria um novo
                         await this.documentRepository.create({
                             paymentId: response.data.id,
                             imageUrl: fileUrl,
                             fileType: "IMAGE",
                             proposalId: param.proposalId,
-                            title: `Comprovante-${format(new Date(), "dd/MM/yyyy")}`
+                            title: `Comprovante-${format(parsedDate, "dd/MM/yyyy")}`
                         });
                     }
                 }
