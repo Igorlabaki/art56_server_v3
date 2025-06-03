@@ -15,7 +15,9 @@ export class PrismaExpenseRepository implements ExpenseRepositoryInterface {
       const {paymentDate, ...rest} = params;
       return await this.prisma.expense.create({
         data:{
-          paymentDate: paymentDate ? new Date(paymentDate) : undefined,
+          ...(paymentDate && {
+            paymentDate
+          }),
           ...rest,
         },
       })
