@@ -24,12 +24,17 @@ export class PrismaExpenseRepository implements ExpenseRepositoryInterface {
     }
   
    async update (reference: UpdateExpenseRequestParams): Promise<Expense  | null> {
+    const {data} = reference;
+    const {paymentDate, ...rest} = data;
       return await this.prisma.expense.update({
         where:{
           id: reference.expenseId
         },
         data:{
-          ...reference.data
+          ...(paymentDate && {
+            paymentDate
+          }),
+          ...rest
         }
       })
     } 

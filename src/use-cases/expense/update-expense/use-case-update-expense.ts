@@ -15,6 +15,10 @@ class UpdateExpenseUseCase {
             throw new HttpResourceNotFoundError("Despesa")
         }
         //
+        if (param.data.paymentDate) {
+            param.data.paymentDate = new Date(param.data.paymentDate).toISOString();
+        }
+
 
         const updatedExpense = await this.expenseRepository.update(param)
 
