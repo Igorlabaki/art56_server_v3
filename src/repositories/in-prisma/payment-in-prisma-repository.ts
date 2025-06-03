@@ -61,6 +61,9 @@ export class PrismaPaymentRepository implements PaymentRepositoryInterface {
           proposalId
         }),
       },
+      orderBy: {
+        paymentDate: 'desc'
+      }
     });
   }
 }
