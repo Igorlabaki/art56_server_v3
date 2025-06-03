@@ -12,9 +12,11 @@ export class PrismaExpenseRepository implements ExpenseRepositoryInterface {
     constructor (private readonly prisma: PrismaClient){}
   
     async create (params: CreateExpenseRequestParams): Promise<Expense | null> {
+      const {paymentDate, ...rest} = params;
       return await this.prisma.expense.create({
         data:{
-          ...params,
+          paymentDate: paymentDate ? new Date(paymentDate) : undefined,
+          ...rest,
         },
       })
     }

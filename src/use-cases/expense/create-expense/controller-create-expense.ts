@@ -9,6 +9,12 @@ class CreateExpenseController {
     async handle(req: Request, resp: Response) {
         try {
             const body: CreateExpenseRequestParams = req.body;
+
+            // Converte paymentDate para ISO-8601 se existir
+            if (body.paymentDate) {
+                body.paymentDate = new Date(body.paymentDate).toISOString();
+            }
+
             // Validate the request parms
             console.log("[CreateExpense] Body:", body);
             createExpenseRequestParams.parse(body);
