@@ -18,7 +18,7 @@ export const createExpenseRequestParams = z.object({
 }).refine(
     (data) => data.recurring || (!!data.paymentDate && data.paymentDate !== ''),
     {
-        message: 'Data do pagamento é obrigatório quando a despesa for recorrente.',
+        message: 'Data do pagamento é obrigatória quando a despesa não for recorrente.',
         path: ['paymentDate'],
     }
 );

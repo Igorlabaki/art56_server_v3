@@ -10,11 +10,14 @@ class CreateExpenseController {
         try {
             const body: CreateExpenseRequestParams = req.body;
             // Validate the request parms
+            console.log("[CreateExpense] Body:", body);
             createExpenseRequestParams.parse(body);
+            console.log("[CreateExpense] Parsed body:", body);
 
             // Esperar a execução do caso de uso
             const response = await this.createExpenseUseCase.execute(body);
             // Retornar o token
+            console.log("[CreateExpense] Response:", response);
          
             return resp.status(201).json(response);
 
