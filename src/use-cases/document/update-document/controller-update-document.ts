@@ -8,6 +8,7 @@ import { s3Client } from "../../../services/upload-config-sw";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { randomUUID } from "crypto";
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface";
+
 class UpdateDocumentController {
     constructor(private updateDocumentUseCase: UpdateDocumentUseCase, private documentRepository: DocumentRepositoryInterface) { }
     async handle(req: Request, resp: Response) {
@@ -18,7 +19,13 @@ class UpdateDocumentController {
                 return new HttpResourceNotFoundError("Documento")
             }
 
-            const fileKeyDelete = param.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
+            const document = await this.documentRepository.getById(param.documentId);
+            
+            if (!document) {
+                throw new HttpResourceNotFoundError("Documento não encontrado");
+            }
+
+            const fileKeyDelete = document.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
 
             const imageDeleted = await s3Client.send(
                 new DeleteObjectCommand({
@@ -44,7 +51,7 @@ class UpdateDocumentController {
 
             // URL pública do arquivo
             const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
-            const {imageUrl,title,documentId} = param
+            const {title, documentId} = param
 
             const documentById = await this.updateDocumentUseCase.execute({
                 documentId,
