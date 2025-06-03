@@ -5,6 +5,8 @@ import { ListDocumentRequestQuerySchema } from "../../zod/document/list-document
 import { UpdateDocumentRequestParams } from "../../zod/document/update-document-params-schema";
 import { CreateDocumentDbSchema } from "../../zod/document/create-document-db-schema";
 import { DocumentRepositoryInterface } from "../interface/document-repository-interface";
+import { UpdateDocumentDbSchema } from "../../zod/document/update-document-db-schema";
+
 export class PrismaDocumentRepository implements DocumentRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
@@ -56,7 +58,7 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
     });
   }
 
-  async update({ data, documentId }: UpdateDocumentRequestParams): Promise<Document | null> {
+  async update({ data, documentId }: UpdateDocumentDbSchema): Promise<Document | null> {
     return await this.prisma.document.update({
       where: {
         id: documentId,

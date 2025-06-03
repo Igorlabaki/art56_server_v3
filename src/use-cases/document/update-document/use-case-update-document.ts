@@ -2,11 +2,12 @@ import { UpdateDocumentRequestParams } from "../../../zod/document/update-docume
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { DocumentRepositoryInterface } from "../../../repositories/interface/document-repository-interface"
+import { UpdateDocumentDbSchema } from "../../../zod/document/update-document-db-schema"
 
 class UpdateDocumentUseCase {
     constructor(private documentRepository: DocumentRepositoryInterface) { }
 
-    async execute(param: UpdateDocumentRequestParams) {
+    async execute(param: UpdateDocumentDbSchema) {
       
         // Validate if document exists
         const document = await this.documentRepository.getById(param.documentId)

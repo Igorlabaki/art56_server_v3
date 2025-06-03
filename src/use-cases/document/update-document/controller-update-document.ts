@@ -18,7 +18,7 @@ class UpdateDocumentController {
                 return new HttpResourceNotFoundError("Documento")
             }
 
-            const fileKeyDelete = param.data.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
+            const fileKeyDelete = param.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
 
             const imageDeleted = await s3Client.send(
                 new DeleteObjectCommand({
@@ -44,13 +44,13 @@ class UpdateDocumentController {
 
             // URL pública do arquivo
             const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
-            const {data,documentId} = param
+            const {imageUrl,title,documentId} = param
 
             const documentById = await this.updateDocumentUseCase.execute({
                 documentId,
                 data:{
                     imageUrl: fileUrl,
-                    title: data.title
+                    title: title
                 }
             });
 
