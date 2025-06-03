@@ -21,7 +21,8 @@ class CreateExpenseController {
          
             return resp.status(201).json(response);
 
-        } catch (error) {
+        } catch (error) {  
+            console.log("[CreateExpense] Error:", error);
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
 
