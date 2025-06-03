@@ -17,11 +17,6 @@ class UpdateDocumentController {
             const param = updateDocumentSchema.parse(req.body);
             console.log("[UpdateDocument] Body validado:", param);
 
-            if (!req.file) {
-                console.log("[UpdateDocument] Nenhum arquivo enviado");
-                return resp.status(400).json({ message: "Arquivo não enviado" });
-            }
-
             console.log("[UpdateDocument] Buscando documento no banco, id:", param.documentId);
             const document = await this.documentRepository.getById(param.documentId);
             console.log("[UpdateDocument] Documento encontrado:", document);
@@ -31,34 +26,39 @@ class UpdateDocumentController {
                 throw new HttpResourceNotFoundError("Documento não encontrado");
             }
 
-            const fileKeyDelete = document.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
-            console.log("[UpdateDocument] Deletando imagem antiga do S3, key:", fileKeyDelete);
-            try {
-                await s3Client.send(
-                    new DeleteObjectCommand({
-                        Bucket: process.env.AWS_BUCKET_NAME!,
-                        Key: fileKeyDelete!,
-                    })
-                );
-                console.log("[UpdateDocument] Imagem antiga deletada com sucesso");
-            } catch (err) {
-                console.log("[UpdateDocument] Erro ao deletar imagem da aws:", err);
-                throw new HttpConflictError("Erro ao deletar imagem da aws.");
+            let fileUrl = document.imageUrl;
+
+            if (req.file) {
+                const fileKeyDelete = document.imageUrl.split("/").pop(); // Pega a chave do arquivo no S3
+                console.log("[UpdateDocument] Deletando imagem antiga do S3, key:", fileKeyDelete);
+                try {
+                    await s3Client.send(
+                        new DeleteObjectCommand({
+                            Bucket: process.env.AWS_BUCKET_NAME!,
+                            Key: fileKeyDelete!,
+                        })
+                    );
+                    console.log("[UpdateDocument] Imagem antiga deletada com sucesso");
+                } catch (err) {
+                    console.log("[UpdateDocument] Erro ao deletar imagem da aws:", err);
+                    throw new HttpConflictError("Erro ao deletar imagem da aws.");
+                }
+
+                const fileKeyUpload = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
+                const params = {
+                    Bucket: process.env.AWS_BUCKET_NAME!,
+                    Key: fileKeyUpload,
+                    Body: req.file.buffer,
+                    ContentType: req.file.mimetype,
+                };
+                console.log("[UpdateDocument] Fazendo upload da nova imagem para o S3, key:", fileKeyUpload);
+                await s3Client.send(new PutObjectCommand(params));
+                console.log("[UpdateDocument] Upload da nova imagem concluído");
+
+                // Atualiza a URL pública do arquivo
+                fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
             }
 
-            const fileKeyUpload = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
-            const params = {
-                Bucket: process.env.AWS_BUCKET_NAME!,
-                Key: fileKeyUpload,
-                Body: req.file.buffer,
-                ContentType: req.file.mimetype,
-            };
-            console.log("[UpdateDocument] Fazendo upload da nova imagem para o S3, key:", fileKeyUpload);
-            await s3Client.send(new PutObjectCommand(params));
-            console.log("[UpdateDocument] Upload da nova imagem concluído");
-
-            // URL pública do arquivo
-            const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
             const {title, documentId} = param
             console.log("[UpdateDocument] Atualizando documento no banco");
             const documentById = await this.updateDocumentUseCase.execute({
