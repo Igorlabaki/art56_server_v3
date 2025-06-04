@@ -17,6 +17,7 @@ class CreateImageController {
   ) {}
 
   async handle(req: Request, res: Response) {
+    console.log("req.body", req.body);
     try {
       if (!req.file) {
         throw new HttpResourceNotFoundError("Arquivo");
