@@ -5,5 +5,5 @@ export const createQuestionSchema = z.object({
     question: z.string(),
     response: z.string(),
 });
-
+/* d */
 export type CreateQuestionRequestParams = z.infer<typeof createQuestionSchema>;
