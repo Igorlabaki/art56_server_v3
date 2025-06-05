@@ -54,7 +54,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       const userOrganization = await prisma.userOrganization.findFirst({
         where: { userId, organizationId },
       });
-
+      console.log(userOrganization)
       if (userOrganization) {
         // Lista de permissões padrão
         const permissionsData = [
