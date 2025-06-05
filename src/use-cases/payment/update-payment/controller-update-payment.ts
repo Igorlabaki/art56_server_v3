@@ -69,17 +69,14 @@ class UpdatePaymentController {
 
                 if (response.success && currentPayment?.imageUrl) {
                     // Busca o documento existente pelo paymentId
-                    const existingDocument = await this.documentRepository.list({
-                        proposalId: param.proposalId,
-                        imageUrl: currentPayment?.imageUrl 
-                    });
+                    const existingDocument = await this.documentRepository.getById(response.data.id);
 
-                    if (existingDocument && existingDocument.length > 0) {
+                    if (existingDocument) {
                         // Atualiza o documento existente
                         const parsedDate = parse(param.paymentDate, "dd/MM/yyyy", new Date());
 
                         await this.updateDocumentUseCase.execute({
-                            documentId: existingDocument[0].id,
+                            documentId: existingDocument.id,
                             data: {
                                 title: `Comprovante-${format(parsedDate, "dd/MM/yyyy")}`,
                                 imageUrl: fileUrl
