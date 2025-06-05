@@ -48,6 +48,7 @@ class UpdatePaymentUseCase {
                 amount: Number(amount),
                 paymentDate: formattedDate,
                 imageUrl: imageUrl,
+                paymentMethod: paymentMethod,
             },
         });
 

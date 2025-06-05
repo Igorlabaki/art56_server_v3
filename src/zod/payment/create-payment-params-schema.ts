@@ -1,3 +1,4 @@
+import { PaymentMethod } from "@prisma/client";
 import { z } from "zod";
 
 export const createPaymentSchema = z.object({
@@ -8,6 +9,7 @@ export const createPaymentSchema = z.object({
     proposalId: z.string(),
     paymentDate: z.string(),
     imageUrl: z.string().optional(),
+    paymentMethod: z.nativeEnum(PaymentMethod),
 });
 
 export type CreatePaymentRequestParams = z.infer<typeof createPaymentSchema>;

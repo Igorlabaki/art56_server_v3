@@ -16,7 +16,7 @@ class CreatePaymentUseCase {
 
   async execute(params: CreatePaymentRequestParams) {
     console.log("usecase")
-    const { proposalId, userId, venueId, username, amount, paymentDate, imageUrl } = params
+    const { proposalId, userId, venueId, username, amount, paymentDate, imageUrl, paymentMethod } = params
 
     const proposalById = await this.proposalRepository.getById(proposalId);
     console.log(proposalById, "proposalById")
@@ -36,7 +36,8 @@ class CreatePaymentUseCase {
       proposalId,
       amount: Number(amount),
       paymentDate: data,
-      imageUrl
+      imageUrl,
+      paymentMethod,
     });
     console.log(newPayment, "newPayment")
     if (!newPayment) {
