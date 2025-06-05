@@ -7,7 +7,8 @@ import { UpdateDocumentDbSchema } from "../../zod/document/update-document-db-sc
 
 export interface DocumentRepositoryInterface {
   delete: (params: string) => Promise<Document | null>;  
-  getById: (params: string) => Promise<Document | null>;
+  getById: (params: string) => Promise<Document | null>;  
+  getByPaymentId: (params: string) => Promise<Document | null>;
   getDocumentByTitle: (params: string) => Promise<Document | null>
   create: (params: CreateDocumentDbSchema) => Promise<Document | null>;
   update: (params: UpdateDocumentDbSchema) => Promise<Document | null>;

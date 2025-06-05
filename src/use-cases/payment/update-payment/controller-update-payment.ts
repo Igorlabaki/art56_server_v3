@@ -69,7 +69,8 @@ class UpdatePaymentController {
 
                 if (response.success && currentPayment?.imageUrl) {
                     // Busca o documento existente pelo paymentId
-                    const existingDocument = await this.documentRepository.getById(response.data.id);
+                    
+                    const existingDocument = await this.documentRepository.getByPaymentId(response.data.id);
 
                     if (existingDocument) {
                         // Atualiza o documento existente

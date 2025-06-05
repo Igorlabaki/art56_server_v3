@@ -44,7 +44,7 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
       where: {
         id: reference,
       },
-      include:{
+      include: {
         payment: true
       }
     });
@@ -58,6 +58,14 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
     });
   }
 
+  async getByPaymentId(reference: string): Promise<Document | null> {
+    return await this.prisma.document.findFirst({
+      where: {
+        paymentId: reference,
+      }
+    })
+  }
+
   async update({ data, documentId }: UpdateDocumentDbSchema): Promise<Document | null> {
     return await this.prisma.document.update({
       where: {
@@ -66,7 +74,7 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
       data: {
         ...data,
       },
-      include:{
+      include: {
         payment: true
       }
     });
@@ -78,7 +86,7 @@ export class PrismaDocumentRepository implements DocumentRepositoryInterface {
         proposalId,
         ...(imageUrl && { imageUrl }),
       },
-      include:{
+      include: {
         payment: true
       }
     });
