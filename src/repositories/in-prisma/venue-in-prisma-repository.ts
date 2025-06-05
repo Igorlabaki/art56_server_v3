@@ -69,7 +69,14 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
         // Concatenando as permissões em uma única string
         const permissionsString = permissionsData.join(',');
-
+        console.log({
+          data: {
+            role: "ADMIN",
+            userOrganizationId: userOrganization.id,
+            venueId: newVenue.id,
+            permissions: permissionsString, // Agora armazenando todas as permissões em uma única string
+          },
+        })
         // Criar uma única permissão para o usuário admin, com todas as permissões concatenadas
         await prisma.userPermission.create({
           data: {
