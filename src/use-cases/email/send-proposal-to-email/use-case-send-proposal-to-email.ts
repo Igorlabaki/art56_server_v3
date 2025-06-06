@@ -10,7 +10,8 @@ interface ISendOrcamentoEmailParams {
     clientEmail: string;
   }
   userId?: string;
-  username?: string;
+  username?: string;  
+  message?: string;
 }
 
 
@@ -20,7 +21,7 @@ export class SendOrcamentoEmailCase {
     private historyRepository: HistoryRepositoryInterface,
   ) { }
 
-  async execute({ proposal, userId,username }: ISendOrcamentoEmailParams) {
+  async execute({ proposal, userId,username, message }: ISendOrcamentoEmailParams) {
     const transporter = nodemailer.createTransport({
       host: "smtp.hostinger.com",
       port: 587,

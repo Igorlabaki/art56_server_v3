@@ -26,6 +26,7 @@ import { userpermissionRoutes } from "./router/userPermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
+import { emailRoutes } from "./router/email";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/user', userRoutes)
 app.use('/text', textRoutes)
 app.use('/goal', goalRoutes)
 app.use('/image', imageRoutes)
+app.use('/email', emailRoutes)
 app.use('/venue', venueRoutes)
 app.use('/token', tokenRoutes)
 app.use('/owner', ownerRoutes)

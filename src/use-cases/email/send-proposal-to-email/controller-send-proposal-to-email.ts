@@ -11,6 +11,7 @@ interface ISenEmailProps {
     clientName: string;
     clientEmail: string;
   }
+  message?: string;
   userId?: string;
   username?: string;
 }
@@ -19,7 +20,7 @@ class SendOrcamentoEmailController {
   constructor() { }
 
   async handle(req: Request, res: Response) {
-    const { proposal, userId, username }: ISenEmailProps = req.body;
+    const { proposal, userId, username, message }: ISenEmailProps = req.body;
     const { clientEmail, clientName, proposalId } = proposal
 
     const prismaUserRepository = new PrismaUserRepository(prismaClient);
@@ -35,11 +36,12 @@ class SendOrcamentoEmailController {
       await sendOrcamentoEmailCase.execute({
         userId,
         username,
-        proposal: {
+        proposal: { 
           proposalId,
           clientEmail,
           clientName
-        }
+        },
+        message
       });
       return res.status(200).json({ message: "E-mail enviado com sucesso" });
     } catch (error) {
