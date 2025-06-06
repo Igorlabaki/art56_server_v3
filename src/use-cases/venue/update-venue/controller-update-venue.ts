@@ -19,36 +19,28 @@ class UpdateVenueController {
             const param = updateVenueSchemaRequest.parse(req.body);
             const { venueId, userId, logoUrl, hasOvernightStay, ...rest } = param;
 
-            // Busca o venue atual para pegar a URL da imagem antiga
-            const currentVenue = await this.venueRepository.getById({ venueId: param.venueId });
-
-            if (!currentVenue) {
-                throw new HttpConflictError("Venue não encontrada.");
-            }
-
             if (req.file) {
-                // Se existe uma imagem antiga, deleta ela primeiro
-                if (currentVenue.logoUrl) {
-                    const fileKeyDelete = currentVenue.logoUrl.split("/").pop(); // Pega a chave do arquivo no S3
-                    console.log("[UpdateVenue] Deletando imagem antiga do S3, key:", fileKeyDelete);
+                console.log("req.file", req.file);
+                // Busca o venue atual para pegar a URL da imagem antiga
+                const currentVenue = await this.venueRepository.getById({ venueId: param.venueId });
 
-                    try {
-                        await s3Client.send(
-                            new DeleteObjectCommand({
-                                Bucket: process.env.AWS_BUCKET_NAME!,
-                                Key: fileKeyDelete!,
-                            })
-                        );
-                        console.log("[UpdateVenue] Imagem antiga deletada com sucesso");
-                    } catch (err) {
-                        console.log("[UpdateVenue] Erro ao deletar imagem da aws:", err);
+                if (currentVenue?.logoUrl) {
+                    const fileKeyDelete = currentVenue.logoUrl.split("/").pop(); // Pega a chave do arquivo no S3
+
+                    const imageDeleted = await s3Client.send(
+                        new DeleteObjectCommand({
+                            Bucket: process.env.AWS_BUCKET_NAME!,
+                            Key: fileKeyDelete!,
+                        })
+                    );
+
+                    if (!imageDeleted) {
                         throw new HttpConflictError("Erro ao deletar imagem da aws.");
                     }
                 }
 
                 // Gerando um nome único para o arquivo
-                const fileKeyUpload = `${param.name || currentVenue.name}-${randomUUID()}-${req.file.originalname}`;
-                console.log("[UpdateVenue] Fazendo upload da nova imagem para o S3, key:", fileKeyUpload);
+                const fileKeyUpload = `${param.name || currentVenue?.name}-${randomUUID()}-${req.file.originalname}`;
 
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
@@ -58,11 +50,11 @@ class UpdateVenueController {
                 };
 
                 await s3Client.send(new PutObjectCommand(params));
-                console.log("[UpdateVenue] Upload da nova imagem concluído");
 
                 // URL pública do arquivo
                 const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
-                console.log("igaul?", fileUrl === currentVenue.logoUrl)
+
+                // Atualiza o venue com a nova URL da imagem
                 const response = await this.updateVenueUseCase.execute({
                     venueId: param.venueId,
                     userId: param.userId,
@@ -76,8 +68,7 @@ class UpdateVenueController {
                 return resp.json(response);
             }
 
-            // Atualiza o venue com a nova URL da imagem
-            const response = await this.updateVenueUseCase.execute({
+            const venueById = await this.updateVenueUseCase.execute({
                 venueId: param.venueId,
                 userId: param.userId,
                 data: {
@@ -85,14 +76,15 @@ class UpdateVenueController {
                     hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
                 }
             });
-
-            return resp.json(response);
+            return resp.json(venueById);
         } catch (error) {
-            console.log("[UpdateVenue] Erro capturado:", error);
+            // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
+
+            // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }
     }
 }
-/* ehdiushduis */
+
 export { UpdateVenueController }
