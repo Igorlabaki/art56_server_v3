@@ -302,7 +302,7 @@ model Venue {
   id                 String           @id @default(uuid())
   name               String           @unique
   email              String?          @unique
-  url                String?          
+  url                String?
   street             String
   streetNumber       String
   complement         String?
@@ -341,6 +341,7 @@ model Venue {
 
   @@index([organizationId])
   @@map("venue")
+  EmailConfig EmailConfig[]
 }
 
 model Goal {
@@ -372,12 +373,12 @@ model SeasonalFee {
 }
 
 model Contact {
-  id       String @id @default(uuid())
+  id       String       @id @default(uuid())
   name     String
   role     String
   whatsapp String
   venueId  String
-  venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue    Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
   email    String?
   type     ContactType? @default(TEAM_MEMBER)
 
@@ -387,7 +388,7 @@ model Contact {
 
 enum ContactType {
   TEAM_MEMBER // Membro da equipe
-  SUPPLIER    // Fornecedor
+  SUPPLIER // Fornecedor
 }
 
 model OwnerVenue {
@@ -533,6 +534,24 @@ model Attachment {
   @@index([organizationId])
   @@index([venueId])
   @@map("attachments")
+}
+
+model EmailConfig {
+  id String @id @default(cuid())
+  backgroundImageUrl String?
+  title String?
+  type EmailConfigType
+  message String?
+  venueId String
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+  @@map("emailConfig")
+}
+
+enum EmailConfigType {
+  PROPOSAL
+  CONTRACT
 }
 
 model Schedule {

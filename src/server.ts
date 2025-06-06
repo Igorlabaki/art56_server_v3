@@ -27,7 +27,7 @@ import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
 import { emailRoutes } from "./router/email";
-
+import { emailConfigRoutes } from "./router/email-config";
 
 const app = express();
 
@@ -70,6 +70,7 @@ app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
 app.use('/userPermission', userpermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
+app.use('/emailConfig', emailConfigRoutes)
 
 app.get('/', (req, res) => {
   res.send('API online!');

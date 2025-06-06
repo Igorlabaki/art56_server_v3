@@ -10,6 +10,9 @@ interface ISenEmailProps {
     proposalId: string;
     clientName: string;
     clientEmail: string;
+  },
+  venue:{
+    venueId: string;
   }
   message?: string;
   userId?: string;
