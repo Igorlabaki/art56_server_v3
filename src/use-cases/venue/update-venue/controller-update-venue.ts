@@ -4,9 +4,9 @@ import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "../../../services/upload-config-sw";
 import { handleErrors } from "../../../errors/error-handler";
 import { UpdateVenueUseCase } from "./use-case-update-venue";
-import { updateVenueSchema } from "../../../zod/venue/update-venue-params-schema";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
+import { updateVenueSchemaRequest } from "../../../zod/venue/update-venue-params-schema-db";
 
 class UpdateVenueController {
     constructor(
@@ -16,8 +16,8 @@ class UpdateVenueController {
 
     async handle(req: Request, resp: Response) {
         try {
-            const param = updateVenueSchema.parse(req.body);
-
+            const param = updateVenueSchemaRequest.parse(req.body);
+            const { venueId, userId,logoUrl, ...rest } = param;
             if (req.file) {
                 // Busca o venue atual para pegar a URL da imagem antiga
                 const currentVenue = await this.venueRepository.getById({ venueId: param.venueId });
@@ -38,7 +38,7 @@ class UpdateVenueController {
                 }
 
                 // Gerando um nome único para o arquivo
-                const fileKeyUpload = `${param.data.name || currentVenue?.name}-${randomUUID()}-${req.file.originalname}`;
+                const fileKeyUpload = `${param.name || currentVenue?.name}-${randomUUID()}-${req.file.originalname}`;
 
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
@@ -56,7 +56,7 @@ class UpdateVenueController {
                 const response = await this.updateVenueUseCase.execute({
                     ...param,
                     data: {
-                        ...param.data,
+                        ...rest,
                         logoUrl: fileUrl
                     }
                 });
@@ -64,7 +64,13 @@ class UpdateVenueController {
                 return resp.json(response);
             }
 
-            const venueById = await this.updateVenueUseCase.execute(param);
+            const venueById = await this.updateVenueUseCase.execute({
+                venueId: param.venueId,
+                userId: param.userId,
+                data: {
+                    ...rest,
+                }
+            });
             return resp.json(venueById);
         } catch (error) {
             // Chamar o handleErrors para formatar o erro

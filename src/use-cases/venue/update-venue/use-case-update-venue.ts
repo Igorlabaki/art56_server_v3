@@ -1,12 +1,12 @@
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
-import { UpdateVenueSchema } from "../../../zod/venue/update-venue-params-schema"
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface"
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
+import { UpdateVenueSchemaDb } from "../../../zod/venue/update-venue-params-schema"
 
 class UpdateVenueUseCase {
     constructor(private venueRepository: VenueRepositoryInterface) { }
 
-    async execute(param: UpdateVenueSchema) {
+    async execute(param: UpdateVenueSchemaDb) {
         // Validate if venue exists
         const venue = await this.venueRepository.getById({venueId: param.venueId})
         console.log(param, "params" )

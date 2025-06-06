@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const updateVenueSchema = z.object({
+export const updateVenueSchemaDb = z.object({
     venueId: z.string(),
     userId: z.string(),
     data: z.object({
@@ -29,4 +29,4 @@ export const updateVenueSchema = z.object({
     }),
 });
 
-export type UpdateVenueSchema = z.infer<typeof updateVenueSchema>;
+export type UpdateVenueSchemaDb = z.infer<typeof updateVenueSchemaDb>;
