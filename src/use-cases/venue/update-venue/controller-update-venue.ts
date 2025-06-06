@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
 import { randomUUID } from "crypto";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "../../../services/upload-config-sw";
 import { handleErrors } from "../../../errors/error-handler";
 import { UpdateVenueUseCase } from "./use-case-update-venue";
@@ -51,22 +50,19 @@ class UpdateVenueController {
                 const fileKeyUpload = `${param.name || currentVenue.name}-${randomUUID()}-${req.file.originalname}`;
                 console.log("[UpdateVenue] Fazendo upload da nova imagem para o S3, key:", fileKeyUpload);
 
-                const upload = new Upload({
-                    client: s3Client,
-                    params: {
-                        Bucket: process.env.AWS_BUCKET_NAME!,
-                        Key: fileKeyUpload,
-                        Body: req.file.buffer,
-                        ContentType: req.file.mimetype,
-                    },
-                });
+                const params = {
+                    Bucket: process.env.AWS_BUCKET_NAME!,
+                    Key: fileKeyUpload,
+                    Body: req.file.buffer,
+                    ContentType: req.file.mimetype,
+                };
 
-                await upload.done();
+                await s3Client.send(new PutObjectCommand(params));
                 console.log("[UpdateVenue] Upload da nova imagem concluído");
 
                 // URL pública do arquivo
                 const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
-
+                console.log("igaul?", fileUrl === currentVenue.logoUrl)
                 const response = await this.updateVenueUseCase.execute({
                     venueId: param.venueId,
                     userId: param.userId,
@@ -80,6 +76,7 @@ class UpdateVenueController {
                 return resp.json(response);
             }
 
+            // Atualiza o venue com a nova URL da imagem
             const response = await this.updateVenueUseCase.execute({
                 venueId: param.venueId,
                 userId: param.userId,
