@@ -7,11 +7,11 @@ const emailRoutes = Router();
 // Create
 
 
-emailRoutes.post("/email/contract", async (req, res) => {
+emailRoutes.post("/contract", async (req, res) => {
     const controller = sendContractEmailFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
-emailRoutes.post("", async (req, res) => {
+emailRoutes.post("/proposal", async (req, res) => {
     const controller = sendProposalEmailFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
