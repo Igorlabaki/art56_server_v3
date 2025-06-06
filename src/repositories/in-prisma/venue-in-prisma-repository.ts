@@ -5,7 +5,7 @@ import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-sc
 import { ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface } from "../interface/venue-repository-interface"
 import { ListVenueRequestQuerySchema, } from "../../zod/venue/list-venue-query-schema"
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema"
-import { UpdateVenueSchema } from "../../zod/venue/update-venue-params-schema"
+import { UpdateVenueSchemaDb } from "../../zod/venue/update-venue-params-schema"
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema"
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
 import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema"
@@ -92,7 +92,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
-  async update(reference: UpdateVenueSchema): Promise<Venue | null> {
+  async update(reference: UpdateVenueSchemaDb): Promise<Venue | null> {
     const { pricePerDay, pricePerPerson, pricePerPersonDay, pricePerPersonHour, owners, maxGuest, ...rest } = reference.data;
 
     const currentVenue = await this.prisma.venue.findUnique({
