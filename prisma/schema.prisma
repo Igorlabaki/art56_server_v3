@@ -303,6 +303,9 @@ model Venue {
   name               String           @unique
   email              String?          @unique
   url                String?
+  facebookUrl        String?
+  tiktokUrl          String?
+  instagramUrl       String?
   street             String
   streetNumber       String
   complement         String?
@@ -338,10 +341,10 @@ model Venue {
   contracts          Contract[]       @relation("ContractVenues")
   attachments        Attachment[]
   goals              Goal[]
+  EmailConfig        EmailConfig[]
 
   @@index([organizationId])
   @@map("venue")
-  EmailConfig EmailConfig[]
 }
 
 model Goal {
@@ -537,13 +540,14 @@ model Attachment {
 }
 
 model EmailConfig {
-  id String @id @default(cuid())
+  id                 String          @id @default(cuid())
   backgroundImageUrl String?
-  title String?
-  type EmailConfigType
-  message String?
-  venueId String
-  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  logoImageUrl       String?
+  title              String?
+  type               EmailConfigType
+  message            String?
+  venueId            String
+  venue              Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
   @@map("emailConfig")

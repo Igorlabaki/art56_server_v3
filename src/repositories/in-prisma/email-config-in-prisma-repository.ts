@@ -31,25 +31,11 @@ export class PrismaEmailConfigRepository implements EmailConfigRepositoryInterfa
     });
   }
 
-  async validateIfExistEmailConfigType(data: ValidateEmailConfigTypeParams): Promise<EmailConfig | null> {
-    return await this.prisma.emailConfig.findFirst({
-      where: {
-        AND: [
-          { type: data.type },
-          { venueId: data.venueId }
-        ],
-        NOT: [
-          { id: data.emailConfigId }
-        ]
-      },
-    });
-  }
-
   async update(params: typeof updateEmailConfigParamsSchema._type): Promise<EmailConfig | null> {
-    const { id, ...data } = params;
+    const { emailConfigId, ...data } = params;
     return await this.prisma.emailConfig.update({
       where: {
-        id,
+        id: emailConfigId,
       },
       data: {
         ...data,

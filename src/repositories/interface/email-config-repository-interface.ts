@@ -23,5 +23,4 @@ export interface EmailConfigRepositoryInterface {
   update: (params: typeof updateEmailConfigParamsSchema._type) => Promise<EmailConfig | null>;
   create: (params: typeof createEmailConfigParamsSchema._type) => Promise<EmailConfig | null>;
   list: (params: typeof listEmailConfigQuerySchema._type) => Promise<EmailConfig[] | null>;
-  validateIfExistEmailConfigType: (reference: ValidateEmailConfigTypeParams) => Promise<EmailConfig | null>;
 } 

@@ -7,14 +7,6 @@ export class CreateEmailConfigUseCase {
   ) {}
 
   async execute(params: typeof createEmailConfigParamsSchema._type) {
-    const emailConfigExists = await this.emailConfigRepository.validateIfExistEmailConfigType({
-      type: params.type,
-      venueId: params.venueId
-    });
-
-    if (emailConfigExists) {
-      throw new Error("Email config already exists for this type and venue");
-    }
 
     const emailConfig = await this.emailConfigRepository.create(params);
 
