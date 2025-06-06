@@ -9,8 +9,8 @@ export class DeleteEmailConfigController {
 
   async handle(request: Request, response: Response) {
     try {
-      const { id } = request.params;
-      await this.deleteEmailConfigUseCase.execute(id);
+      const { emailConfigId } = request.params;
+      await this.deleteEmailConfigUseCase.execute(emailConfigId);
 
       return response.status(204).send();
     } catch (error) {

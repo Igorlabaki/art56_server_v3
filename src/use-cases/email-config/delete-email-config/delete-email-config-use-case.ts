@@ -13,5 +13,15 @@ export class DeleteEmailConfigUseCase {
     }
 
     await this.emailConfigRepository.delete(id);
+
+    const formatedResponse = {
+      success: true,
+      message: `Configuração de email do tipo ${emailConfigExists.type} deletada com sucesso`,
+      data: null,
+      count: 0,
+      type: "EmailConfig"
+    }
+
+    return formatedResponse;
   }
 } 

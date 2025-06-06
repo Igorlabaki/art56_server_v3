@@ -18,6 +18,14 @@ export class CreateEmailConfigUseCase {
 
     const emailConfig = await this.emailConfigRepository.create(params);
 
-    return emailConfig;
+    const formatedResponse = {
+      success: true,
+      message: `Configuração de email do tipo ${params.type} criada com sucesso`,
+      data: emailConfig,
+      count: 1,
+      type: "EmailConfig"
+    }
+
+    return formatedResponse;
   }
 } 

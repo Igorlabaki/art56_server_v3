@@ -9,6 +9,14 @@ export class ListEmailConfigUseCase {
   async execute(params: typeof listEmailConfigQuerySchema._type) {
     const emailConfigs = await this.emailConfigRepository.list(params);
 
-    return emailConfigs;
+    const formatedResponse = {
+      success: true,
+      message: "Configurações de email listadas com sucesso",
+      data: emailConfigs || [],
+      count: emailConfigs?.length || 0,
+      type: "EmailConfig"
+    }
+
+    return formatedResponse;
   }
 } 
