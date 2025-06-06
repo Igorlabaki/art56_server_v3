@@ -15,6 +15,6 @@ emailRoutes.post("/email/proposal", async (req, res) => {
     const controller = sendProposalEmailFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
-
+/* dd */
 
 export { emailRoutes };
