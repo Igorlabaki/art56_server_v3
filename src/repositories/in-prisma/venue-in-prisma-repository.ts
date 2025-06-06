@@ -93,7 +93,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async update(reference: UpdateVenueSchemaDb): Promise<Venue | null> {
-    const { pricePerDay, pricePerPerson, pricePerPersonDay, pricePerPersonHour, owners, maxGuest, ...rest } = reference.data;
+    const { pricePerDay, pricePerPerson, pricePerPersonDay, pricePerPersonHour, owners, maxGuest,hasOvernightStay, ...rest } = reference.data;
 
     const currentVenue = await this.prisma.venue.findUnique({
       where: { id: reference.venueId },
@@ -125,6 +125,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         pricePerPerson: perPerson,
         pricePerPersonDay: perPersonDay,
         pricePerPersonHour: perPersonHour,
+        hasOvernightStay: hasOvernightStay ? true : false,
         ownerVenue: {
           create: ownersToConnect.map((ownerId) => ({
             owner: { connect: { id: ownerId } }, // Relaciona o owner
