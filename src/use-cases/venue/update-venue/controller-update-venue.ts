@@ -1,17 +1,71 @@
 import { Request, Response } from "express"
-
+import { randomUUID } from "crypto";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { s3Client } from "../../../services/upload-config-sw";
 import { handleErrors } from "../../../errors/error-handler";
 import { UpdateVenueUseCase } from "./use-case-update-venue";
 import { updateVenueSchema } from "../../../zod/venue/update-venue-params-schema";
+import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
+import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 
 class UpdateVenueController {
-    constructor(private updateVenueUseCase: UpdateVenueUseCase) { }
+    constructor(
+        private updateVenueUseCase: UpdateVenueUseCase,
+        private venueRepository: VenueRepositoryInterface
+    ) { }
+
     async handle(req: Request, resp: Response) {
         try {
             const param = updateVenueSchema.parse(req.body);
-            
+
+            if (req.file) {
+                // Busca o venue atual para pegar a URL da imagem antiga
+                const currentVenue = await this.venueRepository.getById({ venueId: param.venueId });
+
+                if (currentVenue?.logoUrl) {
+                    const fileKeyDelete = currentVenue.logoUrl.split("/").pop(); // Pega a chave do arquivo no S3
+
+                    const imageDeleted = await s3Client.send(
+                        new DeleteObjectCommand({
+                            Bucket: process.env.AWS_BUCKET_NAME!,
+                            Key: fileKeyDelete!,
+                        })
+                    );
+
+                    if (!imageDeleted) {
+                        throw new HttpConflictError("Erro ao deletar imagem da aws.");
+                    }
+                }
+
+                // Gerando um nome único para o arquivo
+                const fileKeyUpload = `${param.data.name || currentVenue?.name}-${randomUUID()}-${req.file.originalname}`;
+
+                const params = {
+                    Bucket: process.env.AWS_BUCKET_NAME!,
+                    Key: fileKeyUpload,
+                    Body: req.file.buffer,
+                    ContentType: req.file.mimetype,
+                };
+
+                await s3Client.send(new PutObjectCommand(params));
+
+                // URL pública do arquivo
+                const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
+
+                // Atualiza o venue com a nova URL da imagem
+                const response = await this.updateVenueUseCase.execute({
+                    ...param,
+                    data: {
+                        ...param.data,
+                        logoUrl: fileUrl
+                    }
+                });
+
+                return resp.json(response);
+            }
+
             const venueById = await this.updateVenueUseCase.execute(param);
-            return resp.status(201).json(venueById);
+            return resp.json(venueById);
         } catch (error) {
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);

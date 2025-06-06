@@ -6,7 +6,7 @@ import { PrismaVenueRepository } from "../../../repositories/in-prisma/venue-in-
 export const updateVenueFactory = () => {
   const prismaVenueRepository = new PrismaVenueRepository(prismaClient);
   const updateVenueCase = new UpdateVenueUseCase(prismaVenueRepository);
-  const updateVenueController = new UpdateVenueController(updateVenueCase);
+  const updateVenueController = new UpdateVenueController(updateVenueCase, prismaVenueRepository);
 
   return updateVenueController;
 };

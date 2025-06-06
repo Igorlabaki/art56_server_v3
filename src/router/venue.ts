@@ -9,13 +9,14 @@ import { getVenueTrafficCountFactory } from "../use-cases/venue/get-traffic-coun
 import { getVenueAnalysiByMonthFactory } from "../use-cases/venue/get-analysis-by-month-venue/factory-get-analysis-by-month-venue";
 import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-venues/factory-list-permitted-venue";
 import { makeGetVenueAnalyticsController } from "../use-cases/venue/get-venue-analytics/factory-get-venue-analytics";
+import { upload } from "../services/upload-config-sw";
 
 const venueRoutes = Router()
 
 venueRoutes.use(ensureAuthenticate)
 
 // Register
-venueRoutes.post("/create", async (req, res) => {
+venueRoutes.post("/create", upload.single("file"), async (req, res) => {
     const controller = createVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -49,7 +50,7 @@ venueRoutes.get("/getById?:venueId?/:userId?", async (req, res) => {
 })
 
 // Update
-venueRoutes.put("/update", async (req, res) => {
+venueRoutes.put("/update", upload.single("file"), async (req, res) => {
     const controller = updateVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
