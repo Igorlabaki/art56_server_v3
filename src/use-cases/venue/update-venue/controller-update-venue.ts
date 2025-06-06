@@ -26,8 +26,6 @@ class UpdateVenueController {
                 throw new HttpConflictError("Venue não encontrada.");
             }
 
-            let fileUrl: string | undefined = currentVenue.logoUrl || undefined;
-
             if (req.file) {
                 // Se existe uma imagem antiga, deleta ela primeiro
                 if (currentVenue.logoUrl) {
@@ -63,7 +61,19 @@ class UpdateVenueController {
                 console.log("[UpdateVenue] Upload da nova imagem concluído");
 
                 // URL pública do arquivo
-                fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
+                const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
+
+                const response = await this.updateVenueUseCase.execute({
+                    venueId: param.venueId,
+                    userId: param.userId,
+                    data: {
+                        ...rest,
+                        logoUrl: fileUrl,
+                        hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
+                    }
+                });
+    
+                return resp.json(response);
             }
 
             // Atualiza o venue com a nova URL da imagem
@@ -72,7 +82,6 @@ class UpdateVenueController {
                 userId: param.userId,
                 data: {
                     ...rest,
-                    logoUrl: fileUrl,
                     hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
                 }
             });
