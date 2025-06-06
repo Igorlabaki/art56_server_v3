@@ -19,6 +19,7 @@ export const updateVenueSchema = z.object({
         facebookUrl: z.string().optional(),
         tiktokUrl: z.string().optional(),
         instagramUrl: z.string().optional(),
+        logoUrl: z.string().optional(),
         pricePerPerson: z.string().optional(),
         pricePerPersonDay: z.string().optional(),
         pricePerPersonHour: z.string().optional(),
