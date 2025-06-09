@@ -7,3 +7,7 @@ export const createEmailConfigParamsSchema = z.object({
   message: z.string().optional(),
   venueId: z.string()
 }) 
+
+
+export type CreateEmailConfigParamsSchema = z.infer<typeof createEmailConfigParamsSchema>;
+

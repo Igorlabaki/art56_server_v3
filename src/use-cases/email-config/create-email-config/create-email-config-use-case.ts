@@ -1,12 +1,12 @@
 import { EmailConfigRepositoryInterface } from "../../../repositories/interface/email-config-repository-interface";
-import { createEmailConfigParamsSchema } from "../../../zod/email-config/create-email-config-params-schema";
+import { CreateEmailConfigParamsSchema, createEmailConfigParamsSchema } from "../../../zod/email-config/create-email-config-params-schema";
 
 export class CreateEmailConfigUseCase {
   constructor(
     private readonly emailConfigRepository: EmailConfigRepositoryInterface
   ) {}
 
-  async execute(params: typeof createEmailConfigParamsSchema._type) {
+  async execute(params: CreateEmailConfigParamsSchema) {
 
     const emailConfig = await this.emailConfigRepository.create(params);
 
