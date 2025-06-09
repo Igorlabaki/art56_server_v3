@@ -545,7 +545,7 @@ model EmailConfig {
   backgroundImageUrl String?
   title              String?
   type               String
-  message            String?
+  message            String?  @db.LongText  
   venueId            String
   venue              Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
