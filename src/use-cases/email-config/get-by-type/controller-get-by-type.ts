@@ -1,5 +1,6 @@
-import { Request, Response } from "express"
 
+
+import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
 import { getByTypeRequestQuerySchema } from "../../../zod/email-config/get-by-type-query-schema";
 import { GetEmailConfigByTypeUseCase } from "./use-case-get-by-type";
