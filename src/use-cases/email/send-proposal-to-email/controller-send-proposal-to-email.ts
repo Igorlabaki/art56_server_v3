@@ -5,6 +5,7 @@ import { SendOrcamentoEmailCase } from './use-case-send-proposal-to-email';
 import { PrismaUserRepository } from '../../../repositories/in-prisma/user-in-prisma-repository';
 import { PrismaHistoryRepository } from '../../../repositories/in-prisma/history-in-prisma-repository';
 import { PrismaVenueRepository } from '../../../repositories/in-prisma/venue-in-prisma-repository';
+import { PrismaEmailConfigRepository } from '../../../repositories/in-prisma/email-config-in-prisma-repository';
 
 interface ISenEmailProps {
   proposal: {
@@ -28,10 +29,12 @@ class SendOrcamentoEmailController {
     const prismaUserRepository = new PrismaUserRepository(prismaClient);
     const prismahistoryRepository = new PrismaHistoryRepository(prismaClient);
     const prismaVenueRepository = new PrismaVenueRepository(prismaClient);
+    const prismaEmailConfigRepository = new PrismaEmailConfigRepository(prismaClient);
     const sendOrcamentoToEmail = new SendOrcamentoEmailCase(
       prismaUserRepository,
       prismahistoryRepository,
-      prismaVenueRepository
+      prismaVenueRepository,
+      prismaEmailConfigRepository
     );
 
     const sendOrcamentoEmailCase = sendOrcamentoToEmail;

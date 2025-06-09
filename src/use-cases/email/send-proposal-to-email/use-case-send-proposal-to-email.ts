@@ -3,6 +3,7 @@ import { UserRepositoryInterface } from '../../../repositories/interface/user-re
 import { HttpResourceNotFoundError } from '../../../errors/errors-type/http-resource-not-found-error';
 import { HistoryRepositoryInterface } from '../../../repositories/interface/history-repository-interface';
 import { VenueRepositoryInterface } from '../../../repositories/interface/venue-repository-interface';
+import { EmailConfigRepositoryInterface } from '../../../repositories/interface/email-config-repository-interface';
 interface ISendOrcamentoEmailParams {
   proposal: {
     proposalId: string;
@@ -20,18 +21,22 @@ export class SendOrcamentoEmailCase {
   constructor(
     private userRepository: UserRepositoryInterface,
     private historyRepository: HistoryRepositoryInterface,
-    private venueRepository: VenueRepositoryInterface
+    private venueRepository: VenueRepositoryInterface,
+    private emailConfigRepository: EmailConfigRepositoryInterface
   ) { }
 
   async execute({ proposal, userId, username, venueId, message }: ISendOrcamentoEmailParams) {
 
     const selectedVenue = await this.venueRepository.getById({ venueId })
 
+
+
     if (!selectedVenue) {
       throw new HttpResourceNotFoundError("Venue")
     }
 
-
+    const emailConfig = await this.emailConfigRepository.getByType({ venueId, type: "PROPOSAL" })
+    console.log(emailConfig)
     const transporter = nodemailer.createTransport({
       host: "smtp.hostinger.com",
       port: 587,
@@ -42,13 +47,15 @@ export class SendOrcamentoEmailCase {
       },
     });
 
+    const backgroundImageUrl = emailConfig?.backgroundImageUrl || '';
+
     const mailOptions = {
       from: '"AR756" <contato@ar756.com>',
       to: proposal.clientEmail,
       subject: "Confirmacao de presenca",
       html: `
              <div style="font-family: Arial, sans-serif; height: 990px;">
-                <table style="width: 100%; height: 100%; background-color: black;">
+                <table style="width: 100%; height: 100%; ${backgroundImageUrl ? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center;` : ''} background-color: black;">
                     <tr>
                         <td>
                         <table style="background-color: white; margin: auto; padding: 20px; width: 50%; height: 690px; border-radius: 10px;">
