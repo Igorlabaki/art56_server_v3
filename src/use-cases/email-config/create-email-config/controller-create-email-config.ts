@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { CreateEmailConfigUseCase } from "./create-email-config-use-case";
-import { createEmailConfigParamsSchema } from "../../../zod/email-config/create-email-config-params-schema";
+import { CreateEmailConfigParamsSchema, createEmailConfigParamsSchema } from "../../../zod/email-config/create-email-config-params-schema";
 import { handleErrors } from "../../../errors/error-handler";
 import { randomUUID } from "crypto";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -26,9 +26,18 @@ export class CreateEmailConfigController {
         // URL pública do arquivo
         const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
         // Adiciona a URL ao body
-        const paramsBody = { ...request.body, backgroundImageUrl: fileUrl };
+        const paramsBody: CreateEmailConfigParamsSchema = { 
+          type: request.body.type,
+          venueId: request.body.venueId,
+          title: request.body.title,
+          message: request.body.message,
+          backgroundImageUrl: fileUrl
+        };
+
         const parsedParams = createEmailConfigParamsSchema.parse(paramsBody);
+
         const emailConfig = await this.createEmailConfigUseCase.execute(parsedParams);
+
         return response.status(201).json(emailConfig);
       }
       // Se não houver arquivo, segue fluxo normal
