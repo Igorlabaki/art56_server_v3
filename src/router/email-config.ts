@@ -4,6 +4,7 @@ import { makeUpdateEmailConfigController } from "../use-cases/email-config/updat
 import { makeDeleteEmailConfigController } from "../use-cases/email-config/delete-email-config/factory-delete-email-config";
 import { makeListEmailConfigController } from "../use-cases/email-config/list-email-config/factory-list-email-config";
 import multer from "multer";
+import { getEmailConfigByTypeFactory } from "../use-cases/email-config/get-by-type/factory-get-by-id-venue";
 
 const emailConfigRoutes = Router();
 
@@ -22,6 +23,12 @@ emailConfigRoutes.post("/create", upload.single("file"), async (req, res) => {
 // List
 emailConfigRoutes.get("/list/:venueId", async (req, res) => {
     const controller = makeListEmailConfigController();
+    await controller.handle(req, res);
+});
+
+// List
+emailConfigRoutes.get("/getByType/:venueId/:type", async (req, res) => {
+    const controller = getEmailConfigByTypeFactory();
     await controller.handle(req, res);
 });
 

@@ -8,3 +8,6 @@ export const updateEmailConfigParamsSchema = z.object({
   message: z.string().optional(),
   venueId: z.string()
 }) 
+
+
+export type UpdateEmailConfigParamsSchema = z.infer<typeof updateEmailConfigParamsSchema>;

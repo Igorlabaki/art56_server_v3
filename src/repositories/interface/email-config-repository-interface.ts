@@ -6,13 +6,13 @@ interface EmailConfig {
   id: string;
   backgroundImageUrl?: string | null;
   title?: string | null;
-  type: 'PROPOSAL' | 'CONTRACT';
+  type: string;
   message?: string | null;
   venueId: string;
 }
 
 export interface ValidateEmailConfigTypeParams {
-  type: 'PROPOSAL' | 'CONTRACT';
+  type: string;
   venueId: string;
   emailConfigId?: string;
 }
@@ -20,6 +20,7 @@ export interface ValidateEmailConfigTypeParams {
 export interface EmailConfigRepositoryInterface {
   delete: (params: string) => Promise<EmailConfig | null>;
   getById: (params: string) => Promise<EmailConfig | null>;
+  getByType: (params: {venueId:string, type:string}) => Promise<EmailConfig | null>;
   update: (params: typeof updateEmailConfigParamsSchema._type) => Promise<EmailConfig | null>;
   create: (params: typeof createEmailConfigParamsSchema._type) => Promise<EmailConfig | null>;
   list: (params: typeof listEmailConfigQuerySchema._type) => Promise<EmailConfig[] | null>;
