@@ -544,18 +544,13 @@ model EmailConfig {
   id                 String          @id @default(cuid())
   backgroundImageUrl String?
   title              String?
-  type               EmailConfigType
+  type               String
   message            String?
   venueId            String
   venue              Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
   @@map("emailConfig")
-}
-
-enum EmailConfigType {
-  PROPOSAL
-  CONTRACT
 }
 
 model Schedule {
