@@ -8,6 +8,8 @@ class GetEmailConfigByTypeController {
     constructor(private getEmailConfigByTypeUseCase: GetEmailConfigByTypeUseCase) { }
     async handle(req: Request, resp: Response) {
         try {
+            const { venueId, type } = req.params;
+            console.log(venueId, type);
             const param = getByTypeRequestQuerySchema.parse(req.params);
             const emailConfigByType = await this.getEmailConfigByTypeUseCase.execute(param);
             
