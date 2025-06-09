@@ -10,6 +10,7 @@ export class CreateEmailConfigController {
 
   async handle(request: Request, response: Response) {
     try {
+      console.log(request.body)
       const params = createEmailConfigParamsSchema.parse(request.body);
       const emailConfig = await this.createEmailConfigUseCase.execute(params);
 
