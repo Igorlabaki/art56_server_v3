@@ -501,7 +501,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       .filter(event => 
         event.startDate >= firstDayOfMonth && 
         event.startDate <= lastDayOfMonth && 
-        event.proposal?.totalAmount
+        event.proposal?.totalAmount &&
+        event.type === "EVENT" // Só conta se for do tipo EVENT
       )
       .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
@@ -510,7 +511,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       .filter(event => 
         event.startDate >= firstDayOfLastMonth && 
         event.startDate <= lastDayOfLastMonth && 
-        event.proposal?.totalAmount
+        event.proposal?.totalAmount &&
+        event.type === "EVENT" // Só conta se for do tipo EVENT
       )
       .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
@@ -529,7 +531,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         .filter(event => 
           event.startDate >= monthStart && 
           event.startDate <= monthEnd && 
-          event.proposal?.totalAmount
+          event.proposal?.totalAmount &&
+          event.type === "EVENT" // Só conta se for do tipo EVENT
         )
         .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
 
