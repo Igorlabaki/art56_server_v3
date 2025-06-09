@@ -27,7 +27,7 @@ emailConfigRoutes.get("/list/:venueId", async (req, res) => {
 });
 
 // List
-emailConfigRoutes.get("/getByType/:venueId?/:type?", async (req, res) => {
+emailConfigRoutes.get("/getByType/:venueId/:type", async (req, res) => {
     const controller = getEmailConfigByTypeFactory();
     await controller.handle(req, res);
 });
