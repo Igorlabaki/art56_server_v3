@@ -4,16 +4,14 @@ import { HttpResourceNotFoundError } from '../../../errors/errors-type/http-reso
 import { HistoryRepositoryInterface } from '../../../repositories/interface/history-repository-interface';
 import { VenueRepositoryInterface } from '../../../repositories/interface/venue-repository-interface';
 interface ISendOrcamentoEmailParams {
-  proposal:{
+  proposal: {
     proposalId: string;
     clientName: string;
     clientEmail: string;
   }
-  venue:{
-    venueId: string;
-  }
+  venueId: string;
   userId?: string;
-  username?: string;  
+  username?: string;
   message?: string;
 }
 
@@ -25,9 +23,9 @@ export class SendOrcamentoEmailCase {
     private venueRepository: VenueRepositoryInterface
   ) { }
 
-  async execute({ proposal, userId,username, venue, message }: ISendOrcamentoEmailParams) {
+  async execute({ proposal, userId, username, venueId, message }: ISendOrcamentoEmailParams) {
 
-    const selectedVenue = await this.venueRepository.getById({ venueId: venue.venueId })
+    const selectedVenue = await this.venueRepository.getById({ venueId })
 
     if (!selectedVenue) {
       throw new HttpResourceNotFoundError("Venue")
@@ -43,7 +41,7 @@ export class SendOrcamentoEmailCase {
         pass: process.env.EMAIL_PASSWORD, // Sua senha de e-mail
       },
     });
-  
+
     const mailOptions = {
       from: '"AR756" <contato@ar756.com>',
       to: proposal.clientEmail,
@@ -86,10 +84,10 @@ export class SendOrcamentoEmailCase {
                 }
             })  */
     };
-    
+
     try {
       const email = await transporter.sendMail(mailOptions);
-    
+
       // Verifica se o e-mail foi aceito pelo servidor de e-mail
       if (email.accepted.length > 0) {
         console.log("E-mail enviado com sucesso:", email.messageId);
@@ -98,15 +96,15 @@ export class SendOrcamentoEmailCase {
           const user = await this.userRepository.getById(userId)
 
           if (!user) {
-              throw new HttpResourceNotFoundError("Usuario")
+            throw new HttpResourceNotFoundError("Usuario")
           }
 
           await this.historyRepository.create({
-              userId: user.id,
-              proposalId: proposal.proposalId,
-              action: `${username} enviou este orcamento ao cliente pelo email`,
+            userId: user.id,
+            proposalId: proposal.proposalId,
+            action: `${username} enviou este orcamento ao cliente pelo email`,
           });
-      }
+        }
         // Mensagem de confirmação ou retorno de sucesso
         return {
           status: "success",
@@ -132,6 +130,6 @@ export class SendOrcamentoEmailCase {
           error: error.message,
         };
       }
+    }
   }
-}
 }
