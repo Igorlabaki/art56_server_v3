@@ -9,12 +9,14 @@ import { getVenueTrafficCountFactory } from "../use-cases/venue/get-traffic-coun
 import { getVenueAnalysiByMonthFactory } from "../use-cases/venue/get-analysis-by-month-venue/factory-get-analysis-by-month-venue";
 import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-venues/factory-list-permitted-venue";
 import { makeGetVenueAnalyticsController } from "../use-cases/venue/get-venue-analytics/factory-get-venue-analytics";
-import { upload } from "../services/upload-config-sw";
-
+import multer from "multer";
 const venueRoutes = Router()
 
 venueRoutes.use(ensureAuthenticate)
 
+// Configuração do Multer (memória)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 // Register
 venueRoutes.post("/create", upload.single("file"), async (req, res) => {
     const controller = createVenueFactory();  // Cria o controlador
