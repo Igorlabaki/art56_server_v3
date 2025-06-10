@@ -17,7 +17,7 @@ class CreateVenueController {
 
             if (req.file) {
                 // Gerando um nome único para o arquivo
-                const fileKey = `${body.data.name}-${randomUUID()}-${req.file.originalname}`;
+                const fileKey = `$${Date.now()}-${randomUUID()}-${req.file.originalname}`;
                 
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,

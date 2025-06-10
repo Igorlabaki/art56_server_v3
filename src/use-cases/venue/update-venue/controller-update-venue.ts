@@ -40,7 +40,7 @@ class UpdateVenueController {
                 }
 
                 // Gerando um nome único para o arquivo
-                const fileKeyUpload = `${param.name || currentVenue?.name}-${randomUUID()}-${req.file.originalname}`;
+                const fileKeyUpload = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
 
                 const params = {
                     Bucket: process.env.AWS_BUCKET_NAME!,
