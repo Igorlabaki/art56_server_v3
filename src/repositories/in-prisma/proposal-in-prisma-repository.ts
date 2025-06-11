@@ -224,7 +224,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
   async updatePersonalInfo({ proposalId, data }: UpdatePersonalInfoProposalSchema): Promise<Proposal | null> {
-    const { cep, cpf, city, completeClientName, completeCompanyName, neighborhood, state, street, streetNumber, rg } = data
+    const { cep, cpf, city, completeClientName, completeCompanyName, neighborhood, state, street, streetNumber, rg, cnpj } = data
     return await this.prisma.proposal.update({
       where: {
         id: proposalId
@@ -234,6 +234,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         cep,
         city,
         state,
+        cnpj,
         street,
         completeClientName,
         completeCompanyName,
