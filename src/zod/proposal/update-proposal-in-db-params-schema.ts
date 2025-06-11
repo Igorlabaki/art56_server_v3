@@ -7,6 +7,8 @@ export const updateProposalInDbParam = z.object({
         completeCompanyName: z.string().optional(),
         endDate: z.date().optional(),
         startDate: z.date().optional(),
+        cpf: z.string().optional(),
+        cnpj: z.string().optional(),
         whatsapp: z.string().optional(),
         approved: z.boolean().optional(),
         basePrice: z.number().optional(),

@@ -6,7 +6,8 @@ import { updatePersonalInfoProposalSchema } from "../../../zod/proposal/update-p
 class UpdateProposalPersonalInfoController {
     constructor(private updateProposalUseCase: UpdateProposalPersonalInfoUseCase) { }
     async handle(req: Request, resp: Response) {
-        try {
+        try {  
+            console.log(req.body, "req.body")
             const param = updatePersonalInfoProposalSchema.parse(req.body);
             
             const proposalPersonalInfo = await this.updateProposalUseCase.execute(param);

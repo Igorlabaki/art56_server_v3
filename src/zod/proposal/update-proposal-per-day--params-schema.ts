@@ -7,6 +7,8 @@ export const updateProposalPerDayRequestParams = z.object({
         completeCompanyName: z.string().optional(),
         venueId: z.string(),
         endHour: z.string(),
+        cpf: z.string().optional(),
+        cnpj: z.string().optional(),
         endDay: z.string(),
         startDay: z.string(),
         whatsapp: z.string(),
