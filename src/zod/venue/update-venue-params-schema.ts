@@ -8,6 +8,7 @@ export const updateVenueSchemaDb = z.object({
         email: z.string().optional(),
         name: z.string().optional(),
         url: z.string().optional(),
+        cnpj: z.string().optional(),
         city: z.string().optional(),
         state: z.string().optional(),
         street: z.string().optional(),

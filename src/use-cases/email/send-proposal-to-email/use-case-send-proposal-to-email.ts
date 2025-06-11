@@ -52,7 +52,7 @@ export class SendOrcamentoEmailCase {
     const mailOptions = {
       from: '"AR756" <contato@ar756.com>',
       to: proposal.clientEmail,
-      subject: "Confirmacao de presenca",
+      subject: "Orcamento",
       html: `
              <div style="font-family: Arial, sans-serif; height: 990px;">
                 <table style="width: 100%; height: 100%; ${backgroundImageUrl ? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center;` : ''} background-color: black;">

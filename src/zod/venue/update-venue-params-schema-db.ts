@@ -8,6 +8,7 @@ export const updateVenueSchemaRequest = z.object({
     name: z.string().optional(),
     url: z.string().optional(),
     city: z.string().optional(),
+    cnpj: z.string().optional(),
     state: z.string().optional(),
     street: z.string().optional(),
     maxGuest: z.string().optional(),
