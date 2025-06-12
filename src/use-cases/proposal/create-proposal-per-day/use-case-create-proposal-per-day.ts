@@ -40,10 +40,7 @@ class CreateProposalPerDayUseCase {
         })
         console.log("[UseCase] Valor total dos serviços:", totalAmountService);
 
-        console.log("[UseCase] Transformando datas");
-        const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
-        const { endDate } = transformDate({ date: params.endDay, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
-        console.log("[UseCase] Datas transformadas:", { startDate, endDate });
+
 
         console.log("[UseCase] Buscando local");
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
@@ -53,6 +50,11 @@ class CreateProposalPerDayUseCase {
             console.error("[UseCase] Local não encontrado");
             throw new HttpResourceNotFoundError("Locacao")
         }
+
+        console.log("[UseCase] Transformando datas");
+        const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: venue.checkIn  ? venue.checkIn : params.startHour, divisor: "/" })
+        const { endDate } = transformDate({ date: params.endDay, endHour: params.endHour, startHour: venue.checkOut  ? venue.checkOut : params.startHour, divisor: "/" })
+        console.log("[UseCase] Datas transformadas:", { startDate, endDate });
 
         if (params.type === "BARTER") {
             console.log("[UseCase] Iniciando criação de proposta de permuta");
@@ -125,6 +127,7 @@ class CreateProposalPerDayUseCase {
         }
 
         if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_DAY" && venue.pricePerDay) {
+            console.log("[UseCase] Iniciando criação de proposta por dia");
             const { seasonalFee } = venue;
             const daysBetween = differenceInCalendarDays(endDate, startDate);
             let pricePerDay = venue.pricePerDay;
@@ -285,7 +288,7 @@ class CreateProposalPerDayUseCase {
         }
 
         if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay) {
-
+            console.log("[UseCase] Iniciando criação de proposta por pessoa por dia");
             const { seasonalFee } = venue
             const daysBetween = differenceInCalendarDays(endDate, startDate);
             let pricePerPersonDay = venue.pricePerPersonDay;
@@ -389,7 +392,7 @@ class CreateProposalPerDayUseCase {
                 };
 
             }
-
+            console.log("[UseCase] Iniciando criação de proposta por dia");
             const basePrice = daysBetween * (Number(guestNumber) * pricePerPersonDay)
             const totalAmount = basePrice + (totalAmountService || 0)
 
