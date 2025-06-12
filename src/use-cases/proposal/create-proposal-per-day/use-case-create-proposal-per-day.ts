@@ -25,26 +25,37 @@ class CreateProposalPerDayUseCase {
     ) { }
 
     async execute(params: CreateProposalPerDayRequestParamsSchema) {
+        console.log("[UseCase] Iniciando execução do caso de uso");
+        console.log("[UseCase] Parâmetros recebidos:", JSON.stringify(params, null, 2));
 
         let createProposalPerDayInDb: CreateProposalInDbParams;
 
         const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId, ...rest } = params
+        console.log("[UseCase] Parâmetros extraídos:", { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId });
 
+        console.log("[UseCase] Buscando valor total dos serviços");
         const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
             serviceIds,
             venueId: params.venueId,
         })
+        console.log("[UseCase] Valor total dos serviços:", totalAmountService);
 
+        console.log("[UseCase] Transformando datas");
         const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
         const { endDate } = transformDate({ date: params.endDay, endHour: params.endHour, startHour: params.startHour, divisor: "/" })
+        console.log("[UseCase] Datas transformadas:", { startDate, endDate });
 
+        console.log("[UseCase] Buscando local");
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
+        console.log("[UseCase] Local encontrado:", venue ? "Sim" : "Não");
 
         if (!venue) {
+            console.error("[UseCase] Local não encontrado");
             throw new HttpResourceNotFoundError("Locacao")
         }
 
         if (params.type === "BARTER") {
+            console.log("[UseCase] Iniciando criação de proposta de permuta");
             createProposalPerDayInDb = {
                 ...rest,
                 endDate,
@@ -57,14 +68,17 @@ class CreateProposalPerDayUseCase {
                 guestNumber: Number(guestNumber),
             }
 
+            console.log("[UseCase] Criando proposta de permuta no banco");
             const newProposal = await this.proposalRepository.createPerDay(
                 createProposalPerDayInDb
             );
 
             if (!newProposal) {
+                console.error("[UseCase] Erro ao criar proposta de permuta no banco");
                 throw Error("Erro na conexao com o banco de dados")
             }
 
+            console.log("[UseCase] Criando notificação para proposta de permuta");
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
@@ -80,12 +94,15 @@ class CreateProposalPerDayUseCase {
             });
 
             if (userId) {
+                console.log("[UseCase] Buscando usuário para histórico");
                 const user = await this.userRepository.getById(userId)
 
                 if (!user) {
+                    console.error("[UseCase] Usuário não encontrado");
                     throw new HttpResourceNotFoundError("Usuario")
                 }
 
+                console.log("[UseCase] Criando histórico para usuário");
                 await this.historyRepository.create({
                     userId: user.id,
                     proposalId: newProposal.id,
@@ -103,6 +120,7 @@ class CreateProposalPerDayUseCase {
                 type: "Proposal"
             }
 
+            console.log("[UseCase] Proposta de permuta criada com sucesso");
             return formatedResponse
         }
 
@@ -511,7 +529,8 @@ class CreateProposalPerDayUseCase {
             type: "Proposal"
         }
 
-        return formatedResponse
+        console.log("[UseCase] Finalizando execução do caso de uso");
+        return formatedResponse;
     }
 }
 
