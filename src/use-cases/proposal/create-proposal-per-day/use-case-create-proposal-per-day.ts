@@ -179,10 +179,23 @@ class CreateProposalPerDayUseCase {
 
                 const basePrice = daysBetween * pricePerDay;
                 const totalAmount = basePrice + (totalAmountService || 0);
-                console.log("[UseCase] Valor total:", totalAmount);
-                console.log( "conta",totalAmount < (venue.minimumPrice || 0) ? (venue.minimumPrice || 0) : totalAmount)
-                const finalTotalAmount = totalAmount < (venue.minimumPrice || 0) ? (venue.minimumPrice || 0) : totalAmount;
-                console.log("[UseCase] Valor final após verificação do mínimo:", finalTotalAmount);
+                console.log("[UseCase] Valores antes da verificação do mínimo:", {
+                    basePrice,
+                    totalAmountService,
+                    totalAmount,
+                    minimumPrice: venue.minimumPrice
+                });
+
+                // Se tiver preço mínimo e o total for menor, usa o mínimo
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
+                    ? venue.minimumPrice 
+                    : totalAmount;
+
+                console.log("[UseCase] Valor final após verificação do mínimo:", {
+                    totalAmount,
+                    minimumPrice: venue.minimumPrice,
+                    finalTotalAmount
+                });
 
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
@@ -339,10 +352,24 @@ class CreateProposalPerDayUseCase {
 
                 const basePrice = daysBetween * pricePerPersonDay;
                 const totalAmount = basePrice + (totalAmountService || 0);
-                console.log("[UseCase] Valor total:", totalAmount);
-                console.log( "conta",totalAmount < (venue.minimumPrice || 0) ? (venue.minimumPrice || 0) : totalAmount)
-                const finalTotalAmount = totalAmount < (venue.minimumPrice || 0) ? (venue.minimumPrice || 0) : totalAmount;
-                console.log("[UseCase] Valor final após verificação do mínimo:", finalTotalAmount);
+                console.log("[UseCase] Valores antes da verificação do mínimo:", {
+                    basePrice,
+                    totalAmountService,
+                    totalAmount,
+                    minimumPrice: venue.minimumPrice
+                });
+
+                // Se tiver preço mínimo e o total for menor, usa o mínimo
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
+                    ? venue.minimumPrice 
+                    : totalAmount;
+
+                console.log("[UseCase] Valor final após verificação do mínimo:", {
+                    totalAmount,
+                    minimumPrice: venue.minimumPrice,
+                    finalTotalAmount
+                });
+
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
                     ...rest,
@@ -472,10 +499,23 @@ class CreateProposalPerDayUseCase {
 
         const basePrice = (Number(totalAmountInput) || 0) - (totalAmountService || 0)
         const totalAmount = Number(totalAmountInput) || 0;
-        console.log("[UseCase] Valor total:", totalAmount);
-        console.log( "conta",totalAmount < (venue.minimumPrice || 0) ? (venue.minimumPrice || 0) : totalAmount)
-        const finalTotalAmount = totalAmount < (venue.minimumPrice || 0) ? (venue.minimumPrice || 0) : totalAmount;
-        console.log("[UseCase] Valor final após verificação do mínimo:", finalTotalAmount);
+        console.log("[UseCase] Valores antes da verificação do mínimo:", {
+            basePrice,
+            totalAmountService,
+            totalAmount,
+            minimumPrice: venue.minimumPrice
+        });
+
+        // Se tiver preço mínimo e o total for menor, usa o mínimo
+        const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
+            ? venue.minimumPrice 
+            : totalAmount;
+
+        console.log("[UseCase] Valor final após verificação do mínimo:", {
+            totalAmount,
+            minimumPrice: venue.minimumPrice,
+            finalTotalAmount
+        });
 
         createProposalPerDayInDb = {
             ...rest,
