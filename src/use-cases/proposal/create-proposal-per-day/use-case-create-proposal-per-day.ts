@@ -176,6 +176,12 @@ class CreateProposalPerDayUseCase {
 
                 const basePrice = daysBetween * pricePerDay;
                 const totalAmount = basePrice + (totalAmountService || 0);
+                console.log("[UseCase] Calculando valor total:", { basePrice, totalAmountService, totalAmount, minimumPrice: venue.minimumPrice });
+
+                // Verifica se o totalAmount é menor que o minimumPrice
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice ? venue.minimumPrice : totalAmount;
+                console.log("[UseCase] Valor final após verificação do mínimo:", finalTotalAmount);
+
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
                     ...rest,
@@ -183,7 +189,7 @@ class CreateProposalPerDayUseCase {
                     startDate,
                     basePrice,
                     serviceIds,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
                     guestNumber: Number(guestNumber),
@@ -330,6 +336,12 @@ class CreateProposalPerDayUseCase {
 
                 const basePrice = daysBetween * pricePerPersonDay;
                 const totalAmount = basePrice + (totalAmountService || 0);
+                console.log("[UseCase] Calculando valor total:", { basePrice, totalAmountService, totalAmount, minimumPrice: venue.minimumPrice });
+
+                // Verifica se o totalAmount é menor que o minimumPrice
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice ? venue.minimumPrice : totalAmount;
+                console.log("[UseCase] Valor final após verificação do mínimo:", finalTotalAmount);
+
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
                     ...rest,
@@ -337,7 +349,7 @@ class CreateProposalPerDayUseCase {
                     startDate,
                     basePrice,
                     serviceIds,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
                     guestNumber: Number(guestNumber),

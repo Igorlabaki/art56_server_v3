@@ -304,7 +304,9 @@ model Venue {
   email              String?          @unique
   url                String?
   facebookUrl        String?
-  logoUrl        String?
+  logoUrl             String?
+  minimumPrice       Float? @default(0)
+  whatsappNumber     String?
   tiktokUrl          String?
   instagramUrl       String?
   street             String

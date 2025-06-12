@@ -11,6 +11,8 @@ export const updateVenueSchemaDb = z.object({
         cnpj: z.string().optional(),
         city: z.string().optional(),
         state: z.string().optional(),
+        whatsappNumber: z.string().optional(),
+        minimumPrice: z.string().optional(),
         street: z.string().optional(),
         maxGuest: z.string().optional(),
         complement: z.string().optional(),

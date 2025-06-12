@@ -18,7 +18,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
   async create(params: CreateVenueRequestParams): Promise<Venue | null> {
     const { data, organizationId, userId } = params; // createdBy = ID do usuário que criou a venue
-    const { owners, pricePerDay, pricePerPerson, maxGuest, pricePerPersonDay, pricePerPersonHour, ...rest } = data;
+    const { owners, pricePerDay, pricePerPerson, maxGuest, pricePerPersonDay, pricePerPersonHour, minimumPrice, ...rest } = data;
 
     // Formatando os valores de preço e maxGuest
     const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
@@ -26,7 +26,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const perPersonDay = Number(pricePerPersonDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const perPersonHour = Number(pricePerPersonHour?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const maxGuestFormated = Number(maxGuest);
-
+    const minimumPriceFormated = Number(minimumPrice?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    
     return await this.prisma.$transaction(async (prisma) => {
       // Criar a Venue
       const newVenue = await prisma.venue.create({
@@ -47,6 +48,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           maxGuest: maxGuestFormated,
           pricePerPersonDay: perPersonDay,
           pricePerPersonHour: perPersonHour,
+          minimumPrice: minimumPriceFormated,
         },
       });
 
@@ -93,7 +95,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async update(reference: UpdateVenueSchemaDb): Promise<Venue | null> {
-    const { pricePerDay, pricePerPerson, pricePerPersonDay, pricePerPersonHour, owners, maxGuest,hasOvernightStay, ...rest } = reference.data;
+    const { pricePerDay, pricePerPerson, pricePerPersonDay, pricePerPersonHour, owners, maxGuest,hasOvernightStay, minimumPrice, ...rest } = reference.data;
 
     const currentVenue = await this.prisma.venue.findUnique({
       where: { id: reference.venueId },
@@ -112,7 +114,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const perPersonDay = Number(pricePerPersonDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perPersonHour = Number(pricePerPersonHour?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    const perPersonHour = Number(pricePerPersonHour?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;    
+
+    const minimumPriceFormated = Number(minimumPrice?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     console.log(perPersonHour)
     return await this.prisma.venue.update({
       where: {
@@ -125,6 +129,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         pricePerPerson: perPerson,
         pricePerPersonDay: perPersonDay,
         pricePerPersonHour: perPersonHour,
+        minimumPrice: minimumPriceFormated,
         hasOvernightStay: hasOvernightStay ? true : false,
         ownerVenue: {
           create: ownersToConnect.map((ownerId) => ({
