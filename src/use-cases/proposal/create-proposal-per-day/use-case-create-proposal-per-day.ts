@@ -53,7 +53,7 @@ class CreateProposalPerDayUseCase {
 
         console.log("[UseCase] Transformando datas");
         const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: venue.checkIn  ? venue.checkIn : params.startHour, divisor: "/" })
-        const { endDate } = transformDate({ date: params.endDay, endHour: params.endHour, startHour: venue.checkOut  ? venue.checkOut : params.startHour, divisor: "/" })
+        const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut  ? venue.checkOut : params.endHour, startHour:params.startHour , divisor: "/" })
         console.log("[UseCase] Datas transformadas:", { startDate, endDate });
 
         if (params.type === "BARTER") {
@@ -244,7 +244,6 @@ class CreateProposalPerDayUseCase {
                     count: 1,
                     type: "Proposal",
                 };
-
             }
 
             // Calcula o preço base
@@ -298,11 +297,9 @@ class CreateProposalPerDayUseCase {
                 data: newProposal,
                 type: "Proposal",
             };
-        }
-
-        if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay) {
+        } else if (Number(totalAmountInput) === 0 && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay) {
             console.log("[UseCase] Iniciando criação de proposta por pessoa por dia");
-            const { seasonalFee } = venue
+            const { seasonalFee } = venue;
             const daysBetween = differenceInCalendarDays(endDate, startDate);
             let pricePerPersonDay = venue.pricePerPersonDay;
 
@@ -370,69 +367,109 @@ class CreateProposalPerDayUseCase {
                     finalTotalAmount
                 });
 
-                // Cria a proposta
-                const createProposalPerPersonInDb = {
+                createProposalPerDayInDb = {
                     ...rest,
                     endDate,
                     startDate,
-                    basePrice,
                     serviceIds,
+                    basePrice,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
                     guestNumber: Number(guestNumber),
-                };
+                }
 
-                const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
-                if (!newProposal) throw Error("Erro na conexao com o banco de dados");
+                const newProposal = await this.proposalRepository.createPerDay(
+                    createProposalPerDayInDb
+                );
 
-                // Envia notificação e histórico
+                if (!newProposal) {
+                    throw Error("Erro na conexao com o banco de dados")
+                }
+
                 await this.notificationRepository.create({
                     venueId: params.venueId,
                     proposalId: newProposal.id,
-                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
+                    content: `Novo orcamento do(a) ${newProposal.completeClientName
+                        } no valor de ${new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                        }).format(newProposal.totalAmount)}, para data  ${format(
+                            newProposal?.startDate,
+                            "dd/MM/yyyy"
+                        )} ate  a data ${format(
+                            newProposal?.endDate,
+                            "dd/MM/yyyy"
+                        )}`,
                     type: "PROPOSAL",
                 });
 
                 if (userId) {
-                    const user = await this.userRepository.getById(userId);
-                    if (!user) throw new HttpResourceNotFoundError("Usuário");
+                    const user = await this.userRepository.getById(userId)
+
+                    if (!user) {
+                        throw new HttpResourceNotFoundError("Usuario")
+                    }
+
                     await this.historyRepository.create({
                         userId: user.id,
-                        username: user.username,
                         proposalId: newProposal.id,
-                        action: `${user.username} criou este orçamento`,
+                        action: `${user.username} criou este orcamento`,
                     });
-                } else {
+                }
+
+                if (!userId) {
                     await this.historyRepository.create({
                         proposalId: newProposal.id,
-                        action: `Cliente criou este orçamento pelo site`,
+                        action: `Cliente criou este orcamento pelo site`,
                     });
                 }
 
                 return {
                     success: true,
-                    message: "Orçamento criado com sucesso",
-                    data: newProposal,
+                    message: `Orcamento criado com sucesso`,
                     count: 1,
-                    type: "Proposal",
-                };
-
+                    data: {
+                        ...newProposal
+                    },
+                    type: "Proposal"
+                }
             }
-            console.log("[UseCase] Iniciando criação de proposta por dia");
-            const basePrice = daysBetween * (Number(guestNumber) * pricePerPersonDay)
-            const totalAmount = basePrice + (totalAmountService || 0)
+        } else {
+            // Se chegou aqui, é porque é um valor manual
+            console.log("[UseCase] Iniciando criação de proposta com valor manual");
+            const basePrice = (Number(totalAmountInput) || 0) - (totalAmountService || 0);
+            const totalAmount = Number(totalAmountInput) || 0;
+            console.log("[UseCase] Valores antes da verificação do mínimo:", {
+                basePrice,
+                totalAmountService,
+                totalAmount,
+                minimumPrice: venue.minimumPrice
+            });
+
+            // Se tiver preço mínimo e o total for menor, usa o mínimo
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
+                ? venue.minimumPrice 
+                : totalAmount;
+
+            console.log("[UseCase] Valor final após verificação do mínimo:", {
+                totalAmount,
+                minimumPrice: venue.minimumPrice,
+                finalTotalAmount
+            });
 
             createProposalPerDayInDb = {
                 ...rest,
                 endDate,
                 startDate,
-                serviceIds,
                 basePrice,
-                totalAmount,
+                serviceIds,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
                 guestNumber: Number(guestNumber),
+                totalAmount: finalTotalAmount,
             }
 
             const newProposal = await this.proposalRepository.createPerDay(
@@ -486,109 +523,16 @@ class CreateProposalPerDayUseCase {
             const formatedResponse = {
                 success: true,
                 message: `Orcamento criado com sucesso`,
-                count: 1,
                 data: {
                     ...newProposal
                 },
+                count: 1,
                 type: "Proposal"
             }
 
-            return formatedResponse
+            console.log("[UseCase] Finalizando execução do caso de uso");
+            return formatedResponse;
         }
-
-
-        const basePrice = (Number(totalAmountInput) || 0) - (totalAmountService || 0)
-        const totalAmount = Number(totalAmountInput) || 0;
-        console.log("[UseCase] Valores antes da verificação do mínimo:", {
-            basePrice,
-            totalAmountService,
-            totalAmount,
-            minimumPrice: venue.minimumPrice
-        });
-
-        // Se tiver preço mínimo e o total for menor, usa o mínimo
-        const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
-            ? venue.minimumPrice 
-            : totalAmount;
-
-        console.log("[UseCase] Valor final após verificação do mínimo:", {
-            totalAmount,
-            minimumPrice: venue.minimumPrice,
-            finalTotalAmount
-        });
-
-        createProposalPerDayInDb = {
-            ...rest,
-            endDate,
-            startDate,
-            basePrice,
-            serviceIds,
-            extraHoursQty: 0,
-            extraHourPrice: 0,
-            guestNumber: Number(guestNumber),
-            totalAmount: finalTotalAmount,
-        }
-
-        const newProposal = await this.proposalRepository.createPerDay(
-            createProposalPerDayInDb
-        );
-
-        if (!newProposal) {
-            throw Error("Erro na conexao com o banco de dados")
-        }
-
-        await this.notificationRepository.create({
-            venueId: params.venueId,
-            proposalId: newProposal.id,
-            content: `Novo orcamento do(a) ${newProposal.completeClientName
-                } no valor de ${new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                }).format(newProposal.totalAmount)}, para data  ${format(
-                    newProposal?.startDate,
-                    "dd/MM/yyyy"
-                )} ate  a data ${format(
-                    newProposal?.endDate,
-                    "dd/MM/yyyy"
-                )}`,
-            type: "PROPOSAL",
-        });
-
-        if (userId) {
-            const user = await this.userRepository.getById(userId)
-
-            if (!user) {
-                throw new HttpResourceNotFoundError("Usuario")
-            }
-
-            await this.historyRepository.create({
-                userId: user.id,
-                proposalId: newProposal.id,
-                action: `${user.username} criou este orcamento`,
-            });
-        }
-
-        if (!userId) {
-            await this.historyRepository.create({
-                proposalId: newProposal.id,
-                action: `Cliente criou este orcamento pelo site`,
-            });
-        }
-
-        const formatedResponse = {
-            success: true,
-            message: `Orcamento criado com sucesso`,
-            data: {
-                ...newProposal
-            },
-            count: 1,
-            type: "Proposal"
-        }
-
-        console.log("[UseCase] Finalizando execução do caso de uso");
-        return formatedResponse;
     }
 }
 
