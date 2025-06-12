@@ -177,7 +177,7 @@ class CreateProposalPerDayUseCase {
                 const basePrice = daysBetween * pricePerDay;
                 const totalAmount = basePrice + (totalAmountService || 0);
                 console.log("[UseCase] Calculando valor total:", { basePrice, totalAmountService, totalAmount, minimumPrice: venue.minimumPrice });
-
+                console.log("[UseCase] vALOR mINIMO:", venue.minimumPrice);
                 // Verifica se o totalAmount é menor que o minimumPrice
                 const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice ? venue.minimumPrice : totalAmount;
                 console.log("[UseCase] Valor final após verificação do mínimo:", finalTotalAmount);
