@@ -235,6 +235,7 @@ class CreateProposalPerDayUseCase {
             // Calcula o preço base
             const basePrice = daysBetween * pricePerDay;
             const totalAmount = basePrice + (totalAmountService || 0);
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice ? venue.minimumPrice : totalAmount;
 
             // Criação da proposta
             const createProposalPerDayInDb = {
@@ -243,9 +244,9 @@ class CreateProposalPerDayUseCase {
                 startDate,
                 serviceIds,
                 basePrice,
-                totalAmount,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
+                totalAmount:finalTotalAmount,
                 guestNumber: Number(guestNumber),
             };
 
