@@ -312,15 +312,15 @@ class CreateProposalPerDayUseCase {
             const { seasonalFee } = venue;
             const daysBetween = differenceInCalendarDays(endDate, startDate);
             let pricePerPersonDay = venue.pricePerPersonDay;
-
+            console.log("pricePerPersonDay", pricePerPersonDay)
             if (seasonalFee?.length) {
                 const year = startDate.getFullYear();
                 const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
-
+                console.log("eventDayOfWeek", eventDayOfWeek)
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-
+                    console.log("feeValue", feeValue)
                     const isInSeason = fee.startDay && fee.endDay
                         ? isWithinInterval(startDate, {
                             start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
@@ -345,7 +345,7 @@ class CreateProposalPerDayUseCase {
                 month: startDate.getMonth() + 1,
                 approved: true
             })
-
+            console.log("totalPerSelectMonth", totalPerSelectMonth)
             if (totalPerSelectMonth) {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
@@ -392,12 +392,12 @@ class CreateProposalPerDayUseCase {
                 const newProposal = await this.proposalRepository.createPerDay(
                     createProposalPerDayInDb
                 );
-
+                console.log("newProposal", newProposal)
                 if (!newProposal) {
                     throw Error("Erro na conexao com o banco de dados")
                 }
 
-                await this.notificationRepository.create({
+                const not = await this.notificationRepository.create({
                     venueId: params.venueId,
                     proposalId: newProposal.id,
                     content: `Novo orcamento do(a) ${newProposal.completeClientName
@@ -415,6 +415,7 @@ class CreateProposalPerDayUseCase {
                         )}`,
                     type: "PROPOSAL",
                 });
+                console.log("notificacao criada", not)
 
                 if (userId) {
                     const user = await this.userRepository.getById(userId)
@@ -437,7 +438,7 @@ class CreateProposalPerDayUseCase {
                     });
                 }
 
-                return {
+                const formatedResponse = {
                     success: true,
                     message: `Orcamento criado com sucesso`,
                     count: 1,
@@ -446,6 +447,8 @@ class CreateProposalPerDayUseCase {
                     },
                     type: "Proposal"
                 }
+                
+                return formatedResponse
             }
         } else {
             console.log("[UseCase] Nenhuma condição de preço atendida, usando valor manual");
