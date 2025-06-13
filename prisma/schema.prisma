@@ -319,6 +319,7 @@ model Venue {
   checkOut           String?          @default("12:00")
   cep                String
   hasOvernightStay   Boolean
+  minimumNights      Int? @default(1)
   createdAt          DateTime         @default(now())
   organizationId     String
   pricingModel       PricingModel

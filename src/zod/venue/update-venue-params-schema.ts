@@ -14,6 +14,7 @@ export const updateVenueSchemaDb = z.object({
         whatsappNumber: z.string().optional(),
         minimumPrice: z.string().optional(),
         street: z.string().optional(),
+        minimumNights: z.string().optional(),
         maxGuest: z.string().optional(),
         complement: z.string().optional(),
         streetNumber: z.string().optional(),

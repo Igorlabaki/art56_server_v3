@@ -12,7 +12,6 @@ export const createVenueSchema =  z.object({
         street: z.string(),
         maxGuest: z.string(),
         streetNumber: z.string(),
-        
         neighborhood: z.string(),
         url: z.string().optional(),
         owners: z.array(z.string()),
@@ -26,6 +25,7 @@ export const createVenueSchema =  z.object({
         facebookUrl: z.string().optional(),
         instagramUrl: z.string().optional(),
         minimumPrice: z.string().optional(),
+        minimumNights: z.string().optional(),
         whatsappNumber: z.string().optional(),
         pricePerPerson: z.string().optional(),
         pricePerPersonDay: z.string().optional(),
