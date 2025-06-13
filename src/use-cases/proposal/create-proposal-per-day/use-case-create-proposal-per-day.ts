@@ -53,7 +53,7 @@ class CreateProposalPerDayUseCase {
 
         console.log("[UseCase] Transformando datas");
         const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: venue.checkIn ? venue.checkIn : params.startHour, divisor: "/" })
-        const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut ? venue.checkOut : params.endHour, startHour: params.startHour, divisor: "/" })
+        const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut ? venue.checkOut : params.endHour, startHour: venue.checkOut ? venue.checkOut : params.endHour, divisor: "/" })
         console.log("[UseCase] Datas transformadas:", { startDate, endDate });
 
         console.log("[UseCase] Verificando modelo de preço do local:", {
