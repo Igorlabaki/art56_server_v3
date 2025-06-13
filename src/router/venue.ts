@@ -10,6 +10,7 @@ import { getVenueAnalysiByMonthFactory } from "../use-cases/venue/get-analysis-b
 import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-venues/factory-list-permitted-venue";
 import { makeGetVenueAnalyticsController } from "../use-cases/venue/get-venue-analytics/factory-get-venue-analytics";
 import multer from "multer";
+import { getWebDataFactory } from "../use-cases/webData/factory-get-web-data";
 const venueRoutes = Router()
 
 venueRoutes.use(ensureAuthenticate)
@@ -48,6 +49,12 @@ venueRoutes.get("/analysisByMonth?:venueId/:year?/:approved?", async (req, res) 
 // Get by Id
 venueRoutes.get("/getById?:venueId?/:userId?", async (req, res) => {
     const controller = getVenuebyidFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+
+// Get by Id
+venueRoutes.get("/getWebData/:venueId?", async (req, res) => {
+    const controller = getWebDataFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 

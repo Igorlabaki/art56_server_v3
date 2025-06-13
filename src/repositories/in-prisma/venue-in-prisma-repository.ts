@@ -1,16 +1,14 @@
 import dayjs from "dayjs"
 
-import { PrismaClient, Venue, User } from "@prisma/client"
+import { PrismaClient, Venue, User, Image, Text, Question } from "@prisma/client"
 import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema"
-import { ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface } from "../interface/venue-repository-interface"
+import { ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface,VenueWithRelations  } from "../interface/venue-repository-interface"
 import { ListVenueRequestQuerySchema, } from "../../zod/venue/list-venue-query-schema"
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema"
 import { UpdateVenueSchemaDb } from "../../zod/venue/update-venue-params-schema"
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema"
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
 import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema"
-
-
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -206,6 +204,19 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         },
         contracts: true,
         attachments: true
+      }
+    });
+  }
+
+  async getWebData({ venueId }: GetSelectedVenueRequestParamSchema): Promise<VenueWithRelations | null> {
+    return await this.prisma.venue.findFirst({
+      where: {
+        id: venueId,
+      },
+      include: {
+        images: true,
+        texts: true,
+        questions: true,
       }
     });
   }

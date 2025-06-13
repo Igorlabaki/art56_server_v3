@@ -1,4 +1,4 @@
-import { Venue, User } from "@prisma/client";
+import { Venue, User, Question,Image, Text } from "@prisma/client";
 
 import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema";
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema";
@@ -66,12 +66,19 @@ export interface VenueAnalyticsResponse {
   } | null;
 }
 
+export type VenueWithRelations = Venue & {
+  images: Image[];
+  texts: Text[];
+  questions: Question[];
+};
+
 export interface VenueRepositoryInterface {
   delete: (params: string) => Promise<Venue | null>
   update: (params: UpdateVenueSchemaDb) => Promise<Venue | null>
   create: (params: CreateVenueRequestParams) => Promise<Venue | null>
   getById: (params: GetVenueByIdRequestParamSchema) => Promise<Venue | null>
   getSelectedVenue: (params: GetSelectedVenueRequestParamSchema) => Promise<Venue | null>
+  getWebData: (params: GetSelectedVenueRequestParamSchema) => Promise<VenueWithRelations | null>
   list: (query: ListVenueRequestQuerySchema) => Promise<ItemListVenueResponse[]  | null>
   listPermitted: (query: ListPermittedVenueRequestQuerySchema) => Promise<ItemListVenueResponse[]  | null>
   getVenueAnalytics: (params: GetVenueAnalyticsParams) => Promise< VenueAnalyticsResponse| null>
