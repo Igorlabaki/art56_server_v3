@@ -14,28 +14,13 @@ class GetWebDataUseCase {
             throw new HttpResourceNotFoundError("Locacao");
         }
 
-        // Juntar todas as permissões em uma única lista
-        
-        const formattedVenue = {
-            id: venue.id,
-            name: venue.name,
-            facebookUrl: venue.facebookUrl,
-            instagramUrl: venue.instagramUrl,
-            tiktokUrl: venue.tiktokUrl,
-            whatsappNumber: venue.whatsappNumber,
-            images: venue.images,
-            minimumNights: venue.minimumNights,
-            logoUrl: venue.logoUrl,
-            texts: venue.texts,
-            questions: venue.questions,
-        };
 
         // Criar a resposta formatada
         const formattedResponse = {
             success: true,
             message: `Locacao ${venue.name}`,
             data: {
-                ...formattedVenue
+                ...venue
             },
             count: 1,
             type: "Locacao"

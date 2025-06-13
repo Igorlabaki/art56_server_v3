@@ -213,14 +213,22 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       where: {
         id: venueId,
       },
-      include: {
+      select: {
+        id: true,
+        minimumNights: true,
+        maxGuest: true,
+        facebookUrl: true,
+        instagramUrl: true,
+        tiktokUrl: true,
+        logoUrl: true,
+        name: true,
+        whatsappNumber: true,
         images: true,
         texts: true,
         questions: true,
       }
     });
   }
-
 
   async delete(reference: string): Promise<Venue | null> {
     return await this.prisma.venue.delete({
