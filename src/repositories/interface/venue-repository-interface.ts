@@ -1,4 +1,4 @@
-import { Venue, User, Question, Image, Text } from "@prisma/client";
+import { Venue, User, Question, Image, Text, Service } from "@prisma/client";
 
 import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema";
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema";
@@ -79,6 +79,7 @@ export interface VenueWithRelations  {
   images: Image[];
   texts: Text[];
   questions: Question[];
+  services: Service[];
 };
 
 export interface VenueRepositoryInterface {
