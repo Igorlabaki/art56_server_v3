@@ -52,8 +52,8 @@ class CreateProposalPerDayUseCase {
         }
 
         console.log("[UseCase] Transformando datas");
-        const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: venue.checkIn  ? venue.checkIn : params.startHour, divisor: "/" })
-        const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut  ? venue.checkOut : params.endHour, startHour:params.startHour , divisor: "/" })
+        const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: venue.checkIn ? venue.checkIn : params.startHour, divisor: "/" })
+        const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut ? venue.checkOut : params.endHour, startHour: params.startHour, divisor: "/" })
         console.log("[UseCase] Datas transformadas:", { startDate, endDate });
 
         console.log("[UseCase] Verificando modelo de preço do local:", {
@@ -197,8 +197,8 @@ class CreateProposalPerDayUseCase {
                 });
 
                 // Se tiver preço mínimo e o total for menor, usa o mínimo
-                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
-                    ? venue.minimumPrice 
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                    ? venue.minimumPrice
                     : totalAmount;
 
                 console.log("[UseCase] Valor final após verificação do mínimo:", {
@@ -270,7 +270,7 @@ class CreateProposalPerDayUseCase {
                 basePrice,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
-                totalAmount:finalTotalAmount,
+                totalAmount: finalTotalAmount,
                 guestNumber: Number(guestNumber),
             };
 
@@ -367,8 +367,8 @@ class CreateProposalPerDayUseCase {
                 });
 
                 // Se tiver preço mínimo e o total for menor, usa o mínimo
-                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
-                    ? venue.minimumPrice 
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                    ? venue.minimumPrice
                     : totalAmount;
 
                 console.log("[UseCase] Valor final após verificação do mínimo:", {
@@ -447,9 +447,101 @@ class CreateProposalPerDayUseCase {
                     },
                     type: "Proposal"
                 }
-                
+
                 return formatedResponse
             }
+            const basePrice = daysBetween * pricePerPersonDay;
+            const totalAmount = basePrice + (totalAmountService || 0);
+            console.log("[UseCase] Valores antes da verificação do mínimo:", {
+                basePrice,
+                totalAmountService,
+                totalAmount,
+                minimumPrice: venue.minimumPrice
+            });
+
+            // Se tiver preço mínimo e o total for menor, usa o mínimo
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                ? venue.minimumPrice
+                : totalAmount;
+
+            console.log("[UseCase] Valor final após verificação do mínimo:", {
+                totalAmount,
+                minimumPrice: venue.minimumPrice,
+                finalTotalAmount
+            });
+
+            createProposalPerDayInDb = {
+                ...rest,
+                endDate,
+                startDate,
+                serviceIds,
+                basePrice,
+                totalAmount: finalTotalAmount,
+                extraHoursQty: 0,
+                extraHourPrice: 0,
+                guestNumber: Number(guestNumber),
+            }
+
+            const newProposal = await this.proposalRepository.createPerDay(
+                createProposalPerDayInDb
+            );
+            console.log("newProposal", newProposal)
+            if (!newProposal) {
+                throw Error("Erro na conexao com o banco de dados")
+            }
+
+            const not = await this.notificationRepository.create({
+                venueId: params.venueId,
+                proposalId: newProposal.id,
+                content: `Novo orcamento do(a) ${newProposal.completeClientName
+                    } no valor de ${new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }).format(newProposal.totalAmount)}, para data  ${format(
+                        newProposal?.startDate,
+                        "dd/MM/yyyy"
+                    )} ate  a data ${format(
+                        newProposal?.endDate,
+                        "dd/MM/yyyy"
+                    )}`,
+                type: "PROPOSAL",
+            });
+            console.log("notificacao criada", not)
+
+            if (userId) {
+                const user = await this.userRepository.getById(userId)
+
+                if (!user) {
+                    throw new HttpResourceNotFoundError("Usuario")
+                }
+
+                await this.historyRepository.create({
+                    userId: user.id,
+                    proposalId: newProposal.id,
+                    action: `${user.username} criou este orcamento`,
+                });
+            }
+
+            if (!userId) {
+                await this.historyRepository.create({
+                    proposalId: newProposal.id,
+                    action: `Cliente criou este orcamento pelo site`,
+                });
+            }
+
+            const formatedResponse = {
+                success: true,
+                message: `Orcamento criado com sucesso`,
+                count: 1,
+                data: {
+                    ...newProposal
+                },
+                type: "Proposal"
+            }
+
+            return formatedResponse
         } else {
             console.log("[UseCase] Nenhuma condição de preço atendida, usando valor manual");
             // Se chegou aqui, é porque é um valor manual
@@ -463,8 +555,8 @@ class CreateProposalPerDayUseCase {
             });
 
             // Se tiver preço mínimo e o total for menor, usa o mínimo
-            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice 
-                ? venue.minimumPrice 
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                ? venue.minimumPrice
                 : totalAmount;
 
             console.log("[UseCase] Valor final após verificação do mínimo:", {
