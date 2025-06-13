@@ -130,6 +130,8 @@ class CreateProposalPerDayUseCase {
                 type: "Proposal"
             }
 
+            console.log(formatedResponse)
+
             console.log("[UseCase] Proposta de permuta criada com sucesso");
             return formatedResponse
         }
@@ -537,6 +539,8 @@ class CreateProposalPerDayUseCase {
                 count: 1,
                 type: "Proposal"
             }
+
+            console.log(formatedResponse)
 
             console.log("[UseCase] Finalizando execução do caso de uso");
             return formatedResponse;
