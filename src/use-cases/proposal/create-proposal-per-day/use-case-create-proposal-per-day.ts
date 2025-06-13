@@ -56,6 +56,14 @@ class CreateProposalPerDayUseCase {
         const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut  ? venue.checkOut : params.endHour, startHour:params.startHour , divisor: "/" })
         console.log("[UseCase] Datas transformadas:", { startDate, endDate });
 
+        console.log("[UseCase] Verificando modelo de preço do local:", {
+            pricingModel: venue.pricingModel,
+            pricePerDay: venue.pricePerDay,
+            pricePerPersonDay: venue.pricePerPersonDay,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString()
+        });
+
         if (params.type === "BARTER") {
             console.log("[UseCase] Iniciando criação de proposta de permuta");
             createProposalPerDayInDb = {
@@ -438,8 +446,8 @@ class CreateProposalPerDayUseCase {
                 }
             }
         } else {
+            console.log("[UseCase] Nenhuma condição de preço atendida, usando valor manual");
             // Se chegou aqui, é porque é um valor manual
-            console.log("[UseCase] Iniciando criação de proposta com valor manual");
             const basePrice = (Number(totalAmountInput) || 0) - (totalAmountService || 0);
             const totalAmount = Number(totalAmountInput) || 0;
             console.log("[UseCase] Valores antes da verificação do mínimo:", {
