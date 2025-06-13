@@ -14,6 +14,8 @@ export const updateVenueSchemaRequest = z.object({
     minimumPrice: z.string().optional(),
     street: z.string().optional(),
     minimumNights: z.string().optional(),
+    checkIn: z.string().optional(),
+    checkOut: z.string().optional(),
     maxGuest: z.string().optional(),
     complement: z.string().optional(),
     streetNumber: z.string().optional(),
