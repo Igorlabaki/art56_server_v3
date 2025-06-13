@@ -357,7 +357,7 @@ class CreateProposalPerDayUseCase {
                     pricePerPersonDay += pricePerPersonDay * goal?.increasePercent / 100
                 }
 
-                const basePrice = daysBetween * pricePerPersonDay;
+                const basePrice = daysBetween * (pricePerPersonDay * Number(guestNumber));
                 const totalAmount = basePrice + (totalAmountService || 0);
                 console.log("[UseCase] Valores antes da verificação do mínimo:", {
                     basePrice,
@@ -450,7 +450,7 @@ class CreateProposalPerDayUseCase {
 
                 return formatedResponse
             }
-            const basePrice = daysBetween * pricePerPersonDay;
+            const basePrice = daysBetween * (pricePerPersonDay * Number(guestNumber));
             const totalAmount = basePrice + (totalAmountService || 0);
             console.log("[UseCase] Valores antes da verificação do mínimo:", {
                 basePrice,
