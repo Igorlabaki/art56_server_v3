@@ -440,6 +440,7 @@ model Owner {
 model Image {
   id             String    @id @default(cuid())
   imageUrl       String    @db.LongText
+  group          String?
   description    String?
   position       Int
   createdAt      DateTime? @default(now())
