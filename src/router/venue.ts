@@ -13,41 +13,39 @@ import multer from "multer";
 import { getWebDataFactory } from "../use-cases/webData/factory-get-web-data";
 const venueRoutes = Router()
 
-venueRoutes.use(ensureAuthenticate)
-
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 // Register
-venueRoutes.post("/create", upload.single("file"), async (req, res) => {
+venueRoutes.post("/create",ensureAuthenticate, upload.single("file"), async (req, res) => {
     const controller = createVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 // List
-venueRoutes.get("/list?:organizationId?/:name?", async (req, res) => {
+venueRoutes.get("/list?:organizationId?/:name?",ensureAuthenticate, async (req, res) => {
     const controller = listVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-venueRoutes.get("/permittedVenueList?:organizationId?/:name?/:userId?", async (req, res) => {
+venueRoutes.get("/permittedVenueList?:organizationId?/:name?/:userId?",ensureAuthenticate, async (req, res) => {
     const controller = listPermittedVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // List
-venueRoutes.get("/trafficCount?:venueId/:year?/:approved?", async (req, res) => {
+venueRoutes.get("/trafficCount?:venueId/:year?/:approved?",ensureAuthenticate, async (req, res) => {
     const controller = getVenueTrafficCountFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // List
-venueRoutes.get("/analysisByMonth?:venueId/:year?/:approved?", async (req, res) => {
+venueRoutes.get("/analysisByMonth?:venueId/:year?/:approved?",ensureAuthenticate, async (req, res) => {
     const controller = getVenueAnalysiByMonthFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // Get by Id
-venueRoutes.get("/getById?:venueId?/:userId?", async (req, res) => {
+venueRoutes.get("/getById?:venueId?/:userId?",ensureAuthenticate, async (req, res) => {
     const controller = getVenuebyidFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -59,19 +57,19 @@ venueRoutes.get("/getWebData/:venueId?", async (req, res) => {
 })
 
 // Update
-venueRoutes.put("/update", upload.single("file"), async (req, res) => {
+venueRoutes.put("/update",ensureAuthenticate, upload.single("file"), async (req, res) => {
     const controller = updateVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // Delete
-venueRoutes.delete("/delete/:venueId", async (req, res) => {
+venueRoutes.delete("/delete/:venueId",ensureAuthenticate, async (req, res) => {
     const controller = deleteVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // Analytics
-venueRoutes.get("/analytics/:venueId", async (req, res) => {
+venueRoutes.get("/analytics/:venueId",ensureAuthenticate, async (req, res) => {
     const controller = makeGetVenueAnalyticsController();
     await controller.handle(req, res);
 });
