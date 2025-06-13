@@ -74,6 +74,7 @@ export interface VenueWithRelations  {
   instagramUrl: string | null;
   tiktokUrl: string | null;
   logoUrl: string | null;
+  email: string | null;
   name: string;
   whatsappNumber: string | null;
   images: Image[];

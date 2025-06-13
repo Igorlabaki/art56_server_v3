@@ -4,13 +4,14 @@ import { CreateImageRequestParams } from "../../zod/image/create-image-params-sc
 import { ListImageRequestQuerySchema } from "../../zod/image/list-image-query-schema";
 import { UpdateImageRequestParams } from "../../zod/image/upload-image-params-schema";
 import { GetByTagImageRequestQuerySchema } from "../../zod/image/get-by-tag-image-query-schema";
+import { CreateImageDbParams } from "../../zod/image/create-image-params-db-schema";
 /* import { ListImageRequestQuerySchema } from "../../zod/image/list-image-query-schema";
 import { UpdateImageRequestParams } from "../../zod/image/update-image-params-schema"; */
 
 export class PrismaImageRepository implements ImageRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
-  async create(params: CreateImageRequestParams): Promise<Image | null> {
+  async create(params: CreateImageDbParams): Promise<Image | null> {
     const { position, venueId, ...rest } = params
     return await this.prisma.image.create({
       data: {

@@ -226,7 +226,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         images: true,
         texts: true,
         questions: true,
-        services: true
+        services: true,
+        email: true
       }
     });
   }
