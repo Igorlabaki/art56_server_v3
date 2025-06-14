@@ -1,7 +1,6 @@
-import { HttpResourceNotFoundError } from "../../errors/errors-type/http-resource-not-found-error";
-import { VenueRepositoryInterface } from "../../repositories/interface/venue-repository-interface";
-import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema";
-
+import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
+import { GetSelectedVenueRequestParamSchema } from "../../../zod/venue/get-selected-venue-param-schema";
 
 class GetWebDataUseCase {
     constructor(private venueRepository: VenueRepositoryInterface) { }

@@ -1,12 +1,12 @@
-import { Request, Response } from "express"
-import { GetVenueByIdUseCase } from "../venue/get-by-id-venue/use-case-get-by-id-venue";
-import { getSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema";
-import { handleErrors } from "../../errors/error-handler";
+
+import { Request, Response } from "express";
+import { handleErrors } from "../../../errors/error-handler";
 import { GetWebDataUseCase } from "./use-case-get-web-data";
+import { getSelectedVenueRequestParamSchema } from "../../../zod/venue/get-selected-venue-param-schema";
 
 class GetWebDataController {
     constructor(private getWebDataUseCase: GetWebDataUseCase) { }
-    async handle(req: Request, resp: Response) {
+    async handle(req: Request   , resp: Response) {
         try {
             const query = getSelectedVenueRequestParamSchema.parse(req.query);
             const WebData = await this.getWebDataUseCase.execute(query);

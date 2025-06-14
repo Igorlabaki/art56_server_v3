@@ -2,13 +2,15 @@ import dayjs from "dayjs"
 
 import { PrismaClient, Venue, User, Image, Text, Question } from "@prisma/client"
 import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema"
-import { ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface,VenueWithRelations  } from "../interface/venue-repository-interface"
+import { HubDataResponse, ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface,WebDataResponse  } from "../interface/venue-repository-interface"
 import { ListVenueRequestQuerySchema, } from "../../zod/venue/list-venue-query-schema"
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema"
 import { UpdateVenueSchemaDb } from "../../zod/venue/update-venue-params-schema"
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema"
-import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
+
 import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema"
+import { GetHubDataRequestParamSchema } from "../../zod/venue/get-hub-data-request-param"
+import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -208,7 +210,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
-  async getWebData({ venueId }: GetSelectedVenueRequestParamSchema): Promise<VenueWithRelations | null> {
+  async getWebData({ venueId }: GetSelectedVenueRequestParamSchema): Promise<WebDataResponse | null> {
     return await this.prisma.venue.findFirst({
       where: {
         id: venueId,
@@ -228,6 +230,26 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         questions: true,
         services: true,
         email: true
+      }
+    });
+  }
+
+  async getHubData({ organizationId }: GetHubDataRequestParamSchema): Promise<HubDataResponse[] | null> {
+    return await this.prisma.venue.findMany({
+      where: {
+        organizationId
+      },
+      select: {
+        id: true,
+        facebookUrl: true,
+        instagramUrl: true,
+        tiktokUrl: true,
+        logoUrl: true,
+        name: true,
+        email: true,
+        whatsappNumber: true,
+        images: true,
+        texts: true,
       }
     });
   }
