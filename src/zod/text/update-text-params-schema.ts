@@ -7,6 +7,7 @@ export const updateTextSchema = z.object({
         area: z.string().optional(),
         title: z.string().optional(),
         position: z.number().optional(),
+        text: z.string().optional(),
     }),
 });
 
