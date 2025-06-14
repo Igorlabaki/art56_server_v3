@@ -10,8 +10,6 @@ import { getHubDataFactory } from "../use-cases/webData/hub/factory-get-web-data
 
 const organizationRoutes = Router()
 
-organizationRoutes.use()
-
 // Register
 organizationRoutes.post("/create",ensureAuthenticate, async (req, res) => {
     const controller = createOrganizationFactory();  // Cria o controlador
