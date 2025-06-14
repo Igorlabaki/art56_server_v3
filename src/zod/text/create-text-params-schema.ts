@@ -4,7 +4,6 @@ export const createTextSchema = z.object({
     area: z.string(),
     text: z.string(),
     venueId: z.string(),
-    organizationId: z.string(),
     position: z.number(),
     title: z.string().optional(),
 });
