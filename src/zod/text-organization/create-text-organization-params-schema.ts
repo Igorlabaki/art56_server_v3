@@ -1,12 +1,11 @@
 import { z } from "zod";
 
-export const createTextSchema = z.object({
+export const createTextOrganizationSchema = z.object({
     area: z.string(),
     text: z.string(),
-    venueId: z.string(),
     organizationId: z.string(),
     position: z.number(),
     title: z.string().optional(),
 });
 
-export type CreateTextRequestParams = z.infer<typeof createTextSchema>;
+export type CreateTextOrganizationSchema = z.infer<typeof createTextOrganizationSchema>;
