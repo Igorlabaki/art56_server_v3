@@ -10,16 +10,16 @@ import { getHubDataFactory } from "../use-cases/webData/hub/factory-get-web-data
 
 const organizationRoutes = Router()
 
-organizationRoutes.use(ensureAuthenticate)
+organizationRoutes.use()
 
 // Register
-organizationRoutes.post("/create", async (req, res) => {
+organizationRoutes.post("/create",ensureAuthenticate, async (req, res) => {
     const controller = createOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // List
-organizationRoutes.get("/list?:userId?:name", async (req, res) => {
+organizationRoutes.get("/list?:userId?:name",ensureAuthenticate, async (req, res) => {
     const controller = listOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -32,19 +32,19 @@ organizationRoutes.get("/getHubData/:organziationId?", async (req, res) => {
 
 
 // Get By Id
-organizationRoutes.get("/getById?:organizationId?:venueName", async (req, res) => {
+organizationRoutes.get("/getById?:organizationId?:venueName",ensureAuthenticate, async (req, res) => {
     const controller = getOrganizationByidFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // Delete
-organizationRoutes.delete("/delete/:organizationId", async (req, res) => {
+organizationRoutes.delete("/delete/:organizationId",ensureAuthenticate, async (req, res) => {
     const controller = deleteOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
 // Update
-organizationRoutes.put("/update", async (req, res) => {
+organizationRoutes.put("/update",ensureAuthenticate, async (req, res) => {
     const controller = updateOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
