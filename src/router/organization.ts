@@ -25,7 +25,7 @@ organizationRoutes.get("/list?:userId?:name",ensureAuthenticate, async (req, res
 })
 
 // Get by Id
-organizationRoutes.get("/getHubData/:organziationId?", async (req, res) => {
+organizationRoutes.get("/getHubData?:organizationId", async (req, res) => {
     const controller = getHubDataFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
