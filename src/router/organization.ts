@@ -6,6 +6,7 @@ import { listOrganizationFactory } from "../use-cases/organization/list-organiza
 import { getOrganizationByidFactory } from "../use-cases/organization/get-organization-by-user-id/factory-get-organization-by-id";
 import { deleteOrganizationFactory } from "../use-cases/organization/delete-organization/factory-delete-organization";
 import { updateOrganizationFactory } from "../use-cases/organization/update-organization/factory-update-organization";
+import { getHubDataFactory } from "../use-cases/webData/hub/factory-get-web-data";
 
 const organizationRoutes = Router()
 
@@ -22,6 +23,13 @@ organizationRoutes.get("/list?:userId?:name", async (req, res) => {
     const controller = listOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+
+// Get by Id
+organizationRoutes.get("/getHubData/:organziationId?", async (req, res) => {
+    const controller = getHubDataFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+
 
 // Get By Id
 organizationRoutes.get("/getById?:organizationId?:venueName", async (req, res) => {

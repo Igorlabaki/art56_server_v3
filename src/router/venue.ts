@@ -10,7 +10,9 @@ import { getVenueAnalysiByMonthFactory } from "../use-cases/venue/get-analysis-b
 import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-venues/factory-list-permitted-venue";
 import { makeGetVenueAnalyticsController } from "../use-cases/venue/get-venue-analytics/factory-get-venue-analytics";
 import multer from "multer";
-import { getWebDataFactory } from "../use-cases/webData/factory-get-web-data";
+import { getWebDataFactory } from "../use-cases/webData/web/factory-get-web-data";
+
+
 const venueRoutes = Router()
 
 // Configuração do Multer (memória)
