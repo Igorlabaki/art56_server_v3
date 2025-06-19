@@ -5,6 +5,7 @@ import { deleteTextFactory } from "../use-cases/text/delete-text/factory-delete-
 import { updateTextFactory } from "../use-cases/text/update-text/factory-update-text";
 import { createTextOrganizationFactory } from "../use-cases/text-organization/create-text-organization/factory-create-text-organization";
 import { updateTextOrganizationFactory } from "../use-cases/text-organization/update-text-organization/factory-update-text-organization";
+import { listTextOrganizationFactory } from "../use-cases/text-organization/list-text-organization/factory-list-text-organization";
 
 const textRoutes = Router();
 
@@ -23,6 +24,11 @@ textRoutes.post("/create-text-organization", async (req, res) => {
 // List
 textRoutes.get("/list/:venueId?/:area?", async (req, res) => {
     const controller = listTextFactory();  
+    await controller.handle(req, res);       
+})
+// List
+textRoutes.get("/list-text-organization/:organizationId?/:area?", async (req, res) => {
+    const controller = listTextOrganizationFactory();  
     await controller.handle(req, res);       
 })
 

@@ -5,7 +5,7 @@ import { PrismaTextRepository } from "../../../repositories/in-prisma/text-in-pr
 import { ListTextOrganizationController } from "./controller-list-text-organization";
 import { ListTextOrganizationUseCase } from "./use-case-list-text-organization";
 
-export const listTextFactory = (): ListTextOrganizationController => {
+export const listTextOrganizationFactory = (): ListTextOrganizationController => {
     const prismaTextRepository = new PrismaTextRepository(prismaClient);
     const listTextUseCase = new ListTextOrganizationUseCase(prismaTextRepository);
     const listTextController = new ListTextOrganizationController(listTextUseCase);
