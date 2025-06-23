@@ -45,7 +45,7 @@ imageRoutes.post("/upload/image-organization", upload.single("file"), (req, res)
   })
 
   // List
-  imageRoutes.get("/list-organization?:organizationId?/:description?", async (req, res) => {
+  imageRoutes.get("/teste?:organizationId?/:description?", async (req, res) => {
       const controller = listImageOrganizationFactory();  
       await controller.handle(req, res);       
   })
