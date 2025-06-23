@@ -3,7 +3,7 @@ import { ListImagesOrganizationUseCase } from './use-case-list-image-organizatio
 import { handleErrors } from '../../../errors/error-handler';
 import { listImageOrganizationRequestQuerySchema, ListImageOrganizationRequestQuerySchema } from '../../../zod/image-organization/list-image-organization-query-schema';
 
-class ListImageController {
+class ListImageOrganizationController {
   constructor(private listImagesOrganizationUseCase: ListImagesOrganizationUseCase) { }
 
   async handle(req: Request, resp: Response) {
@@ -23,4 +23,4 @@ class ListImageController {
   }
 }
 
-export { ListImageController };
+export { ListImageOrganizationController };
