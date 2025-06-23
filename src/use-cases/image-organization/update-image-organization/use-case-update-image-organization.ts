@@ -21,12 +21,12 @@ class UpdateImageOrganizationUseCase {
         const updatedImage = await this.imageRepository.updateOrganization(param)
 
         if (!updatedImage) {
-            throw new HttpConflictError("Pergunta")
+            throw new HttpConflictError("Imagem")
         }
 
         const formatedResponse = {
             success: true,
-            message: `Pergunta atualizado(a) com sucesso`,
+            message: `Imagem atualizado(a) com sucesso`,
             data: {
                 ...updatedImage
             },
