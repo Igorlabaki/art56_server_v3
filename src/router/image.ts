@@ -6,6 +6,10 @@ import { createImageFactory } from "../use-cases/image/create-image/factory-crea
 import { deleteImageFactory } from "../use-cases/image/delete-image/factory-delete-image";
 import { updateImageFactory } from "../use-cases/image/update-image/factory-update-question";
 import { getbytagImageFactory } from "../use-cases/image/get-by-tag-image/factory-get-by-tag-image";
+import { createImageOrganizationFactory } from "../use-cases/image-organization/create-image-organization/factory-create-image-organization";
+import { updateImageOrganizationFactory } from "../use-cases/image-organization/update-image-organization/factory-update-image-organization";
+import { listImageOrganizationFactory } from "../use-cases/image-organization/list-image-organization/factory-list-image-organization";
+import { getbytagImageOrganizationFactory } from "../use-cases/image-organization/get-by-tag-image-organization/factory-get-by-tag-image-organization";
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();
@@ -28,11 +32,23 @@ imageRoutes.post("/upload", upload.single("file"), (req, res) => {
   controller.handle(req, res);
 });
 
-// List
-imageRoutes.get("/list?:venueId?/:description?", async (req, res) => {
-    const controller = listImageFactory();  
-    await controller.handle(req, res);       
-})
+// Create
+imageRoutes.post("/upload/organization", upload.single("file"), (req, res) => {
+  const controller = createImageOrganizationFactory();
+  controller.handle(req, res);
+});
+
+  // List
+  imageRoutes.get("/list?:venueId?/:description?", async (req, res) => {
+      const controller = listImageFactory();  
+      await controller.handle(req, res);       
+  })
+
+  // List
+  imageRoutes.get("/list/organization?:organizationId?/:description?", async (req, res) => {
+      const controller = listImageOrganizationFactory();  
+      await controller.handle(req, res);       
+  })
 
 // Delete
 imageRoutes.delete("/delete/:imageId", async (req, res) => {
@@ -45,9 +61,18 @@ imageRoutes.get("/getByTag?:venueId?/:tag?/:responsiveMode?", async (req, res) =
     const controller = getbytagImageFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+imageRoutes.get("/getByTag/organization?:organizationId?/:tag?/:responsiveMode?", async (req, res) => {
+    const controller = getbytagImageOrganizationFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
 // update
 imageRoutes.put("/update", upload.single("file"), (req, res) => {
   const controller = updateImageFactory();
+  controller.handle(req, res);
+});
+
+imageRoutes.put("/update/organization", upload.single("file"), (req, res) => {
+  const controller = updateImageOrganizationFactory();
   controller.handle(req, res);
 });
 
