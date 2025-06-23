@@ -33,7 +33,7 @@ imageRoutes.post("/upload", upload.single("file"), (req, res) => {
 });
 
 // Create
-imageRoutes.post("/upload/organization", upload.single("file"), (req, res) => {
+imageRoutes.post("/upload/image-organization", upload.single("file"), (req, res) => {
   const controller = createImageOrganizationFactory();
   controller.handle(req, res);
 });
@@ -45,7 +45,7 @@ imageRoutes.post("/upload/organization", upload.single("file"), (req, res) => {
   })
 
   // List
-  imageRoutes.get("/list/organization?:organizationId?/:description?", async (req, res) => {
+  imageRoutes.get("/list/image-organization?:organizationId?/:description?", async (req, res) => {
       const controller = listImageOrganizationFactory();  
       await controller.handle(req, res);       
   })
@@ -61,7 +61,7 @@ imageRoutes.get("/getByTag?:venueId?/:tag?/:responsiveMode?", async (req, res) =
     const controller = getbytagImageFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
-imageRoutes.get("/getByTag/organization?:organizationId?/:tag?/:responsiveMode?", async (req, res) => {
+imageRoutes.get("/getByTag/image-organization?:organizationId?/:tag?/:responsiveMode?", async (req, res) => {
     const controller = getbytagImageOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -71,7 +71,7 @@ imageRoutes.put("/update", upload.single("file"), (req, res) => {
   controller.handle(req, res);
 });
 
-imageRoutes.put("/update/organization", upload.single("file"), (req, res) => {
+imageRoutes.put("/update/image-organization", upload.single("file"), (req, res) => {
   const controller = updateImageOrganizationFactory();
   controller.handle(req, res);
 });
