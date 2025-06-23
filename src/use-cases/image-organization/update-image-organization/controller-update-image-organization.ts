@@ -47,7 +47,7 @@ class UpdateImageOrganizationController {
             }
 
             // Valida os dados recebidos
-            updateImageRequestParams.parse(req.body);
+            updateImageOrganizationRequestParams.parse(req.body);
 
             const body: UpdateImageOrganizationRequestParams = req.body;
 
