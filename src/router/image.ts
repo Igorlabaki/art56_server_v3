@@ -71,7 +71,7 @@ imageRoutes.put("/update", upload.single("file"), (req, res) => {
   controller.handle(req, res);
 });
 
-imageRoutes.put("/update/image-organization", upload.single("file"), (req, res) => {
+imageRoutes.put("/organization/update", upload.single("file"), (req, res) => {
   const controller = updateImageOrganizationFactory();
   controller.handle(req, res);
 });
