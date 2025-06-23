@@ -9,6 +9,7 @@ import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-er
 import { createImageRequestParams } from "../../../zod/image/create-image-params-schema";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { createImageOrganizationRequestParams } from "../../../zod/image-organization/create-image-organization-params-schema";
 
 class CreateImageOrganizationController {
   constructor(
@@ -26,17 +27,17 @@ class CreateImageOrganizationController {
       console.log("✅ Arquivo recebido:", req.file.originalname);
 
       // Valida os dados recebidos
-      createImageRequestParams.parse(req.body);
+      createImageOrganizationRequestParams.parse(req.body);
 
-      const { position, tag, venueId } = req.body;
+      const { position, tag, organizationId } = req.body;
 
       // Verifica se já existe uma imagem na posição/tag
       if (tag) {
-        const verifyImage = await this.imageRepository.verifyImage({
+        const verifyImage = await this.imageRepository.verifyImageOrganization({
           tag,
           imageId: null,
           position: Number(position),
-          venueId,
+          organizationId,
         });
 
         if (verifyImage) {
