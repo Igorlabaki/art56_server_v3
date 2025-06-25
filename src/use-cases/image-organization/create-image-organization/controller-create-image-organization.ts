@@ -6,7 +6,6 @@ import { CreateImageOrganizationUseCase } from "./use-case-create-image-organiza
 import { handleErrors } from "../../../errors/error-handler";
 import { s3Client } from "../../../services/upload-config-sw";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
-import { createImageRequestParams } from "../../../zod/image/create-image-params-schema";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { createImageOrganizationRequestParams } from "../../../zod/image-organization/create-image-organization-params-schema";

@@ -79,8 +79,8 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
           id: {
             not: imageId,
           },
-          venueId
         }),
+        venueId,
         position: position,
       },
     });
@@ -94,8 +94,8 @@ export class PrismaImageRepository implements ImageRepositoryInterface {
           id: {
             not: imageId,
           },
-          organizationId
         }),
+        organizationId,
         position: position,
       },
     });
