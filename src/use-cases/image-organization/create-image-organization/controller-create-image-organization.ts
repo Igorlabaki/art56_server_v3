@@ -39,7 +39,13 @@ class CreateImageOrganizationController {
           position: Number(position),
           organizationId,
         });
-
+        console.log({
+          tag,
+          imageId: null,
+          position: Number(position),
+          organizationId,
+        })
+        console.log(verifyImage)
         if (verifyImage) {
           throw new HttpConflictError(
             "Já existe uma imagem nessa posição desta tag."
