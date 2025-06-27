@@ -1,7 +1,7 @@
 import dayjs from "dayjs"
 
 import { PrismaClient, Venue, User, Image, Text, Question } from "@prisma/client"
-import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema"
+import { CreateVenueDbSchema } from "../../zod/venue/create-venue-db-schema"
 import { HubDataResponse, ItemListVenueResponse, VenueAnalyticsResponse, VenueRepositoryInterface,WebDataResponse  } from "../interface/venue-repository-interface"
 import { ListVenueRequestQuerySchema, } from "../../zod/venue/list-venue-query-schema"
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema"
@@ -16,7 +16,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
 
-  async create(params: CreateVenueRequestParams): Promise<Venue | null> {
+  async create(params: CreateVenueDbSchema): Promise<Venue | null> {
     const { data, organizationId, userId } = params; // createdBy = ID do usuário que criou a venue
     const { owners, pricePerDay, pricePerPerson, maxGuest, pricePerPersonDay, pricePerPersonHour, minimumPrice,minimumNights, ...rest } = data;
 

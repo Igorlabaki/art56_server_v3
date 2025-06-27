@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createVenueSchema =  z.object({
+export const createVenueDbSchema =  z.object({
     userId: z.string(),
     organizationId: z.string(),
     data: z.object({
@@ -47,5 +47,5 @@ export const createVenueSchema =  z.object({
   })
   
 
-export type CreateVenueRequestParams = z.infer<typeof createVenueSchema>;
+export type CreateVenueDbSchema = z.infer<typeof createVenueDbSchema>;
 

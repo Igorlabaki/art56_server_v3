@@ -1,5 +1,5 @@
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
-import { CreateVenueRequestParams } from "../../../zod/venue/create-venue-params-schema"
+import { CreateVenueDbSchema } from "../../../zod/venue/create-venue-db-schema"
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface"
 
 class CreateVenueUseCase {
@@ -7,7 +7,7 @@ class CreateVenueUseCase {
         private venueRepository: VenueRepositoryInterface,
     ) { }
 
-    async execute(params: CreateVenueRequestParams) {
+    async execute(params: CreateVenueDbSchema) {
 
 
         const newVenue = await this.venueRepository.create(params)

@@ -4,7 +4,6 @@ import { ListOwnerQuerySchema } from "../../zod/owner/list-owner-params-schema"
 import { OwnerRepositoryInterface } from "../interface/owner-repository-interface"
 import { CreateOrganizationOwnerRequestParams } from "../../zod/owner/create-owner-params-schema"
 import { ListOwnerByVenueIdQuerySchema } from "../../zod/owner/list-owners-by-venue-params-schema"
-import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema"
 import { CreateVenueOwnerRequestParams } from "../../zod/owner/create-venue-owner-params-schema"
 export class PrismaOwnerRepository implements OwnerRepositoryInterface {
 

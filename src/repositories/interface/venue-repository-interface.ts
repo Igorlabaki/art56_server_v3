@@ -1,6 +1,6 @@
 import { Venue, User, Question, Image, Text, Service } from "@prisma/client";
 
-import { CreateVenueRequestParams } from "../../zod/venue/create-venue-params-schema";
+import { CreateVenueDbSchema } from "../../zod/venue/create-venue-db-schema";
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema";
 import { ListVenueRequestQuerySchema } from "../../zod/venue/list-venue-query-schema";
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema";
@@ -99,7 +99,8 @@ export interface HubDataResponse  {
 export interface VenueRepositoryInterface {
   delete: (params: string) => Promise<Venue | null>
   update: (params: UpdateVenueSchemaDb) => Promise<Venue | null>
-  create: (params: CreateVenueRequestParams) => Promise<Venue | null>
+  create: (params: CreateVenueDbSchema
+  ) => Promise<Venue | null>
   getById: (params: GetVenueByIdRequestParamSchema) => Promise<Venue | null>
   getSelectedVenue: (params: GetSelectedVenueRequestParamSchema) => Promise<Venue | null>
   getWebData: (params: GetSelectedVenueRequestParamSchema) => Promise<WebDataResponse | null>
