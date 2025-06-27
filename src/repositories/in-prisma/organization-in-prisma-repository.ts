@@ -76,13 +76,6 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
       },
       include: {
         owners: true,
-        logoUrl: true,
-        email: true,
-        url: true,
-        facebookUrl: true,
-        instagramUrl: true,
-        whatsappNumber: true,
-        tiktokUrl: true,
         venues: {
           select: {
             id: true,
