@@ -7,11 +7,15 @@ import { getOrganizationByidFactory } from "../use-cases/organization/get-organi
 import { deleteOrganizationFactory } from "../use-cases/organization/delete-organization/factory-delete-organization";
 import { updateOrganizationFactory } from "../use-cases/organization/update-organization/factory-update-organization";
 import { getHubDataFactory } from "../use-cases/webData/hub/factory-get-web-data";
+import multer from "multer";
 
 const organizationRoutes = Router()
 
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 // Register
-organizationRoutes.post("/create",ensureAuthenticate, async (req, res) => {
+organizationRoutes.post("/create",ensureAuthenticate, upload.single("file"), async (req, res) => {
     const controller = createOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -42,7 +46,7 @@ organizationRoutes.delete("/delete/:organizationId",ensureAuthenticate, async (r
 })
 
 // Update
-organizationRoutes.put("/update",ensureAuthenticate, async (req, res) => {
+organizationRoutes.put("/update",ensureAuthenticate, upload.single("file"), async (req, res) => {
     const controller = updateOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })

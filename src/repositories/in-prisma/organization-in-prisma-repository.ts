@@ -15,12 +15,12 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
 
   constructor(private readonly prisma: PrismaClient) { }
 
-  async  create({ name, userId }: CreateOrganizationRequestParams): Promise<Organization | null> {
+  async  create({ userId, ...rest }: CreateOrganizationRequestParams): Promise<Organization | null> {
     const permissions: string = "EDIT_ORGANIZATION";
 
     return await this.prisma.organization.create({
       data: {
-        name,
+        ...rest,
         userOrganizations: {
           create: {
             userId: userId,
@@ -76,6 +76,13 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
       },
       include: {
         owners: true,
+        logoUrl: true,
+        email: true,
+        url: true,
+        facebookUrl: true,
+        instagramUrl: true,
+        whatsappNumber: true,
+        tiktokUrl: true,
         venues: {
           select: {
             id: true,
