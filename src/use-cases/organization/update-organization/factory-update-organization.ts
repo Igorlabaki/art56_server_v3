@@ -6,7 +6,7 @@ import { PrismaOrganizationRepository } from "../../../repositories/in-prisma/or
 export const updateOrganizationFactory = () => {
   const prismaOrganizationRepository = new PrismaOrganizationRepository(prismaClient);
   const updateOrganizationCase = new UpdateOrganizationUseCase(prismaOrganizationRepository);
-  const updateOrganizationController = new UpdateOrganizationController(updateOrganizationCase);
+  const updateOrganizationController = new UpdateOrganizationController(updateOrganizationCase, prismaOrganizationRepository);
 
   return updateOrganizationController;
 };
