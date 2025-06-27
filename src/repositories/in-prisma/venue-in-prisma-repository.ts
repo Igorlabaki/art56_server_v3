@@ -277,6 +277,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       select: {
         id: true,
         name: true,
+        description: true,
         images: {
           select: {
             imageUrl: true
@@ -339,6 +340,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       select: {
         id: true,
         name: true,
+        description: true,
         images: {
           select: {
             imageUrl: true
