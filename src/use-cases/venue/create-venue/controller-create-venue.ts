@@ -16,7 +16,7 @@ class CreateVenueController {
             // Validate the request parms
             createVenueRequestSchema.parse(body);
 
-            const { userId, organizationId, ...rest } = body
+            const { userId, organizationId,hasOvernightStay,owners, ...rest } = body
 
             if (req.file) {
                 // Gerando um nome único para o arquivo
@@ -38,6 +38,8 @@ class CreateVenueController {
                 const response = await this.createVenueUseCase.execute({
                     userId, organizationId,
                     data: {
+                        hasOvernightStay: hasOvernightStay === "true" ? true : false,
+                        owners: JSON.parse(owners),
                         ...rest,
                         logoUrl: fileUrl
                     }
@@ -50,6 +52,8 @@ class CreateVenueController {
             const response = await this.createVenueUseCase.execute({
                 userId, organizationId,
                 data: {
+                    hasOvernightStay: hasOvernightStay === "true" ? true : false,
+                    owners: JSON.parse(owners),
                     ...rest,
                 }
             });
