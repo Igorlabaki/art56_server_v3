@@ -13,9 +13,10 @@ class CreateOrganizationController {
             const body: CreateOrganizationRequestParams = req.body;
             // Validate the request parms
             createOrganizationSchema.parse(body);
-            
-            const { logoUrl, ...data } = body;
 
+            const { logoUrl, ...data } = body;
+            console.log( {...data});
+            console.log( req.file);
             if (req.file) {
                 // Gerando um nome único para o arquivo
                 const fileKey = `$${Date.now()}-${randomUUID()}-${req.file.originalname}`;
