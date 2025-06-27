@@ -32,20 +32,7 @@ export const createVenueRequestSchema = z.object({
   pricePerPersonDay: z.string().optional(),
   pricePerPersonHour: z.string().optional(),
   pricingModel: z.enum(["PER_PERSON", "PER_DAY", "PER_PERSON_DAY", "PER_PERSON_HOUR"]),
-}).refine(
-  (data) => {
-    if (data.hasOvernightStay) {
-      return data.checkIn?.trim() && data.checkOut?.trim();
-    }
-    return true;
-  },
-  {
-    message: "Se o espaço aceitar pernoite, os campos check-in e check-out são obrigatórios.",
-    path: ["checkIn"], // Aponta o erro para o campo `checkIn`
-  }
-)
-
-
+})
 
 export type CreateVenueRequestParams = z.infer<typeof createVenueRequestSchema>;
 
