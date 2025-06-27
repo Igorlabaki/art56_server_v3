@@ -13,6 +13,8 @@ class CreateOrganizationController {
             const body: CreateOrganizationRequestParams = req.body;
             // Validate the request parms
             createOrganizationSchema.parse(body);
+            
+            const { logoUrl, ...data } = body;
 
             if (req.file) {
                 // Gerando um nome único para o arquivo
@@ -32,7 +34,7 @@ class CreateOrganizationController {
 
                 // Salva no banco com a URL da imagem
                 const response = await this.createOrganizationUseCase.execute({
-                    ...body,
+                    ...data,
                     logoUrl: fileUrl
                 });
 

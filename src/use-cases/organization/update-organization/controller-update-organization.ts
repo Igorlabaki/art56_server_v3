@@ -16,7 +16,7 @@ class UpdateOrganizationController {
         try {
             const param = updateOrganizationRequestSchema.parse(req.body);
 
-            const { organizationId, ...data } = param;
+            const { organizationId,logoUrl, ...data } = param;
 
             if (req.file) {
                 console.log("req.file", req.file);
