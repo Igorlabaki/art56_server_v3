@@ -13,7 +13,7 @@ class CreateOrganizationUseCase {
         private userRepositoryInterface: UserRepositoryInterface,
     ) { }
 
-    async execute({ name, userId }: CreateOrganizationRequestParams) {
+    async execute({ name, userId, ...rest }: CreateOrganizationRequestParams) {
 
         const userByid = await this.userRepositoryInterface.getById(
             userId
@@ -26,7 +26,8 @@ class CreateOrganizationUseCase {
         // Validate if user exists
         const newOrganization = await this.organizationRepository.create({
             name,
-            userId
+            userId,
+            ...rest
         })
 
         if (!newOrganization) {
