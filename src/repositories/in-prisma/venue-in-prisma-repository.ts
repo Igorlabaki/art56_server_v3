@@ -344,6 +344,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             imageUrl: true
           }
         },
+        city: true,
+        state: true,
         // Próximo evento (qualquer data futura)
         DateEvent: {
           where: {

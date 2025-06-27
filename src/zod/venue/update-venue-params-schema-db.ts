@@ -3,6 +3,7 @@ import { z } from "zod";
 export const updateVenueSchemaRequest = z.object({
     venueId: z.string(),
     userId: z.string(),
+    description:z.string().optional(),
     cep: z.string().optional(),
     email: z.string().optional(),
     name: z.string().optional(),

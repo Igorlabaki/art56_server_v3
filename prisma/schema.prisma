@@ -303,6 +303,7 @@ model DateEvent {
 model Venue {
   id                 String           @id @default(uuid())
   name               String           @unique
+  description        String?           @db.LongText
   email              String?          @unique
   url                String?
   facebookUrl        String?

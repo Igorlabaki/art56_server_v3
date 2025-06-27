@@ -20,6 +20,7 @@ export const createVenueSchema =  z.object({
         logoUrl: z.string().optional(),
         checkOut: z.string().optional(),
         tiktokUrl: z.string().optional(),
+        description:z.string().optional(),
         complement: z.string().optional(),
         pricePerDay: z.string().optional(), 
         facebookUrl: z.string().optional(),
