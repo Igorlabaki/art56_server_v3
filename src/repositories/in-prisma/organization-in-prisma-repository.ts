@@ -4,6 +4,7 @@ import { ListOrganizationQuerySchema } from "../../zod/organization/list-organiz
 import { GetByIdOrganizationSchema } from "../../zod/organization/get-by-id-organization-params-schema"
 import { CreateOrganizationRequestParams } from "../../zod/organization/create-organization-params-schema"
 import { OrganizationRepositoryInterface, UpdateOrganizationRequestParams } from "../interface/organization-repository-interface"
+import { UpdateImageOrganizationRequestSchema } from "../../zod/organization/update-image-organization-request-schema"
 
 type OrganizationWithVenueCount = Organization & {
   _count: {
@@ -58,6 +59,20 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
         },
       }
     })
+  }
+
+  async updateImages({ organizationId, imageids }: UpdateImageOrganizationRequestSchema): Promise<Organization | null> {
+    return await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        images: {
+          set: imageids.map((id) => ({ id })),
+        },
+      },
+      include: {
+        images: true,
+      },
+    });
   }
 
   async getById({ organizationId, venueName }: GetByIdOrganizationSchema): Promise<Organization | null> {

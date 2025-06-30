@@ -3,6 +3,7 @@ import { CreateOrganizationRequestParams } from "../../zod/organization/create-o
 import { ListOrganizationQuerySchema } from "../../zod/organization/list-organization-params-schema";
 import { GetByIdOrganizationSchema } from "../../zod/organization/get-by-id-organization-params-schema";
 import { DeleteOrganizationSchema } from "../../zod/organization/delete-organization-params-schema";
+import { UpdateImageOrganizationRequestSchema } from "../../zod/organization/update-image-organization-request-schema";
 
 export type OrganizationWithVenueCount = Organization & {
   _count: {
@@ -26,4 +27,5 @@ export interface OrganizationRepositoryInterface {
   getById: (params: GetByIdOrganizationSchema) => Promise<Organization | null>
   update: (params: UpdateOrganizationRequestParams) => Promise<Organization | null>
   create: (params: CreateOrganizationRequestParams) => Promise<Organization | null>
+  updateImages: (params: UpdateImageOrganizationRequestSchema) => Promise<Organization | null>
 }
