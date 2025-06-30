@@ -314,6 +314,7 @@ model Venue {
   email              String?          @unique
   url                String?
   facebookUrl        String?
+  isShowOnOrganization Boolean? @default(false)
   logoUrl            String?
   minimumPrice       Float?           @default(0)
   whatsappNumber     String?
@@ -457,6 +458,7 @@ model Image {
   updatedAt      DateTime?     @updatedAt
   responsiveMode String?
   tag            String?
+  isShowOnOrganization Boolean? @default(false)
   venueId        String? // Tornando opcional
   organizationId String? // Novo campo opcional
   venue          Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
