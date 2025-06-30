@@ -14,7 +14,7 @@ class UpdateOrganizationController {
     constructor(private updateOrganizationUseCase: UpdateOrganizationUseCase, private organizationRepository: OrganizationRepositoryInterface) { }
     async handle(req: Request, resp: Response) {
         try {
-            console.log("req.body", req.body);
+            console.log("req.file", req.file);
             const param = updateOrganizationRequestSchema.parse(req.body);
 
             const { organizationId,logoUrl, ...data } = param;
