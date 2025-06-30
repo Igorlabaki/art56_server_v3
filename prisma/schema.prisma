@@ -457,6 +457,7 @@ model Image {
   updatedAt      DateTime?     @updatedAt
   responsiveMode String?
   tag            String?
+  isShowOrganization Boolean? @default(false)
   venueId        String? // Tornando opcional
   organizationId String? // Novo campo opcional
   venue          Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
