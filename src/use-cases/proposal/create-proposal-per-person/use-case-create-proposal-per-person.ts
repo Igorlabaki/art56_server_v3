@@ -162,31 +162,19 @@ class CreateProposalPerPersonUseCase {
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
 
                     const isInSeason = fee.startDay && fee.endDay
-                        ? (() => {
-                            const start = parse(fee.startDay, "dd/MM", new Date());
-                            const end = parse(fee.endDay, "dd/MM", new Date());
-                            const eventMonthDay = format(startDate, "MM-dd");
-                            const startMonthDay = format(start, "MM-dd");
-                            const endMonthDay = format(end, "MM-dd");
-
-                            // Se o período não cruza o ano (ex: 01/08 a 31/08)
-                            if (startMonthDay <= endMonthDay) {
-                              return eventMonthDay >= startMonthDay && eventMonthDay <= endMonthDay;
-                            }
-                            // Se o período cruza o ano (ex: 15/12 a 10/01)
-                            else {
-                              return eventMonthDay >= startMonthDay || eventMonthDay <= endMonthDay;
-                            }
-                          })()
+                        ? isWithinInterval(startDate, {
+                            start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
+                            end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
+                        })
                         : false;
 
                     const isAffectedDay = fee.affectedDays
                         ? fee.affectedDays.split(",").map(d => d.trim().toLowerCase()).includes(eventDayOfWeek) || fee.affectedDays.includes("all")
                         : false;
-                   
+
                     return adjustment + (isInSeason || isAffectedDay ? feeValue : 0);
                 }, 0);
-                console.log(totalAdjustment, "totalAdjustment")
+
                 // Aplica o ajuste no preço
                 pricePerPerson += pricePerPerson * totalAdjustment / 100;
             }
@@ -349,22 +337,10 @@ class CreateProposalPerPersonUseCase {
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
 
                     const isInSeason = fee.startDay && fee.endDay
-                        ? (() => {
-                            const start = parse(fee.startDay, "dd/MM", new Date());
-                            const end = parse(fee.endDay, "dd/MM", new Date());
-                            const eventMonthDay = format(startDate, "MM-dd");
-                            const startMonthDay = format(start, "MM-dd");
-                            const endMonthDay = format(end, "MM-dd");
-
-                            // Se o período não cruza o ano (ex: 01/08 a 31/08)
-                            if (startMonthDay <= endMonthDay) {
-                              return eventMonthDay >= startMonthDay && eventMonthDay <= endMonthDay;
-                            }
-                            // Se o período cruza o ano (ex: 15/12 a 10/01)
-                            else {
-                              return eventMonthDay >= startMonthDay || eventMonthDay <= endMonthDay;
-                            }
-                          })()
+                        ? isWithinInterval(startDate, {
+                            start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
+                            end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
+                        })
                         : false;
 
                     const isAffectedDay = fee.affectedDays
