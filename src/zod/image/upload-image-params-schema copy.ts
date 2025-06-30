@@ -12,3 +12,5 @@ export const updateImageRequestParams = z.object({
 })
 
 export type UpdateImageRequestParams = z.infer<typeof updateImageRequestParams>;
+
+// Update Image Organization
