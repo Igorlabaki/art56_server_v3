@@ -156,11 +156,11 @@ class CreateProposalPerPersonUseCase {
             if (seasonalFee?.length) {
                 const year = startDate.getFullYear();
                 const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
-
+                
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-
+                    console.log(feeValue, "feeValue")
                     const isInSeason = fee.startDay && fee.endDay
                         ? isWithinInterval(startDate, {
                             start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
@@ -171,7 +171,7 @@ class CreateProposalPerPersonUseCase {
                     const isAffectedDay = fee.affectedDays
                         ? fee.affectedDays.split(",").map(d => d.trim().toLowerCase()).includes(eventDayOfWeek) || fee.affectedDays.includes("all")
                         : false;
-
+                       
                     return adjustment + (isInSeason || isAffectedDay ? feeValue : 0);
                 }, 0);
 
