@@ -1,8 +1,9 @@
 
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
-import { UpdateImageRequestParams } from "../../../zod/image/upload-image-params-schema";
+
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { UpdateImageRequestParams } from "../../../zod/image/upload-image-params-schema copy";
 
 class UpdateImageUseCase {
     constructor(private imageRepository: ImageRepositoryInterface) { }

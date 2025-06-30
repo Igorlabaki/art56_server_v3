@@ -6,7 +6,7 @@ import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { UpdateImageUseCase } from "../../image/update-image/use-case-update-image";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
-import { UpdateImageRequestParams, updateImageRequestParams } from "../../../zod/image/upload-image-params-schema";
+import { UpdateImageRequestParams, updateImageRequestParams } from "../../../zod/image/upload-image-params-schema copy";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 
 class UpdateImageController {
