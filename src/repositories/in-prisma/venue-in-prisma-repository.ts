@@ -360,6 +360,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         facebookUrl: true,
         tiktokUrl: true,
         whatsappNumber: true,
+        isShowOnOrganization: true,
         // Próximo evento (qualquer data futura)
         DateEvent: {
           where: {
