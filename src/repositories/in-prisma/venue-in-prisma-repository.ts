@@ -348,6 +348,11 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             id: true,
           }
         },
+        texts:{
+          where:{
+            area: "amenities"
+          }
+        },
         city: true,
         state: true,
         url: true,
