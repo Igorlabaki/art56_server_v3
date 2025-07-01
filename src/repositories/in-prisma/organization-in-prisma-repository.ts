@@ -61,17 +61,67 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     })
   }
 
-  async updateImages({ organizationId, imageids }: UpdateImageOrganizationRequestSchema): Promise<Organization | null> {
-    return await this.prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        images: {
-          set: imageids.map((id) => ({ id })),
+  async updateImages({ organizationId, imageids, venueId }: UpdateImageOrganizationRequestSchema): Promise<Organization | null> {
+    // Buscar todas as imagens relacionadas ao venueId
+    const venueImages = await this.prisma.image.findMany({
+      where: {
+        venueId: venueId
+      },
+      select: {
+        id: true
+      }
+    });
+
+    // Extrair os IDs das imagens do venue
+    const venueImageIds = venueImages.map(img => img.id);
+
+    // Atualizar imagens que estão na lista imageids para isShowOnOrganization = true
+    if (imageids.length > 0) {
+      await this.prisma.image.updateMany({
+        where: {
+          id: {
+            in: imageids
+          },
+          venueId: venueId
         },
+        data: {
+          isShowOnOrganization: true
+        }
+      });
+    }
+
+    // Atualizar imagens que NÃO estão na lista imageids para isShowOnOrganization = false
+    const imagesToHide = venueImageIds.filter(id => !imageids.includes(id));
+    
+    if (imagesToHide.length > 0) {
+      await this.prisma.image.updateMany({
+        where: {
+          id: {
+            in: imagesToHide
+          },
+          venueId: venueId
+        },
+        data: {
+          isShowOnOrganization: false
+        }
+      });
+    }
+
+    // Retornar a organização atualizada
+    return await this.prisma.organization.findFirst({
+      where: {
+        id: organizationId
       },
       include: {
-        images: true,
-      },
+        owners: true,
+        venues: {
+          select: {
+            id: true,
+            name: true,
+            images: true,
+          },
+        },
+      }
     });
   }
 

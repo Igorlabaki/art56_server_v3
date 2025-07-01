@@ -343,7 +343,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         description: true,
         images: {
           select: {
-            imageUrl: true
+            imageUrl: true,
+            isShowOnOrganization: true,
+            id: true
           }
         },
         city: true,
