@@ -121,7 +121,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
             images: true,
           },
         },
-      }
+      },
     });
   }
 

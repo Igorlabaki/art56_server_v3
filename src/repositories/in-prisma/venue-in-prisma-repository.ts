@@ -345,11 +345,16 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           select: {
             imageUrl: true,
             isShowOnOrganization: true,
-            id: true
+            id: true,
           }
         },
         city: true,
         state: true,
+        url: true,
+        instagramUrl: true,
+        facebookUrl: true,
+        tiktokUrl: true,
+        whatsappNumber: true,
         // Próximo evento (qualquer data futura)
         DateEvent: {
           where: {
