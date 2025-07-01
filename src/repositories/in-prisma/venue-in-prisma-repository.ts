@@ -237,7 +237,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   async getHubData({ organizationId }: GetHubDataRequestParamSchema): Promise<HubDataResponse[] | null> {
     return await this.prisma.venue.findMany({
       where: {
-        organizationId
+        organizationId,
+        isShowOnOrganization: true
       },
       select: {
         id: true,
@@ -248,9 +249,17 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         name: true,
         email: true,
         whatsappNumber: true,
-        images: true,
-        texts: true,
-      }
+        images: {
+          where: {
+            isShowOnOrganization: true
+          }
+        },
+        texts: {
+          where: {
+            area: "amenities"
+          }
+        },
+      },
     });
   }
 
