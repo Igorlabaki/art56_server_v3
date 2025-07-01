@@ -31,6 +31,7 @@ export const updateVenueSchemaDb = z.object({
         pricePerPersonDay: z.string().optional(),
         pricePerPersonHour: z.string().optional(),
         owners: z.array(z.string()).optional(),
+        isShowOnOrganization: z.boolean().optional(),
         hasOvernightStay: z.boolean().optional(),
         pricingModel: z.enum(["PER_PERSON", "PER_DAY", "PER_PERSON_DAY", "PER_PERSON_HOUR"]),
     }),

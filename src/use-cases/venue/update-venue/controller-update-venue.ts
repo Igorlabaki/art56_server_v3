@@ -17,7 +17,7 @@ class UpdateVenueController {
     async handle(req: Request, resp: Response) {
         try {
             const param = updateVenueSchemaRequest.parse(req.body);
-            const { venueId, userId, logoUrl, hasOvernightStay,owners, ...rest } = param;
+            const { venueId, userId, logoUrl, hasOvernightStay,owners,isShowOnOrganization, ...rest } = param;
 
             if (req.file) {
                 console.log("req.file", req.file);
@@ -60,7 +60,8 @@ class UpdateVenueController {
                     userId: param.userId,
                     data: {
                         ...rest,
-                        owners: JSON.parse(owners),
+                        owners: owners ? JSON.parse(owners) : undefined,
+                        isShowOnOrganization: isShowOnOrganization === "true" ? true : isShowOnOrganization === "false" ? false : undefined,
                         logoUrl: fileUrl,
                         hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
                     }
@@ -74,7 +75,8 @@ class UpdateVenueController {
                 userId: param.userId,
                 data: {
                     ...rest,
-                    owners: JSON.parse(owners),
+                    owners: owners ? JSON.parse(owners) : undefined,
+                    isShowOnOrganization: isShowOnOrganization === "true" ? true : isShowOnOrganization === "false" ? false : undefined,
                     hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
                 }
             });
