@@ -3,8 +3,6 @@ import { OrganizationRepositoryInterface } from "../../../repositories/interface
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { GetHubDataRequestParamSchema } from "../../../zod/venue/get-hub-data-request-param";
 
-
-
 class GetHubDataUseCase {
     constructor(private venueRepository: VenueRepositoryInterface, private organizationRepository: OrganizationRepositoryInterface) { }
 
