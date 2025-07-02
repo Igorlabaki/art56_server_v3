@@ -110,40 +110,46 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
     const currentOwnerIds = currentVenue?.ownerVenue.map((relation) => relation.ownerId) || [];
 
-    const ownersToConnect = owners?.filter((id) => !currentOwnerIds.includes(id)) || [];
-    const ownersToDisconnect = currentOwnerIds.filter((id) => !owners?.includes(id)) || [];
-
-    const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perDay = Number(pricePerDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perPersonDay = Number(pricePerPersonDay?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
-    const perPersonHour = Number(pricePerPersonHour?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;    
+    const perPerson = Number(pricePerPerson?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPerson || 0;
+    const perDay = Number(pricePerDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerDay || 0;
+    const perPersonDay = Number(pricePerPersonDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPersonDay || 0;
+    const perPersonHour = Number(pricePerPersonHour?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPersonHour || 0;    
     const minimumNightsFormated = Number(minimumNights) || 1;
-    const minimumPriceFormated = Number(minimumPrice?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    const minimumPriceFormated = Number(minimumPrice?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.minimumPrice || 0;
     console.log(perPersonHour)
+
+    // Monta o objeto de dados para o update
+    const updateData: any = {
+      ...rest,
+      maxGuest: maxGuest ? Number(maxGuest) : currentVenue?.maxGuest,
+      pricePerDay: perDay,
+      pricePerPerson: perPerson,
+      pricePerPersonDay: perPersonDay,
+      pricePerPersonHour: perPersonHour,
+      minimumPrice: minimumPriceFormated,
+      hasOvernightStay: hasOvernightStay ? true : false,
+      minimumNights: minimumNightsFormated,
+    };
+
+    if (owners) {
+      const ownersToConnect = owners.filter((id) => !currentOwnerIds.includes(id));
+      const ownersToDisconnect = currentOwnerIds.filter((id) => !owners.includes(id));
+      updateData.ownerVenue = {
+        create: ownersToConnect.map((ownerId) => ({
+          owner: { connect: { id: ownerId } },
+        })),
+        deleteMany: ownersToDisconnect.map((ownerId) => ({
+          ownerId,
+          venueId: reference.venueId,
+        })),
+      };
+    }
+
     return await this.prisma.venue.update({
       where: {
         id: reference.venueId,
       },
-      data: {
-        ...rest,
-        maxGuest: maxGuest ? Number(maxGuest) : currentVenue?.maxGuest,
-        pricePerDay: perDay,
-        pricePerPerson: perPerson,
-        pricePerPersonDay: perPersonDay,
-        pricePerPersonHour: perPersonHour,
-        minimumPrice: minimumPriceFormated,
-        hasOvernightStay: hasOvernightStay ? true : false,
-        minimumNights: minimumNightsFormated,
-        ownerVenue: {
-          create: ownersToConnect.map((ownerId) => ({
-            owner: { connect: { id: ownerId } }, // Relaciona o owner
-          })),
-          deleteMany: ownersToDisconnect.map((ownerId) => ({
-            ownerId,
-            venueId: reference.venueId,
-          })),
-        },
-      },
+      data: updateData,
       include: {
         UserPermission: {
           where: { userOrganization: { userId: reference.userId } }, // 🔥 Filtra novamente ao incluir para trazer apenas as permissões do usuário
