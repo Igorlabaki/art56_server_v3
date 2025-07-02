@@ -37,10 +37,10 @@ export interface OrganizationWebDataResponse  {
 
 export interface OrganizationRepositoryInterface {
   delete: (params: DeleteOrganizationSchema) => Promise<Organization | null>
-  list: (params: ListOrganizationQuerySchema) => Promise<OrganizationWithVenueCount[] | null>
   getById: (params: GetByIdOrganizationSchema) => Promise<Organization | null>
   update: (params: UpdateOrganizationRequestParams) => Promise<Organization | null>
   create: (params: CreateOrganizationRequestParams) => Promise<Organization | null>
+  list: (params: ListOrganizationQuerySchema) => Promise<OrganizationWithVenueCount[] | null>
   updateImages: (params: UpdateImageOrganizationRequestSchema) => Promise<Organization | null>
   getOrganizationWebData: (params: GetOrganziationWebDataRequestParamSchema) => Promise<OrganizationWebDataResponse | null>
 }

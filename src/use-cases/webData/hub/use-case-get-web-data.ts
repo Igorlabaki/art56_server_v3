@@ -8,7 +8,7 @@ class GetHubDataUseCase {
 
     async execute({organizationId}: GetHubDataRequestParamSchema) {
         // Buscar o local (venue)
-        const organization = await this.organizationRepository.getById({organizationId});
+        const organization = await this.organizationRepository.getOrganizationWebData({organizationId});
 
         if (!organization) {
             throw new HttpResourceNotFoundError("Organizacao");
