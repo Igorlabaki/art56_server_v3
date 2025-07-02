@@ -15,9 +15,20 @@ class GetHubDataUseCase {
             throw new HttpResourceNotFoundError("Locacao");
         }
 
+        const imageArrays = hubData.map((venue) => venue.images.map((image) => image.imageUrl));
+        const maxLength = Math.max(...imageArrays.map(arr => arr.length));
+        const mixedImages = [];
+        for (let i = 0; i < maxLength; i++) {
+            for (let arr of imageArrays) {
+                if (arr[i]) {
+                    mixedImages.push(arr[i]);
+                }
+            }
+        }
+
         const formattedHubData = {
             hubdata: hubData,
-            images: hubData.map((venue) => venue.images.map((image) => image.imageUrl))
+            images: mixedImages
         }
 
         // Criar a resposta formatada
