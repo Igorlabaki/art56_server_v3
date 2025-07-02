@@ -63,7 +63,7 @@ class CreateProposalPerPersonUseCase {
 
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {
         let createProposalPerPersonInDb: CreateProposalInDbParams;
-
+        console.log("cheguei no usecase")
         const { date, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId, ...rest } = params
 
         const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
@@ -72,7 +72,7 @@ class CreateProposalPerPersonUseCase {
         })
         const totalAmountInputFormated = totalAmountInput ? Number(totalAmountInput) : 0
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] } & { Payment: Payment[] };
-
+        console.log("venue", venue)
         if (!venue) {
             throw new HttpResourceNotFoundError("Locacao")
         }
@@ -142,10 +142,12 @@ class CreateProposalPerPersonUseCase {
         }
 
         if (Number(totalAmountInputFormated) === 0 && venue.pricePerPerson && venue.pricingModel === "PER_PERSON") {
-           
+            console.log("cheguei no if PER PERSON")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const { seasonalFee } = venue;
             const eventDuration = calcEventDuration(endDate, startDate);
+
+            console.log(endDate, startDate, eventDuration, venue.pricePerPerson, venue.pricingModel)
 
             let pricePerPerson = venue.pricePerPerson;
 
@@ -154,11 +156,11 @@ class CreateProposalPerPersonUseCase {
             if (seasonalFee?.length) {
                 const year = startDate.getFullYear();
                 const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
-                
+
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-                    console.log(feeValue, "feeValue","\n")
+
                     const isInSeason = fee.startDay && fee.endDay
                         ? isWithinInterval(startDate, {
                             start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
@@ -172,7 +174,7 @@ class CreateProposalPerPersonUseCase {
                        
                     return adjustment + (isInSeason || isAffectedDay ? feeValue : 0);
                 }, 0);
-                console.log(totalAdjustment, "totalAdjustment")
+
                 // Aplica o ajuste no preço
                 pricePerPerson += pricePerPerson * totalAdjustment / 100;
             }
@@ -215,7 +217,7 @@ class CreateProposalPerPersonUseCase {
 
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
-
+                console.log("newProposal", newProposal)
                 const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
 
                 // Envia notificação e histórico
@@ -290,6 +292,7 @@ class CreateProposalPerPersonUseCase {
             
             // Enviar notificação para os administradores
             const lognotification = await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
+            console.log("lognotification", lognotification)
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
@@ -317,7 +320,7 @@ class CreateProposalPerPersonUseCase {
         }
 
         if (Number(totalAmountInputFormated) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
-
+            console.log("cheguei no if PER PERSON HOUR")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const eventDuration = calcEventDuration(endDate, startDate);
             const { seasonalFee } = venue;
@@ -489,6 +492,7 @@ class CreateProposalPerPersonUseCase {
         }
 
         if (totalAmountInput) {
+            console.log("cheguei no if CUSTOM")
             const {
                 basePrice,
                 endDate,
