@@ -253,6 +253,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         tiktokUrl: true,
         logoUrl: true,
         name: true,
+        city: true,
+        state:true,
         email: true,
         whatsappNumber: true,
         images: {
