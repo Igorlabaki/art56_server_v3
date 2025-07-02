@@ -15,14 +15,19 @@ class GetHubDataUseCase {
             throw new HttpResourceNotFoundError("Locacao");
         }
 
+        const formattedHubData = hubData.map((venue) => {
+            return {
+                ...venue,
+                images: venue.images.map((image) => image.imageUrl)
+            }
+        })
+
 
         // Criar a resposta formatada
         const formattedResponse = {
             success: true,
             message: `List de Locacoes`,
-            data: {
-                hubData: [...hubData]
-            },
+            data: formattedHubData,
             count: 1,
             type: "Locacao"
         };
