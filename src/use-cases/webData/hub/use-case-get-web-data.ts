@@ -26,7 +26,7 @@ class GetHubDataUseCase {
         // Criar a resposta formatada
         const formattedResponse = {
             success: true,
-            message: `List de Locacoes`,
+            message: `Hub data`,
             data: formattedHubData,
             count: 1,
             type: "Locacao"
