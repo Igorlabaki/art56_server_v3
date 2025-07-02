@@ -1,14 +1,21 @@
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { OrganizationRepositoryInterface } from "../../../repositories/interface/organization-repository-interface";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { GetHubDataRequestParamSchema } from "../../../zod/venue/get-hub-data-request-param";
 
 
 
 class GetHubDataUseCase {
-    constructor(private venueRepository: VenueRepositoryInterface) { }
+    constructor(private venueRepository: VenueRepositoryInterface, private organizationRepository: OrganizationRepositoryInterface) { }
 
     async execute({organizationId}: GetHubDataRequestParamSchema) {
         // Buscar o local (venue)
+        const organization = await this.organizationRepository.getById({organizationId});
+
+        if (!organization) {
+            throw new HttpResourceNotFoundError("Organizacao");
+        }
+
         const hubData= await this.venueRepository.getHubData({organizationId});
 
         if (!hubData) {
@@ -28,7 +35,8 @@ class GetHubDataUseCase {
 
         const formattedHubData = {
             hubdata: hubData,
-            images: mixedImages
+            images: mixedImages,
+            organization: organization
         }
 
         // Criar a resposta formatada

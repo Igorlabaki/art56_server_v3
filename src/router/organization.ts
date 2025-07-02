@@ -9,6 +9,7 @@ import { updateOrganizationFactory } from "../use-cases/organization/update-orga
 import { getHubDataFactory } from "../use-cases/webData/hub/factory-get-web-data";
 import multer from "multer";
 import { updateVenueOrganizationImageFactory } from "../use-cases/organization/update-venue-organization-images/factory-update-venue-organization-image";
+import { getOrganizationWebDataFactory } from "../use-cases/webData/web-organization/factory-get-organization-web-data";
 
 const organizationRoutes = Router()
 
@@ -45,6 +46,13 @@ organizationRoutes.delete("/delete/:organizationId", ensureAuthenticate, async (
     const controller = deleteOrganizationFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+
+// Get by Id
+organizationRoutes.get("/getOrganizationWebData/:organizationId?", async (req, res) => {
+    const controller = getOrganizationWebDataFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+
 
 // Update
 organizationRoutes.put("/update", ensureAuthenticate, upload.single("file"), async (req, res) => {

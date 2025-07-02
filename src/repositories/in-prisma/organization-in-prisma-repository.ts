@@ -3,8 +3,9 @@ import { DeleteOrganizationSchema } from "../../zod/organization/delete-organiza
 import { ListOrganizationQuerySchema } from "../../zod/organization/list-organization-params-schema"
 import { GetByIdOrganizationSchema } from "../../zod/organization/get-by-id-organization-params-schema"
 import { CreateOrganizationRequestParams } from "../../zod/organization/create-organization-params-schema"
-import { OrganizationRepositoryInterface, UpdateOrganizationRequestParams } from "../interface/organization-repository-interface"
+import { OrganizationRepositoryInterface, OrganizationWebDataResponse, UpdateOrganizationRequestParams } from "../interface/organization-repository-interface"
 import { UpdateImageOrganizationRequestSchema } from "../../zod/organization/update-image-organization-request-schema"
+import { GetOrganziationWebDataRequestParamSchema } from "../../zod/organization/get-web-data-param-schema"
 
 type OrganizationWithVenueCount = Organization & {
   _count: {
@@ -122,6 +123,26 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
           },
         },
       },
+    });
+  }
+
+  async getOrganizationWebData({ organizationId }: GetOrganziationWebDataRequestParamSchema): Promise<OrganizationWebDataResponse | null> {
+    return await this.prisma.organization.findFirst({
+      where: {
+        id: organizationId,
+      },
+      select: {
+        id: true,
+        facebookUrl: true,
+        instagramUrl: true,
+        tiktokUrl: true,
+        logoUrl: true,
+        name: true,
+        whatsappNumber: true,
+        images: true,
+        texts: true,
+        email: true
+      }
     });
   }
 
