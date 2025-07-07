@@ -37,10 +37,10 @@ class AuthenticateUserUseCase {
         }
         //
 
-        // Update FCM token if provided
+        /* // Update FCM token if provided
         if (fcmToken) {
             await this.userRepository.updateFcmToken(userAlreadyExists.id, fcmToken)
-        }
+        } */
 
         // Provide token to user
         const accessTokenProvider = new AccessTokenProvider()
