@@ -10,7 +10,7 @@ export async function sendForgotPasswordEmail(email: string, token: string) {
     },
   });
 
-  const resetUrl = `http://localhost:8080/reset-password?token=${token}`;
+  const resetUrl = `https://event-hub-dashboard.vercel.app/reset-password?token=${token}`;
 
   await transporter.sendMail({
     from: '"EventHub" <igorlabakig@gmail.com>',
