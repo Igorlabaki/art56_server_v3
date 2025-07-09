@@ -233,6 +233,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         whatsappNumber: true,
         images: true,
         texts: true,
+        url: true,
         questions: true,
         services: true,
         email: true
@@ -252,6 +253,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         instagramUrl: true,
         tiktokUrl: true,
         logoUrl: true,
+        url: true,
         name: true,
         city: true,
         state:true,
