@@ -47,7 +47,7 @@ venueRoutes.get("/analysisByMonth?:venueId/:year?/:approved?",ensureAuthenticate
 })
 
 // Get by Id
-venueRoutes.get("/getById?:venueId?/:userId?",ensureAuthenticate, async (req, res) => {
+venueRoutes.get("/getById?:venueId?/:userId?", async (req, res) => {
     const controller = getVenuebyidFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })

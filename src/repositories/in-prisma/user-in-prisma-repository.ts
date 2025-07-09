@@ -33,8 +33,8 @@ export class PrismaUserRepository implements UserRepositoryInterface {
   async getByEmail(reference: string): Promise<User | null> {
     return await this.prisma.user.findFirst({
       where: {
-        email: reference
-      }
+        email: reference,
+      },
     })
   }
 
