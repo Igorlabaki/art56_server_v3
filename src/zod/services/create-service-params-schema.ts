@@ -5,7 +5,7 @@ export const createServiceSchema = z.object({
     price: z.number(),      
     venueId: z.string(),
     rpaRequired: z.boolean().optional().default(false)  ,
-    rpaMinPeople: z.number().optional().default(1),
+    rpaMinPeople: z.number().optional(),
 });
 
 export type CreateServiceRequestParams = z.infer<typeof createServiceSchema>;
