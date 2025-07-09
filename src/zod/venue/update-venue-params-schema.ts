@@ -22,6 +22,8 @@ export const updateVenueSchemaDb = z.object({
         complement: z.string().optional(),
         streetNumber: z.string().optional(),
         neighborhood: z.string().optional(),
+        openingHour: z.string().optional(),
+        closingHour: z.string().optional(),
         pricePerDay: z.string().optional(),
         facebookUrl: z.string().optional(),
         tiktokUrl: z.string().optional(),

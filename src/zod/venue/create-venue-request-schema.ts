@@ -32,6 +32,8 @@ export const createVenueRequestSchema = z.object({
   pricePerPersonDay: z.string().optional(),
   pricePerPersonHour: z.string().optional(),
   pricingModel: z.enum(["PER_PERSON", "PER_DAY", "PER_PERSON_DAY", "PER_PERSON_HOUR"]),
+  openingHour: z.string().optional(),
+  closingHour: z.string().optional(),
 })
 
 export type CreateVenueRequestParams = z.infer<typeof createVenueRequestSchema>;
