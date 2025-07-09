@@ -263,6 +263,11 @@ class CreateProposalPerPersonUseCase {
             const extraHoursQty = calcExtraHoursQty(eventDuration);
             const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
 
+            // Se tiver preço mínimo e o total for menor, usa o mínimo
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                ? venue.minimumPrice
+                : totalAmount;
+
             // Cria a proposta
             const createProposalPerPersonInDb = {
                 ...rest,
@@ -270,7 +275,7 @@ class CreateProposalPerPersonUseCase {
                 startDate,
                 basePrice,
                 serviceIds,
-                totalAmount,
+                totalAmount: finalTotalAmount,
                 extraHoursQty,
                 extraHourPrice,
                 guestNumber: Number(guestNumber),
@@ -377,6 +382,11 @@ class CreateProposalPerPersonUseCase {
                 const extraHoursQty = calcExtraHoursQty(eventDuration);
                 const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
 
+                // Se tiver preço mínimo e o total for menor, usa o mínimo
+                const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                    ? venue.minimumPrice
+                    : totalAmount;
+
                 // Cria a proposta
                 const createProposalPerPersonInDb = {
                     ...rest,
@@ -384,7 +394,7 @@ class CreateProposalPerPersonUseCase {
                     startDate,
                     basePrice,
                     serviceIds,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHoursQty,
                     extraHourPrice,
                     guestNumber: Number(guestNumber),
@@ -437,6 +447,11 @@ class CreateProposalPerPersonUseCase {
             const extraHourPrice = calcBasePrice / eventDuration;
             const totalAmount = calcBasePrice + (totalAmountService || 0);
 
+            // Se tiver preço mínimo e o total for menor, usa o mínimo
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                ? venue.minimumPrice
+                : totalAmount;
+
             // Criação da proposta
             const createProposalPerPersonInDb = {
                 ...rest,
@@ -444,7 +459,7 @@ class CreateProposalPerPersonUseCase {
                 startDate,
                 basePrice: calcBasePrice,
                 serviceIds,
-                totalAmount,
+                totalAmount: finalTotalAmount,
                 extraHoursQty: 0,
                 extraHourPrice,
                 guestNumber: Number(guestNumber),

@@ -123,13 +123,18 @@ class UpdateProposalPerPersonUseCase {
 
             const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
 
+            // Se tiver preço mínimo e o total for menor, usa o mínimo
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                ? venue.minimumPrice
+                : totalAmount;
+
             updateProposalInDbParam = {
                 data: {
                     ...rest,
                     endDate,
                     startDate,
                     basePrice,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHoursQty,
                     extraHourPrice,
                     guestNumber: Number(guestNumber)
@@ -194,12 +199,17 @@ class UpdateProposalPerPersonUseCase {
             const extraHourPrice = calcBasePrice / eventDurantion;
             const totalAmount = calcBasePrice + (totalAmountService || 0);
 
+            // Se tiver preço mínimo e o total for menor, usa o mínimo
+            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
+                ? venue.minimumPrice
+                : totalAmount;
+
             updateProposalInDbParam = {
                 data: {
                     ...rest,
                     endDate,
                     startDate,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHourPrice,
                     extraHoursQty: 0,
                     basePrice: calcBasePrice,
