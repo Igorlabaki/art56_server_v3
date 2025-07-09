@@ -212,6 +212,8 @@ model Service {
   name             String
   price            Float
   venueId          String
+  rpaRequired      Boolean           @default(false)
+  rpaMinPeople     Int               @default(1)
   proposalServices ProposalService[]
   venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
 

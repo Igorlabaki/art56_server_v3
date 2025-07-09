@@ -5,6 +5,8 @@ export const updateServiceSchema = z.object({
     data: z.object({
         name: z.string().optional(),
         price: z.number().optional(),
+        rpaRequired: z.boolean().optional(),
+        rpaMinPeople: z.number().optional(),
     }),
 });
 
