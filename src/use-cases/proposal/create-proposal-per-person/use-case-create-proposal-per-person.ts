@@ -145,7 +145,7 @@ class CreateProposalPerPersonUseCase {
             console.log("cheguei no if PER PERSON")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const { seasonalFee } = venue;
-            const eventDuration = calcEventDuration(endDate, startDate);
+            const eventDuration = calcEventDuration(startDate, endDate);
 
             console.log(endDate, startDate, eventDuration, venue.pricePerPerson, venue.pricingModel)
 
@@ -322,7 +322,7 @@ class CreateProposalPerPersonUseCase {
         if (Number(totalAmountInputFormated) === 0 && venue.pricePerPersonHour && venue.pricingModel === "PER_PERSON_HOUR") {
             console.log("cheguei no if PER PERSON HOUR")
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
-            const eventDuration = calcEventDuration(endDate, startDate);
+            const eventDuration = calcEventDuration(startDate, endDate);
             const { seasonalFee } = venue;
 
             let pricePerPersonHour = venue.pricePerPersonHour;

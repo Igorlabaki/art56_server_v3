@@ -114,7 +114,7 @@ class UpdateProposalPerPersonUseCase {
                 startHour,
             });
 
-            const eventDurantion = calcEventDuration(endDate, startDate);
+            const eventDurantion = calcEventDuration(startDate, endDate);
 
             const basePrice = Number(guestNumber) * venue.pricePerPerson
 
@@ -187,7 +187,7 @@ class UpdateProposalPerPersonUseCase {
                 startHour,
             });
 
-            const eventDurantion = calcEventDuration(endDate, startDate);
+            const eventDurantion = calcEventDuration(startDate, endDate);
 
             const calcBasePrice = eventDurantion * (Number(guestNumber) * venue.pricePerPersonHour)
 

@@ -23,10 +23,18 @@ export function transformDate({
     'YYYY-MM-DD HH:mm',
   ).toDate();
 
-  const endDate = moment.utc(
+  let endDate = moment.utc(
     `${yearInicio}-${monthInicio}-${dayInicio} ${hourFim}:${minutesFim}`,
     'YYYY-MM-DD HH:mm',
   ).toDate();
+
+  // Se o horário de término for menor que o de início, significa que o evento termina no dia seguinte
+  if (endDate.getTime() < startDate.getTime()) {
+    endDate = moment.utc(
+      `${yearInicio}-${monthInicio}-${dayInicio} ${hourFim}:${minutesFim}`,
+      'YYYY-MM-DD HH:mm',
+    ).add(1, 'day').toDate();
+  }
 
   return {
     endDate,

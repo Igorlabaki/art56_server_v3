@@ -37,7 +37,7 @@ export function calcStandartTotalAmount({
      divisor
   });
 
-  const eventDurantion = calcEventDuration(endDate, startDate);
+  const eventDurantion = calcEventDuration(startDate, endDate);
 
   const [day, month, year] = date.split("-");
 
