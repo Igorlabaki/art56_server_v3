@@ -197,14 +197,19 @@ class CreateProposalPerDayUseCase {
                 });
 
                 // Se tiver preço mínimo e o total for menor, usa o mínimo
+                let finalBasePrice = basePrice;
                 const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
                     ? venue.minimumPrice
                     : totalAmount;
+                if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
+                    finalBasePrice = venue.minimumPrice;
+                }
 
                 console.log("[UseCase] Valor final após verificação do mínimo:", {
                     totalAmount,
                     minimumPrice: venue.minimumPrice,
-                    finalTotalAmount
+                    finalTotalAmount,
+                    finalBasePrice
                 });
 
                 // Cria a proposta
@@ -212,7 +217,7 @@ class CreateProposalPerDayUseCase {
                     ...rest,
                     endDate,
                     startDate,
-                    basePrice,
+                    basePrice: finalBasePrice,
                     serviceIds,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
@@ -259,15 +264,18 @@ class CreateProposalPerDayUseCase {
             // Calcula o preço base
             const basePrice = daysBetween * pricePerDay;
             const totalAmount = basePrice + (totalAmountService || 0);
+            let finalBasePrice = basePrice;
             const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice ? venue.minimumPrice : totalAmount;
-
+            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
+                finalBasePrice = venue.minimumPrice;
+            }
             // Criação da proposta
             const createProposalPerDayInDb = {
                 ...rest,
                 endDate,
                 startDate,
                 serviceIds,
-                basePrice,
+                basePrice: finalBasePrice,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
                 totalAmount: finalTotalAmount,
@@ -367,14 +375,19 @@ class CreateProposalPerDayUseCase {
                 });
 
                 // Se tiver preço mínimo e o total for menor, usa o mínimo
+                let finalBasePrice = basePrice;
                 const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
                     ? venue.minimumPrice
                     : totalAmount;
+                if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
+                    finalBasePrice = venue.minimumPrice;
+                }
 
                 console.log("[UseCase] Valor final após verificação do mínimo:", {
                     totalAmount,
                     minimumPrice: venue.minimumPrice,
-                    finalTotalAmount
+                    finalTotalAmount,
+                    finalBasePrice
                 });
 
                 createProposalPerDayInDb = {
@@ -382,7 +395,7 @@ class CreateProposalPerDayUseCase {
                     endDate,
                     startDate,
                     serviceIds,
-                    basePrice,
+                    basePrice: finalBasePrice,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
@@ -452,30 +465,20 @@ class CreateProposalPerDayUseCase {
             }
             const basePrice = daysBetween * (pricePerPersonDay * Number(guestNumber));
             const totalAmount = basePrice + (totalAmountService || 0);
-            console.log("[UseCase] Valores antes da verificação do mínimo:", {
-                basePrice,
-                totalAmountService,
-                totalAmount,
-                minimumPrice: venue.minimumPrice
-            });
-
+            let finalBasePrice = basePrice;
             // Se tiver preço mínimo e o total for menor, usa o mínimo
             const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
                 ? venue.minimumPrice
                 : totalAmount;
-
-            console.log("[UseCase] Valor final após verificação do mínimo:", {
-                totalAmount,
-                minimumPrice: venue.minimumPrice,
-                finalTotalAmount
-            });
-
+            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
+                finalBasePrice = venue.minimumPrice;
+            }
             createProposalPerDayInDb = {
                 ...rest,
                 endDate,
                 startDate,
                 serviceIds,
-                basePrice,
+                basePrice: finalBasePrice,
                 totalAmount: finalTotalAmount,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
@@ -547,29 +550,19 @@ class CreateProposalPerDayUseCase {
             // Se chegou aqui, é porque é um valor manual
             const basePrice = (Number(totalAmountInput) || 0) - (totalAmountService || 0);
             const totalAmount = Number(totalAmountInput) || 0;
-            console.log("[UseCase] Valores antes da verificação do mínimo:", {
-                basePrice,
-                totalAmountService,
-                totalAmount,
-                minimumPrice: venue.minimumPrice
-            });
-
+            let finalBasePrice = basePrice;
             // Se tiver preço mínimo e o total for menor, usa o mínimo
             const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
                 ? venue.minimumPrice
                 : totalAmount;
-
-            console.log("[UseCase] Valor final após verificação do mínimo:", {
-                totalAmount,
-                minimumPrice: venue.minimumPrice,
-                finalTotalAmount
-            });
-
+            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
+                finalBasePrice = venue.minimumPrice;
+            }
             createProposalPerDayInDb = {
                 ...rest,
                 endDate,
                 startDate,
-                basePrice,
+                basePrice: finalBasePrice,
                 serviceIds,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
