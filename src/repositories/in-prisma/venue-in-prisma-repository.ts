@@ -99,7 +99,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async update(reference: UpdateVenueSchemaDb): Promise<Venue | null> {
-    const { pricePerDay, pricePerPerson, pricePerPersonDay, pricePerPersonHour, owners, maxGuest,hasOvernightStay, minimumPrice,minimumNights, ...rest } = reference.data;
+    const { pricePerDay, pricePerPerson, pricePerPersonDay,standardEventDuration, pricePerPersonHour, owners, maxGuest,hasOvernightStay, minimumPrice,minimumNights, ...rest } = reference.data;
 
     const currentVenue = await this.prisma.venue.findUnique({
       where: { id: reference.venueId },
@@ -118,8 +118,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const perPersonHour = Number(pricePerPersonHour?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPersonHour || 0;    
     const minimumNightsFormated = Number(minimumNights) || 1;
     const minimumPriceFormated = Number(minimumPrice?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.minimumPrice || 0;
-    console.log(perPersonHour)
-
+   
+    const standardEventDurationFormated = Number(standardEventDuration);
     // Monta o objeto de dados para o update
     const updateData: any = {
       ...rest,
@@ -129,8 +129,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       pricePerPersonDay: perPersonDay,
       pricePerPersonHour: perPersonHour,
       minimumPrice: minimumPriceFormated,
-      hasOvernightStay: hasOvernightStay ? true : false,
       minimumNights: minimumNightsFormated,
+      hasOvernightStay: hasOvernightStay ? true : false,
+      standardEventDuration: standardEventDurationFormated,
     };
 
     if (owners) {
