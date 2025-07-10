@@ -226,20 +226,21 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       },
       select: {
         id: true,
-        minimumNights: true,
+        url: true,
+        name: true,
+        email: true,
+        texts: true,
+        images: true,
+        logoUrl: true,
+        services: true,
         maxGuest: true,
+        tiktokUrl: true,
+        questions: true,
         facebookUrl: true,
         instagramUrl: true,
-        tiktokUrl: true,
-        logoUrl: true,
-        name: true,
+        minimumNights: true,
         whatsappNumber: true,
-        images: true,
-        texts: true,
-        url: true,
-        questions: true,
-        services: true,
-        email: true
+        standardEventDuration: true,
       }
     });
   }
@@ -262,6 +263,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         state:true,
         email: true,
         whatsappNumber: true,
+        standardEventDuration: true,
+        minimumNights: true,
         images: {
           where: {
             isShowOnOrganization: true
