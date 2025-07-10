@@ -23,6 +23,8 @@ export const createVenueDbSchema =  z.object({
         description:z.string().optional(),
         complement: z.string().optional(),
         pricePerDay: z.string().optional(), 
+        openingHour: z.string().optional(),
+        closingHour: z.string().optional(),
         facebookUrl: z.string().optional(),
         instagramUrl: z.string().optional(),
         minimumPrice: z.string().optional(),
@@ -31,8 +33,7 @@ export const createVenueDbSchema =  z.object({
         pricePerPerson: z.string().optional(),
         pricePerPersonDay: z.string().optional(),
         pricePerPersonHour: z.string().optional(),
-        openingHour: z.string().optional(),
-        closingHour: z.string().optional(),
+        eventDefaultDuration: z.number().optional(),
         pricingModel: z.enum(["PER_PERSON", "PER_DAY", "PER_PERSON_DAY", "PER_PERSON_HOUR"]),
     }).refine(
         (data) => {

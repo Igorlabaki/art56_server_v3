@@ -343,6 +343,7 @@ model Venue {
   pricePerDay          Float?
   pricePerPersonDay    Float?
   pricePerPersonHour   Float?
+  standardEventDuration Int?            
   maxGuest             Int
   organization         Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   texts                Text[]
