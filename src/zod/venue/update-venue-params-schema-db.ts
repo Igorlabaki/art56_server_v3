@@ -31,6 +31,7 @@ export const updateVenueSchemaRequest = z.object({
     pricePerPersonHour: z.string().optional(),
     owners: z.string().optional(),
     openingHour: z.string().optional(),
+    standardEventDuration: z.string().optional(),
     closingHour: z.string().optional(),
     isShowOnOrganization: z.string().optional(),
     hasOvernightStay: z.string().optional(),

@@ -14,7 +14,6 @@ export const createProposalPerPersonRequestParamsSchema = z.object({
     userId: z.string().optional(),
     serviceIds: z.array(z.string()),
     totalAmountInput: z.string().optional(),
-    eventDefaultDuration: z.number().optional(),
     type: z.enum(["PRODUCTION", "BARTER", "OTHER", "EVENT"]), 
     trafficSource: z.enum(["AIRBNB", "GOOGLE", "INSTAGRAM", "TIKTOK", "OTHER", "FRIEND", "FACEBOOK"]),
 });

@@ -18,7 +18,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
   async create(params: CreateVenueDbSchema): Promise<Venue | null> {
     const { data, organizationId, userId } = params; // createdBy = ID do usuário que criou a venue
-    const { owners, pricePerDay, pricePerPerson, maxGuest, pricePerPersonDay, pricePerPersonHour, minimumPrice,minimumNights, ...rest } = data;
+    const { owners, pricePerDay, pricePerPerson, maxGuest, pricePerPersonDay, pricePerPersonHour, minimumPrice,minimumNights, standardEventDuration, ...rest } = data;
 
     // Formatando os valores de preço e maxGuest
     const perPerson = Number(pricePerPerson?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
@@ -28,6 +28,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const maxGuestFormated = Number(maxGuest);
     const minimumPriceFormated = Number(minimumPrice?.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const minimumNightsFormated = Number(minimumNights) || 1;
+    const standardEventDurationFormated = Number(standardEventDuration);
 
     return await this.prisma.$transaction(async (prisma) => {
       // Criar a Venue
@@ -51,6 +52,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           pricePerPersonHour: perPersonHour,
           minimumPrice: minimumPriceFormated,
           minimumNights: minimumNightsFormated,
+          standardEventDuration: standardEventDurationFormated,
         },
       });
 

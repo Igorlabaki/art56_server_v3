@@ -29,6 +29,7 @@ export const createVenueRequestSchema = z.object({
   minimumNights: z.string().optional(),
   whatsappNumber: z.string().optional(),
   pricePerPerson: z.string().optional(),
+  standardEventDuration: z.string().optional(),
   pricePerPersonDay: z.string().optional(),
   pricePerPersonHour: z.string().optional(),
   pricingModel: z.enum(["PER_PERSON", "PER_DAY", "PER_PERSON_DAY", "PER_PERSON_HOUR"]),
