@@ -1,4 +1,4 @@
-export function calcExtraHoursQty(eventDurantion: number) {
-  const horasExtras = eventDurantion >= 6 ? eventDurantion - 6 : 0;
+export function calcExtraHoursQty(eventDurantion: number, standardEventDuration: number) {
+  const horasExtras = eventDurantion >= standardEventDuration ? eventDurantion - standardEventDuration : 0;
   return horasExtras;
 }

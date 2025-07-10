@@ -146,7 +146,7 @@ class CreateProposalPerPersonUseCase {
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const { seasonalFee } = venue;
             const eventDuration = calcEventDuration(startDate, endDate);
-
+            let extraHoursQtyCalculated = 0;
             console.log(endDate, startDate, eventDuration, venue.pricePerPerson, venue.pricingModel)
 
             let pricePerPerson = venue.pricePerPerson;
@@ -198,9 +198,15 @@ class CreateProposalPerPersonUseCase {
                 }
 
                 const calculatedBasePrice = Number(guestNumber) * pricePerPerson;
+
                 const extraHourPrice = calcExtraHourPrice(calculatedBasePrice);
-                const extraHoursQty = calcExtraHoursQty(eventDuration);
-                const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
+                if (venue.standardEventDuration) {
+                    extraHoursQtyCalculated = calcExtraHoursQty(eventDuration, venue.standardEventDuration);
+                } else {
+                    extraHoursQtyCalculated = 0;
+                }
+                
+                const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQtyCalculated;
 
                 // Se tiver preço mínimo e o total for menor, usa o mínimo como basePrice
                 let basePrice = calculatedBasePrice;
@@ -219,7 +225,7 @@ class CreateProposalPerPersonUseCase {
                     basePrice,
                     serviceIds,
                     totalAmount: finalTotalAmount,
-                    extraHoursQty,
+                    extraHoursQty: extraHoursQtyCalculated,
                     extraHourPrice,
                     guestNumber: Number(guestNumber),
                 };
@@ -269,8 +275,13 @@ class CreateProposalPerPersonUseCase {
             // Calcula o preço total
             const calculatedBasePrice = Number(guestNumber) * pricePerPerson;
             const extraHourPrice = calcExtraHourPrice(calculatedBasePrice);
-            const extraHoursQty = calcExtraHoursQty(eventDuration);
-            const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
+            
+            if (venue.standardEventDuration) {
+                extraHoursQtyCalculated = calcExtraHoursQty(eventDuration, venue.standardEventDuration);
+            } else {
+                extraHoursQtyCalculated = 0;
+            }
+            const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQtyCalculated;
 
             // Se tiver preço mínimo e o total for menor, usa o mínimo como basePrice
             let basePrice = calculatedBasePrice;
@@ -289,7 +300,7 @@ class CreateProposalPerPersonUseCase {
                 basePrice,
                 serviceIds,
                 totalAmount: finalTotalAmount,
-                extraHoursQty,
+                extraHoursQty: extraHoursQtyCalculated,
                 extraHourPrice,
                 guestNumber: Number(guestNumber),
             };
@@ -392,8 +403,13 @@ class CreateProposalPerPersonUseCase {
 
                 const calculatedBasePrice = Number(guestNumber) * pricePerPersonHour;
                 const extraHourPrice = calcExtraHourPrice(calculatedBasePrice);
-                const extraHoursQty = calcExtraHoursQty(eventDuration);
-                const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
+                let extraHoursQtyCalculated = 0;
+                if (venue.standardEventDuration) {
+                    extraHoursQtyCalculated = calcExtraHoursQty(eventDuration, venue.standardEventDuration);
+                } else {
+                    extraHoursQtyCalculated = 0;
+                }
+                const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQtyCalculated;
 
                 // Se tiver preço mínimo e o total for menor, usa o mínimo como basePrice
                 let basePrice = calculatedBasePrice;
@@ -412,7 +428,7 @@ class CreateProposalPerPersonUseCase {
                     basePrice,
                     serviceIds,
                     totalAmount: finalTotalAmount,
-                    extraHoursQty,
+                    extraHoursQty: extraHoursQtyCalculated,
                     extraHourPrice,
                     guestNumber: Number(guestNumber),
                 };
