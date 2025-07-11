@@ -5,8 +5,7 @@ import { CreateUserPermissionRequestParams } from "../../zod/user-permission/cre
 import { UpdateUserPermissionRequestParams } from "../../zod/user-permission/update-user-permission-params-schema";
 import { connect } from "http2";
 import { ListUserPermissionByUserRequestQuerySchema } from "../../zod/user-permission/list-user-permission-by-query-schema";
-
-
+import { GetUserPermissionSchema } from "../../zod/user-permission/get-user-permission-params-schema";
 
 export class PrismaUserPermissionRepository implements UserPermissionRepositoryInterface {
 
@@ -87,6 +86,16 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
     return await this.prisma.userPermission.findFirst({
       where: {
         userOrganizationId: reference
+      }
+
+    })
+  }
+
+  async getUserPermission({userOrganizationId,venueId}: GetUserPermissionSchema): Promise<UserPermission | null> {
+    return await this.prisma.userPermission.findFirst({
+      where: {
+        userOrganizationId: userOrganizationId ,
+        venueId: venueId
       }
 
     })
