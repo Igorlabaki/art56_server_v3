@@ -91,13 +91,15 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
     })
   }
 
-  async getUserPermission({userOrganizationId,venueId}: GetUserPermissionSchema): Promise<UserPermission | null> {
+  async getUserPermission({userId,organizationId,venueId}: GetUserPermissionSchema): Promise<UserPermission | null> {
     return await this.prisma.userPermission.findFirst({
       where: {
-        userOrganizationId: userOrganizationId ,
+        userOrganization: {
+          userId: userId,
+          organizationId: organizationId
+        },
         venueId: venueId
       }
-
     })
   }
 

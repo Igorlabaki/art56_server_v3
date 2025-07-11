@@ -15,7 +15,7 @@ userpermissionRoutes.get("/list?:userPermissionId?", async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 
-userpermissionRoutes.get("/get?:venueId?/:userOganization?", async (req, res) => {
+userpermissionRoutes.get("/get?:venueId?/:organizationId?/:userId?", async (req, res) => {
     const controller = getUserPermissionFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
