@@ -98,7 +98,9 @@ export class PrismaUserPermissionRepository implements UserPermissionRepositoryI
           userId: userId,
           organizationId: organizationId
         },
-        venueId: venueId
+        ...(venueId && {
+          venueId: venueId
+        }),
       }
     })
   }
