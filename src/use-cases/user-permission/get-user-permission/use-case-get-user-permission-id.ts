@@ -19,7 +19,7 @@ class GetUserPermissionUseCase {
             success: true,
             message: `Permissao do usuario encontrada com sucesso`,
             data: {
-                ...userPermission
+                userPermissionList: [...userPermission]
             },
             count: 1,
             type: "Permission"

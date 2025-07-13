@@ -6,7 +6,7 @@ import { GetUserPermissionSchema } from "../../zod/user-permission/get-user-perm
 export interface UserPermissionRepositoryInterface {
   delete: (params: string) => Promise<UserPermission | null>
   getById: (params: string) => Promise<UserPermission | null>
-  getUserPermission: (params: GetUserPermissionSchema)   => Promise<UserPermission | null>
+  getUserPermission: (params: GetUserPermissionSchema)   => Promise<UserPermission[] | null>
   create: (params: CreateUserPermissionRequestParams) => Promise<UserPermission | null>
   update: (params: UpdateUserPermissionRequestParams) => Promise<UserPermission | null>
   list: (query: ListUserPermissionByUserRequestQuerySchema) => Promise<UserPermission[]  | null>
