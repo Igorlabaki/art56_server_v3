@@ -11,18 +11,33 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
   async create({
     permissions,
     userOrganizationId,
-    userId
+    userId,
+    organizationId
   }: CreateUserOrganizationPermissionRequestParams): Promise<UserOrganizationPermission | null> {
-    return await this.prisma.userOrganizationPermission.create({
-      data: {
-        permissions: permissions.join(','),
-        userOrganization: {
-          connect: {
-            id: userOrganizationId
-          }
-        },
+    // Se userOrganizationId foi fornecido, verificar se existe
+    if (userOrganizationId) {
+      const userOrganization = await this.prisma.userOrganization.findUnique({
+        where: { id: userOrganizationId },
+        include: { organization: true }
+      });
+
+      if (!userOrganization) {
+        throw new Error(`UserOrganization com ID ${userOrganizationId} não encontrado`);
       }
-    })
+
+      return await this.prisma.userOrganizationPermission.create({
+        data: {
+          permissions: permissions.join(','),
+          userOrganization: {
+            connect: {
+              id: userOrganizationId
+            }
+          },
+        }
+      })
+    }
+
+    throw new Error("userOrganizationId é obrigatório para criar permissões");
   }
 
   async update(
