@@ -9,6 +9,7 @@ class ListOrganizationUseCase {
 
   async execute(params: ListOrganizationQuerySchema) {
 
+
     const userById = await this.userRepository.getById(params.userId)
 
     if(!userById){

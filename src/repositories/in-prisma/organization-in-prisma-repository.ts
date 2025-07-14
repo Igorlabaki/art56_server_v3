@@ -1,4 +1,4 @@
-import { PrismaClient, Organization,  } from "@prisma/client"
+import { PrismaClient, Organization, } from "@prisma/client"
 import { DeleteOrganizationSchema } from "../../zod/organization/delete-organization-params-schema"
 import { ListOrganizationQuerySchema } from "../../zod/organization/list-organization-params-schema"
 import { GetByIdOrganizationSchema } from "../../zod/organization/get-by-id-organization-params-schema"
@@ -17,8 +17,8 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
 
   constructor(private readonly prisma: PrismaClient) { }
 
-  async  create({ userId, ...rest }: CreateOrganizationRequestParams): Promise<Organization | null> {
-    const permissions: string = "EDIT_ORGANIZATION";
+  async create({ userId, ...rest }: CreateOrganizationRequestParams): Promise<Organization | null> {
+    const permissions: string = "VIEW_ORG_INFO,VIEW_ORG_SITE,VIEW_ORG_VENUES,VIEW_ORG_OWNERS,VIEW_ORG_CONTRACTS,VIEW_ORG_PERMISSIONS,EDIT_ORG_INFO,EDIT_ORG_SITE,EDIT_ORG_VENUES,EDIT_ORG_OWNERS,EDIT_ORG_CONTRACTS,EDIT_ORG_PERMISSIONS";
 
     return await this.prisma.organization.create({
       data: {
@@ -26,21 +26,18 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
         userOrganizations: {
           create: {
             userId: userId,
-            userPermissions: {
-              create: [
-                {
-                  role: "ADMIN",
-                  venueId: null ,// Pode ser nulo ou você pode definir para um venue específico
-                  permissions: permissions, // A permissão é agora uma string
-                }
-              ]
+            userOrganizationPermission: {
+              create: {
+               // Pode ser nulo ou você pode definir para um venue específico
+                permissions: permissions, // A permissão é agora uma string
+              }
             }
           }
         }
       }
     });
   }
-  
+
   async update(reference: UpdateOrganizationRequestParams): Promise<Organization | null> {
     return await this.prisma.organization.update({
       where: {
@@ -93,7 +90,7 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
 
     // Atualizar imagens que NÃO estão na lista imageids para isShowOnOrganization = false
     const imagesToHide = venueImageIds.filter(id => !imageids.includes(id));
-    
+
     if (imagesToHide.length > 0) {
       await this.prisma.image.updateMany({
         where: {
@@ -192,8 +189,8 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
     return await this.prisma.organization.findMany({
       where: {
         ...(userId && {
-        userOrganizations: {
-          some: {
+          userOrganizations: {
+            some: {
               userId: userId
             }
           },

@@ -119,7 +119,7 @@ class UpdateProposalPerPersonUseCase {
             const basePrice = Number(guestNumber) * venue.pricePerPerson
 
             const extraHourPrice = calcExtraHourPrice(basePrice);
-            const extraHoursQty = calcExtraHoursQty(eventDurantion);
+            const extraHoursQty = calcExtraHoursQty(eventDurantion, Number(venue.standardEventDuration));
 
             const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
 
@@ -276,6 +276,7 @@ class UpdateProposalPerPersonUseCase {
                 guests: Number(guestNumber),
                 totalAmountInput: Number(totalAmountInput),
                 totalAmountService: totalAmountService || 0,
+                standardEventDuration: Number(venue.standardEventDuration),
             },
             divisor: "/",
         });

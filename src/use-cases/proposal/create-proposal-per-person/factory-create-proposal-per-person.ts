@@ -8,7 +8,7 @@ import { PrismaHistoryRepository } from "../../../repositories/in-prisma/history
 import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";
 import { PrismaNotificationRepository } from "../../../repositories/in-prisma/notification-in-prisma-repository";
 import { PrismaGoalRepository } from "../../../repositories/in-prisma/goal-in-prisma-repository";
-import { PrismaUserPermissionRepository } from "../../../repositories/in-prisma/user-permission-in-prisma-repository";
+
 import { PrismaUserOrganizationRepository } from "../../../repositories/in-prisma/user-organization-in-prisma-repository";
 
 export const createProposalPerPersonFactory = (): CreateProposalPerPersonController => {
@@ -19,7 +19,6 @@ export const createProposalPerPersonFactory = (): CreateProposalPerPersonControl
     const prismaGoalRepository = new PrismaGoalRepository(prismaClient);
     const prismaProposalRepository = new PrismaProposalRepository(prismaClient);
     const prismaNotificationRepository = new PrismaNotificationRepository(prismaClient);
-    const prismaUserPermissionRepository = new PrismaUserPermissionRepository(prismaClient);
     const prismaUserOrganizationRepository = new PrismaUserOrganizationRepository(prismaClient);
 
     const createProposalPerPersonUseCase = new CreateProposalPerPersonUseCase(
@@ -30,7 +29,6 @@ export const createProposalPerPersonFactory = (): CreateProposalPerPersonControl
         prismaHistoryRepository,
         prismaProposalRepository,
         prismaNotificationRepository,
-        prismaUserPermissionRepository,
         prismaUserOrganizationRepository,
     );
     const createProposalPerPersonController = new CreateProposalPerPersonController(createProposalPerPersonUseCase);

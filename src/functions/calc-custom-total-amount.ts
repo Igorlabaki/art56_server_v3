@@ -12,11 +12,12 @@ interface CalcCustomTotalAmountProps {
     perPersonPrice: number;
     totalAmountInput: number;
     totalAmountService: number;
+    standardEventDuration: number;
   },
   divisor?: string;
 }
 
-export function calcCustomTotalAmount({ data: { date, endHour, startHour, totalAmountInput,totalAmountService}, divisor }: CalcCustomTotalAmountProps) {
+export function calcCustomTotalAmount({ data: { date, endHour, startHour, totalAmountInput,totalAmountService, standardEventDuration }, divisor }: CalcCustomTotalAmountProps) {
   const { endDate, startDate } = transformDate({
     date,
     endHour,
@@ -27,7 +28,7 @@ export function calcCustomTotalAmount({ data: { date, endHour, startHour, totalA
   const eventDurantion = calcEventDuration(startDate, endDate);
 
   const totalAmountInputWithoutTotalAmountService = totalAmountInput - totalAmountService
-  const extraHoursQty = calcExtraHoursQty(eventDurantion);
+  const extraHoursQty = calcExtraHoursQty(eventDurantion, standardEventDuration);
   const basePrice = (totalAmountInputWithoutTotalAmountService / eventDurantion) * (eventDurantion - extraHoursQty)
   const extraHourPrice = calcExtraHourPrice(basePrice);
 

@@ -22,7 +22,7 @@ import { dateEventRoutes } from "./router/dateEvent";
 import { organizationRoutes } from "./router/organization";
 import { notificationRoutes } from "./router/notification";
 import { userorganizationRoutes } from "./router/userOrganization";
-import { userpermissionRoutes } from "./router/userPermission";
+import { userVenuePermissionRoutes } from "./router/userVenuePermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
@@ -68,7 +68,7 @@ app.use('/attachment', attachmentRoutes)
 app.use('/seasonalFee', seasonalFeeRoutes)
 app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
-app.use('/userPermission', userpermissionRoutes)
+app.use('/userVenuePermission', userVenuePermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
 app.use('/emailConfig', emailConfigRoutes)
 

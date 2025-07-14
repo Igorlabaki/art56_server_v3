@@ -7,7 +7,7 @@ import { UpdateUserOrganizationRequestParams } from "../../zod/user-organization
 export type UserOrganizationWithRelations = Prisma.UserOrganizationGetPayload<{
   include: {
     user: true;
-    userPermissions: {
+    userVenuePermissions: {
       include: {
         userOrganization: {
           select: {
@@ -17,6 +17,7 @@ export type UserOrganizationWithRelations = Prisma.UserOrganizationGetPayload<{
         venue: true;
       };
     };
+    userOrganizationPermission: true;
   };
 }>;
 

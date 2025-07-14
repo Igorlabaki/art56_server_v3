@@ -77,9 +77,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         const permissionsString = permissionsData.join(',');
    
         // Criar uma única permissão para o usuário admin, com todas as permissões concatenadas
-        await prisma.userPermission.create({
+        await prisma.userVenuePermission.create({
           data: {
-            role: "ADMIN",
             userOrganizationId: userOrganization.id,
             venueId: newVenue.id,
             permissions: permissionsString, // Agora armazenando todas as permissões em uma única string
@@ -147,7 +146,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       },
       data: updateData,
       include: {
-        UserPermission: {
+        userVenuePermissions: {
           where: { userOrganization: { userId: reference.userId } }, // 🔥 Filtra novamente ao incluir para trazer apenas as permissões do usuário
           select: {
             permissions: true,
@@ -173,7 +172,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             owner: true
           }
         },
-        UserPermission: {
+        userVenuePermissions: {
           select: {
             permissions: true
           }
@@ -190,12 +189,12 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     return await this.prisma.venue.findFirst({
       where: {
         id: venueId,
-        UserPermission: {
+        userVenuePermissions: {
           some: { userOrganization: { userId: userId } } // 🔥 Filtra permissões apenas do usuário
         }
       },
       include: {
-        UserPermission: {
+        userVenuePermissions: {
           where: { userOrganization: { userId: userId } }, // 🔥 Filtra novamente ao incluir para trazer apenas as permissões do usuário
           select: {
             permissions: true,
@@ -347,7 +346,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       where: {
         organizationId,
         ...(name && { name }),
-        UserPermission: {
+        userVenuePermissions: {
           some: {
             userOrganization: {
               userId: userId

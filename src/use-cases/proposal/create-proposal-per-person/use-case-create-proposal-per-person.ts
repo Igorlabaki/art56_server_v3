@@ -16,7 +16,6 @@ import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 import { Payment, SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
-import { UserPermissionRepositoryInterface } from "../../../repositories/interface/user-permission-repository-interface";
 import { UserOrganizationRepositoryInterface } from "../../../repositories/interface/user-organization-repository-interface";
 import { FirebaseNotificationService } from "../../../services/firebase-notification-service";
 
@@ -29,7 +28,6 @@ class CreateProposalPerPersonUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
-        private userPermissionRepository: UserPermissionRepositoryInterface,
         private userOrganizationRepository: UserOrganizationRepositoryInterface,
     ) { }
 
@@ -561,6 +559,7 @@ class CreateProposalPerPersonUseCase {
                     guests: Number(guestNumber),
                     totalAmountInput: Number(totalAmountInput),
                     totalAmountService: totalAmountService || 0,
+                    standardEventDuration: Number(venue.standardEventDuration),
                 },
                 divisor: "/",
             });

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const listOrganizationQuerySchema = z.object({
-    userId: z.string().optional(),
+    userId: z.string(),
     name: z.string().optional(),
 });
 

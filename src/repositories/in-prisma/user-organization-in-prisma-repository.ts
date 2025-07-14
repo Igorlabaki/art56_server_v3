@@ -1,5 +1,5 @@
 
-import { PrismaClient, UserOrganization, UserPermission } from "@prisma/client"
+import { PrismaClient, UserOrganization } from "@prisma/client"
 import { UserOrganizationRepositoryInterface, UserOrganizationWithRelations } from "../interface/user-organization-repository-interface"
 import { CreateUserOrganizationRequestParams } from "../../zod/user-organization/create-user-organization-params-schema"
 import { ListUserOrganizationRequestQuerySchema } from "../../zod/user-organization/list-user-organization-query-schema"
@@ -14,7 +14,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
 
   async getPermissions(permissionNames: string[], userId: string, venueId: string): Promise<string> {
     // Busca as permissões associadas ao usuário e ao venueId
-    const permissions = await this.prisma.userPermission.findMany({
+    const permissions = await this.prisma.userVenuePermission.findMany({
       where: {
         userOrganization: {
           userId, // Filtro pelo ID do usuário
@@ -55,7 +55,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     userId,
 
   }: CreateUserOrganizationRequestParams): Promise<UserOrganization | null> {
- 
+
     const userOrganization = await this.prisma.userOrganization.create({
       data: {
         organization: {
@@ -69,7 +69,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
 
     return userOrganization;
   }
-  
+
   async update({
     userOrganizationId,
     venuesPermissions,
@@ -77,9 +77,9 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
     if (!venuesPermissions || venuesPermissions.length === 0) {
       return null;
     }
-  
+
     for (const item of venuesPermissions) {
-      await this.prisma.userPermission.upsert({
+      await this.prisma.userVenuePermission.upsert({
         where: {
           userOrganizationId_venueId: {
             userOrganizationId,
@@ -87,24 +87,22 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
           },
         },
         update: {
-          role: item.role,
           permissions: item.permissions.join(','),
         },
         create: {
           userOrganizationId,
           venueId: item.venueId,
-          role: item.role,
           permissions: item.permissions.join(','),
         },
       });
     }
-  
+
     return await this.prisma.userOrganization.findUnique({
       where: { id: userOrganizationId },
       include: {
         user: true,
         organization: true,
-        userPermissions: {
+        userVenuePermissions: {
           include: {
             userOrganization: {
               select: {
@@ -113,6 +111,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
             },
           },
         },
+        userOrganizationPermission: true,
       },
     });
   }
@@ -124,21 +123,23 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
       },
       include: {
         user: true,
-        userPermissions: {
-          include:{
+        userVenuePermissions: {
+          include: {
             userOrganization: {
-              select:{
+              select: {
+ 
                 organizationId: true
               }
             },
             venue: true
           }
-        }
+        },
+        userOrganizationPermission: true,
       },
     })
   }
 
-  async verifyByUserIdAndOrganizationId({organizationId,userId}: {userId: string, organizationId: string}): Promise<UserOrganization | null> {
+  async verifyByUserIdAndOrganizationId({ organizationId, userId }: { userId: string, organizationId: string }): Promise<UserOrganization | null> {
     return await this.prisma.userOrganization.findFirst({
       where: {
         organizationId,
@@ -146,16 +147,17 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
       },
       include: {
         user: true,
-        userPermissions: {
-          include:{
+        userVenuePermissions: {
+          include: {
             userOrganization: {
-              select:{
+              select: {
                 organizationId: true
               }
             },
             venue: true
           }
-        }
+        },
+        userOrganizationPermission: true,
       },
     })
   }
@@ -165,7 +167,7 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
       where: {
         userId: reference
       }
-      
+
     })
   }
 
@@ -200,15 +202,8 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
       include: {
         user: true,
         organization: true,
-        userPermissions: {
-          include:{
-            userOrganization: {
-              select:{
-                organizationId: true
-              }
-            }
-          }
-        }
+        userVenuePermissions: true,
+        userOrganizationPermission: true,
       },
     })
   }
@@ -227,23 +222,24 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
               venueId,
               role
             }
-            
+
           }
         }),
         organizationId
       },
       include: {
         user: true,
-        userPermissions: {
-          include:{
+        userVenuePermissions: {
+          include: {
             userOrganization: {
-              select:{
+              select: {
                 organizationId: true
               }
             },
             venue: true
           }
-        }
+        },
+        userOrganizationPermission: true,
       },
     })
   }
