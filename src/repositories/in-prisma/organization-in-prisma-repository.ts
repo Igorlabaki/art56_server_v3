@@ -191,11 +191,13 @@ export class PrismaOrganizationRepository implements OrganizationRepositoryInter
   async list({ userId, name }: ListOrganizationQuerySchema): Promise<OrganizationWithVenueCount[] | null> {
     return await this.prisma.organization.findMany({
       where: {
+        ...(userId && {
         userOrganizations: {
           some: {
-            userId: userId
-          }
-        },
+              userId: userId
+            }
+          },
+        }),
         ...(name && {
           name: {
             contains: name,
