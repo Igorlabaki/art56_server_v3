@@ -28,6 +28,7 @@ import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
 import { emailRoutes } from "./router/email";
 import { emailConfigRoutes } from "./router/email-config";
+import { userOrganizationPermissionRoutes } from "./router/useOrganizationPermission";
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/organization', organizationRoutes)
 app.use('/userVenuePermission', userVenuePermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
 app.use('/emailConfig', emailConfigRoutes)
+app.use('/userOrganizationPermission', userOrganizationPermissionRoutes)
 
 app.get('/', (req, res) => {
   res.send('API online!');
