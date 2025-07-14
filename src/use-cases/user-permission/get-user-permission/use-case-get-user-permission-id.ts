@@ -11,7 +11,7 @@ class GetUserPermissionUseCase {
             const userPermission = await this.userPermissionRepository.getUserPermission(params)
 
             if (!userPermission) {
-                throw new HttpResourceNotFoundError("Organizacao")
+                throw new HttpResourceNotFoundError("Permissao")
             }
         //
 

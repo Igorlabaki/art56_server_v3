@@ -193,7 +193,9 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
             name
           }
         }),
-        userId
+        ...(userId && {
+          userId
+        })
       },
       include: {
         user: true,
