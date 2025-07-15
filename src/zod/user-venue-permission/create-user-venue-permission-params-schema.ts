@@ -6,6 +6,7 @@ export const createUserVenuePermissionSchema = z.object({
     userorganizationId: z.string().optional(),
     organizationId: z.string(),
     userId: z.string(),
+    role: z.string().optional(),
     permissions: z.array(
         z.string()
     ),

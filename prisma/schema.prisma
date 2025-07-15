@@ -86,7 +86,6 @@ model UserOrganization {
   id                         String                      @id @default(uuid())
   userId                     String
   organizationId             String
-  role                       String?
   joinedAt                   DateTime                    @default(now())
   user                       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization               Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -100,6 +99,7 @@ model UserOrganization {
 
 model UserVenuePermission {
   venueId            String
+  role                 String?
   userOrganizationId String
   id                 String           @id @default(uuid())
   permissions        String           @db.LongText
@@ -114,6 +114,7 @@ model UserVenuePermission {
 
 model UserOrganizationPermission {
   id                 String           @id @default(uuid())
+  role               String?
   userOrganizationId String           @unique
   permissions        String           @db.LongText
   userOrganization   UserOrganization @relation("OrgPerm", fields: [userOrganizationId], references: [id], onDelete: Cascade)

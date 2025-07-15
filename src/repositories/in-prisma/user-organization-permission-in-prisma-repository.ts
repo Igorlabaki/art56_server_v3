@@ -13,7 +13,8 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
     permissions,
     userOrganizationId,
     userId,
-    organizationId
+    organizationId,
+    role
   }: CreateUserOrganizationPermissionRequestParams): Promise<UserOrganizationPermission | null> {
     // Se userOrganizationId foi fornecido, verificar se existe
     if (userOrganizationId) {
@@ -28,6 +29,7 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
 
       return await this.prisma.userOrganizationPermission.create({
         data: {
+          role,
           permissions: permissions.join(','),
           userOrganization: {
             connect: {
@@ -44,7 +46,7 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
   async update(
     params
   : UpdateUserOrganizationPermissionRequestParams): Promise<UserOrganizationPermission | null> {
-    const {permissions,userOrganizationPermissionId} =  params
+    const {permissions,userOrganizationPermissionId, role} =  params
     if (!permissions || permissions.length === 0) {
       return null;
     }
@@ -54,6 +56,7 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
         id: userOrganizationPermissionId
       },
       data: {
+        role,
         permissions: permissions.join(','),
       },
     });
@@ -88,10 +91,13 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
     })
   }
 
-  async list({ userOrganizationId }: ListUserOrganizationPermissionByUserRequestQuerySchema ): Promise<UserOrganizationPermission[] | null> {
+  async list({ userOrganizationId, role }: ListUserOrganizationPermissionByUserRequestQuerySchema ): Promise<UserOrganizationPermission[] | null> {
     return await this.prisma.userOrganizationPermission.findMany({
       where: {
-       userOrganizationId,
+        ...(role && {
+          role
+        }),
+        userOrganizationId,
       }
     })
   }

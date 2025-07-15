@@ -40,7 +40,6 @@ class CreateProposalPerPersonUseCase {
         const userOrganizations = await this.userOrganizationRepository.listByOrganization({
             organizationId: venue.organizationId,
             venueId,
-            role: "ADMIN"
         });
         console.log("userOrganizations", userOrganizations)
         if (!userOrganizations) return;

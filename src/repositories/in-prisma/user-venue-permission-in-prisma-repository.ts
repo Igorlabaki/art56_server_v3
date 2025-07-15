@@ -14,6 +14,7 @@ export class PrismaUserVenuePermissionRepository implements UserVenuePermissionR
     venueId,
     permissions,
     organizationId,
+    role,
     userId
   }: CreateUserVenuePermissionRequestParams): Promise<UserVenuePermission | null> {
     return await this.prisma.userVenuePermission.create({
@@ -24,6 +25,7 @@ export class PrismaUserVenuePermissionRepository implements UserVenuePermissionR
             id: venueId
           }
         },
+        role,
         userOrganization: {
           connect: {
            userId_organizationId: {
@@ -50,6 +52,7 @@ export class PrismaUserVenuePermissionRepository implements UserVenuePermissionR
       },
       data: {
         permissions: permissions.join(','),
+        role,
       },
       include:{
         venue:{
@@ -122,6 +125,9 @@ export class PrismaUserVenuePermissionRepository implements UserVenuePermissionR
       ...(venueId && {
         venueId: venueId
       }),
+      ...(role && {
+        role
+      }), 
       },
       include: {
         venue:{
