@@ -3,6 +3,7 @@ import { CreateUserOrganizationPermissionRequestParams } from "../../zod/user-or
 import { UpdateUserOrganizationPermissionRequestParams } from "../../zod/user-organization-permission/update-user-organization-permission-params-schema";
 import { ListUserOrganizationPermissionByUserRequestQuerySchema } from "../../zod/user-organization-permission/list-user-organization-permission-by-query-schema";
 import { UserOrganizationPermissionRepositoryInterface } from "../interface/user-organization-permission-repository-interface";
+import { GetUserOrganizationPermissionSchema } from "../../zod/user-organization-permission/get-user-organization-permission-params-schema";
 
 export class PrismaUserOrganizationPermissionRepository implements UserOrganizationPermissionRepositoryInterface {
 
@@ -67,10 +68,14 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
   }
 
 
-  async getByUserOrganizationPermissionId(reference: string): Promise<UserOrganizationPermission | null> {
+  async getByUserOrganizationPermission({userId, organizationId}: GetUserOrganizationPermissionSchema): Promise<UserOrganizationPermission | null> {
+
     return await this.prisma.userOrganizationPermission.findFirst({
       where: {
-        id: reference
+        userOrganization: {
+          userId,
+          organizationId
+        }
       }
     })
   }
