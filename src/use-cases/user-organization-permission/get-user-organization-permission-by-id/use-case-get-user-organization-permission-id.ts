@@ -3,7 +3,7 @@ import { UserOrganizationPermissionRepositoryInterface } from "../../../reposito
 import { GetByIdUserOrganizationPermissionSchema } from "../../../zod/user-organization-permission/get-by-id-user-organization-permission-params-schema"
 import { GetUserOrganizationPermissionSchema } from "../../../zod/user-organization-permission/get-user-organization-permission-params-schema"
 
-class GetUserOrganizationPermissionByIdUseCase {
+class      GetUserOrganizationPermissionByIdUseCase {
     constructor(private userOrganizationPermissionRepository: UserOrganizationPermissionRepositoryInterface) { }
 
     async execute(param: GetUserOrganizationPermissionSchema) {

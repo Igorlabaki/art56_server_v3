@@ -217,14 +217,13 @@ export class PrismaUserOrganizationRepository implements UserOrganizationReposit
           }
         }),
         ...(venueId && {
-          userPermissions: {
+          userVenuePermissions: {
             some: {
               venueId,
-              role
             }
-
           }
         }),
+        role,
         organizationId
       },
       include: {
