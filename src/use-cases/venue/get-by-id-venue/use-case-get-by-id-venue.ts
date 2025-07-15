@@ -18,7 +18,7 @@ class GetVenueByIdUseCase {
         const formattedVenue = {
             ...venue,
             // @ts-ignore
-            permissions: venue.UserPermission
+            permissions: venue.UserVenuePermission
               .map((up: { permissions: string }) => up.permissions) // 🔥 Extrai permissões
               .join(",").split(",") // 🔥 Junta em uma única string separada por vírgula
           };
