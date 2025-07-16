@@ -39,6 +39,7 @@ class CreateUserOrganizationPermissionUseCase {
         // Se o UserOrganization já existe e é válido, apenas criar a permissão
         const userOrganizationPermission = await this.userOrganizationPermissionRepository.create({
           permissions: params.permissions,
+          role: params.role,
           userOrganizationId: params.userOrganizationId,
           userId: params.userId,
           organizationId: params.organizationId
@@ -70,6 +71,7 @@ class CreateUserOrganizationPermissionUseCase {
         permissions: params.permissions,
         userOrganizationId: userOrganizationExists.id,
         userId: params.userId,
+        role: params.role,
         organizationId: params.organizationId
       });
 
