@@ -99,6 +99,7 @@ class CreateUserOrganizationPermissionUseCase {
         permissions: params.permissions,
         userOrganizationId: newUserOrganization.id,
         userId: params.userId,
+        role: params.role,
         organizationId: params.organizationId
       });
 
