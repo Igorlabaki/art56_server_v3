@@ -47,9 +47,6 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
     params
   : UpdateUserOrganizationPermissionRequestParams): Promise<UserOrganizationPermission | null> {
     const {permissions,userOrganizationPermissionId, role} =  params
-    if (!permissions || permissions.length === 0) {
-      return null;
-    }
 
     return await this.prisma.userOrganizationPermission.update({
       where: {
@@ -57,7 +54,7 @@ export class PrismaUserOrganizationPermissionRepository implements UserOrganizat
       },
       data: {
         role,
-        permissions: permissions.join(','),
+        permissions: permissions ? permissions.join(',') : "",
       },
     });
   }

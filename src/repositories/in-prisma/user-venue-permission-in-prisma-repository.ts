@@ -42,16 +42,13 @@ export class PrismaUserVenuePermissionRepository implements UserVenuePermissionR
     params
   : UpdateUserVenuePermissionRequestParams): Promise<UserVenuePermission | null> {
     const {permissions,userVenuePermissionId,role,venueId} =  params
-    if (!permissions || permissions.length === 0) {
-      return null;
-    }
-
+ 
     return await this.prisma.userVenuePermission.update({
       where: {
         id: userVenuePermissionId
       },
       data: {
-        permissions: permissions.join(','),
+        permissions: permissions ? permissions.join(',') : "",
         role,
       },
       include:{
