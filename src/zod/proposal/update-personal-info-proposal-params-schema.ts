@@ -11,6 +11,7 @@ export const updatePersonalInfoProposalSchema = z.object({
         streetNumber: z.string(),
         neighborhood: z.string(),
         rg: z.string().optional(),
+        adressComplement: z.string().optional(),
         cnpj: z.string().optional(),
         completeClientName: z.string(),
         completeCompanyName: z.string().optional(),

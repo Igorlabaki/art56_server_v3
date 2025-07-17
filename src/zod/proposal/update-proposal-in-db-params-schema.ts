@@ -17,6 +17,7 @@ export const updateProposalInDbParam = z.object({
         totalAmount: z.number().optional(),
         description: z.string().optional(),
         knowsVenue: z.boolean().optional(),
+        adressComplement: z.string().optional(),
         email: z.string().email().optional(),
         extraHoursQty: z.number().optional(),
         extraHourPrice: z.number().optional(),

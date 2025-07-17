@@ -138,7 +138,7 @@ model Proposal {
   state               String?
   type                ProposalType
   trafficSource       TrafficSource
-
+  adressComplement    String?
   guestNumber      Int
   knowsVenue       Boolean           @default(false)
   startDate        DateTime
