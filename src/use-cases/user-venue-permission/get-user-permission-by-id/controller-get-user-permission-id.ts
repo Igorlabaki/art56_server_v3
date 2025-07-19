@@ -1,16 +1,17 @@
 import { Request, Response } from "express"
 import { handleErrors } from "../../../errors/error-handler";
-import { GetUserPermissionByIdUseCase } from "./use-case-get-user-permission-id";
-import { getByIdUserPermissionSchema } from "../../../zod/user-permission/get-by-id-user-permission-params-schema";
+import { GetUserVenuePermissionByIdUseCase } from "./use-case-get-user-permission-id";
+import { getByIdUserVenuePermissionSchema } from "../../../zod/user-venue-permission/get-by-id-user-venue-permission-params-schema";
 
-class GetUserPermissionByIdController {
-    constructor(private getUserPermissionByIdUseCase: GetUserPermissionByIdUseCase) { }
+
+class GetUserVenuePermissionByIdController {
+    constructor(private getUserVenuePermissionByIdUseCase: GetUserVenuePermissionByIdUseCase) { }
     async handle(req: Request, resp: Response) {
         try {
-            const query = getByIdUserPermissionSchema.parse(req.query);
-            const UserpermissionById = await this.getUserPermissionByIdUseCase.execute(query);
+            const query = getByIdUserVenuePermissionSchema.parse(req.query);
+            const UserVenuePermissionById = await this.getUserVenuePermissionByIdUseCase.execute(query);
             
-            return resp.json(UserpermissionById)
+            return resp.json(UserVenuePermissionById)
         } catch (error) {
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
@@ -21,4 +22,4 @@ class GetUserPermissionByIdController {
     }
 }
 
-export { GetUserPermissionByIdController }
+export { GetUserVenuePermissionByIdController }

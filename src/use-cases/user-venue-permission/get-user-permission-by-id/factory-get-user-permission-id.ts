@@ -1,12 +1,13 @@
 import prismaClient from "../../../services/prisma-client";
-import { GetUserPermissionByIdUseCase } from "./use-case-get-user-permission-id";
-import { GetUserPermissionByIdController } from "./controller-get-user-permission-id";
-import { PrismaUserPermissionRepository } from "../../../repositories/in-prisma/user-permission-in-prisma-repository";
+import { GetUserVenuePermissionByIdController } from "./controller-get-user-permission-id";
+import { PrismaUserVenuePermissionRepository } from "../../../repositories/in-prisma/user-venue-permission-in-prisma-repository";
+import { GetUserVenuePermissionByIdUseCase } from "./use-case-get-user-permission-id";
+   
 
-export const getUserPermissionByidFactory = () => {
-  const prismaPermissionRepository = new PrismaUserPermissionRepository(prismaClient);
-  const getPermissionByidUseCase = new GetUserPermissionByIdUseCase(prismaPermissionRepository);
-  const getPermissionByidController = new GetUserPermissionByIdController(getPermissionByidUseCase);
+export const getUserVenuePermissionByIdFactory = () => {
+  const prismaUserVenuePermissionRepository = new PrismaUserVenuePermissionRepository(prismaClient);
+  const getUserVenuePermissionByIdUseCase = new GetUserVenuePermissionByIdUseCase(prismaUserVenuePermissionRepository);
+  const getUserVenuePermissionByIdController = new GetUserVenuePermissionByIdController(getUserVenuePermissionByIdUseCase);
 
-  return getPermissionByidController;
+  return getUserVenuePermissionByIdController;
 };

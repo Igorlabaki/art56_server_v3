@@ -1,16 +1,17 @@
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
-import { UserPermissionRepositoryInterface } from "../../../repositories/interface/user-permission-repository-interface"
-import { GetByIdUserPermissionSchema } from "../../../zod/user-permission/get-by-id-user-permission-params-schema"
+import { UserVenuePermissionRepositoryInterface } from "../../../repositories/interface/user-venue-permission-repository-interface"
+import { GetByIdUserVenuePermissionSchema } from "../../../zod/user-venue-permission/get-by-id-user-venue-permission-params-schema"
+  
 
-class GetUserPermissionByIdUseCase {
-    constructor(private userPermissionRepository: UserPermissionRepositoryInterface) { }
+class GetUserVenuePermissionByIdUseCase {
+    constructor(private userVenuePermissionRepository: UserVenuePermissionRepositoryInterface) { }
 
-    async execute(param: GetByIdUserPermissionSchema) {
+    async execute(param: GetByIdUserVenuePermissionSchema) {
         
         // Validate if permission exists
-            const userPermission = await this.userPermissionRepository.getById(param.userPermissionId)
+            const userVenuePermission = await this.userVenuePermissionRepository.getById(param.userVenuePermissionId)
 
-            if (!userPermission) {
+            if (!userVenuePermission) {
                 throw new HttpResourceNotFoundError("Organizacao")
             }
         //
@@ -19,7 +20,7 @@ class GetUserPermissionByIdUseCase {
             success: true,
             message: `Permissao do usuario encontrada com sucesso`,
             data: {
-                ...userPermission
+                ...userVenuePermission
             },
             count: 1,
             type: "Permission"
@@ -31,4 +32,4 @@ class GetUserPermissionByIdUseCase {
     }
 }
 
-export { GetUserPermissionByIdUseCase }
+export { GetUserVenuePermissionByIdUseCase }

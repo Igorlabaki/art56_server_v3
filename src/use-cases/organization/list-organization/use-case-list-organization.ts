@@ -9,6 +9,9 @@ class ListOrganizationUseCase {
 
   async execute(params: ListOrganizationQuerySchema) {
 
+    if(!params.userId){
+      throw new HttpResourceNotFoundError("Usuario")
+    }
 
     const userById = await this.userRepository.getById(params.userId)
 
