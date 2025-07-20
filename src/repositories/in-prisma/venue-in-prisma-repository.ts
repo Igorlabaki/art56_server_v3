@@ -104,7 +104,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       },
     });
 
-    const currentOwnerIds = currentVenue?.ownerVenue.map((relation) => relation.ownerId) || [];
+    const currentOwnerIds = currentVenue?.ownerVenue?.map((relation) => relation.ownerId) || [];
 
     const perPerson = Number(pricePerPerson?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPerson || 0;
     const perDay = Number(pricePerDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerDay || 0;

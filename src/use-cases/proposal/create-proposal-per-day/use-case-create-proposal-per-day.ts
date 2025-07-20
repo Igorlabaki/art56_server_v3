@@ -146,27 +146,30 @@ class CreateProposalPerDayUseCase {
             if (seasonalFee?.length) {
                 const year = startDate.getFullYear();
                 const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
-
+                console.log("eventDayOfWeek", eventDayOfWeek)
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
+                    console.log("isSurcharge", isSurcharge)
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-
+                    console.log("feeValue", feeValue)
                     const isInSeason = fee.startDay && fee.endDay
                         ? isWithinInterval(startDate, {
                             start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
                             end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
                         })
                         : false;
-
+                    console.log("isInSeason", isInSeason)
                     const isAffectedDay = fee.affectedDays
                         ? fee.affectedDays.split(",").map(d => d.trim().toLowerCase()).includes(eventDayOfWeek) || fee.affectedDays.includes("all")
                         : false;
-
+                    console.log("isAffectedDay", isAffectedDay)
+                    console.log("adjustment", adjustment + (isInSeason || isAffectedDay ? feeValue : 0))
                     return adjustment + (isInSeason || isAffectedDay ? feeValue : 0);
                 }, 0);
 
                 // Aplica o ajuste no preço
                 pricePerDay += pricePerDay * totalAdjustment / 100;
+                console.log("pricePerDay", pricePerDay)
             }
 
             const totalPerSelectMonth = await this.proposalRepository.monthlyRevenueAnalysis({
@@ -175,18 +178,18 @@ class CreateProposalPerDayUseCase {
                 month: startDate.getMonth() + 1,
                 approved: true
             })
-
+            console.log("totalPerSelectMonth", totalPerSelectMonth)
             if (totalPerSelectMonth) {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
                     targetMonth: String(startDate.getMonth() + 1)
                 })
-
+                console.log("goal", goal)
                 if (goal?.increasePercent) {
                     pricePerDay += pricePerDay * goal?.increasePercent / 100
                 }
-
+                console.log("pricePerDay", pricePerDay)
                 const basePrice = daysBetween * pricePerDay;
                 const totalAmount = basePrice + (totalAmountService || 0);
                 console.log("[UseCase] Valores antes da verificação do mínimo:", {
@@ -195,7 +198,7 @@ class CreateProposalPerDayUseCase {
                     totalAmount,
                     minimumPrice: venue.minimumPrice
                 });
-
+                
                 // Se tiver preço mínimo e o total for menor, usa o mínimo
                 let finalBasePrice = basePrice;
                 let finalTotalAmount = totalAmount;
@@ -223,7 +226,7 @@ class CreateProposalPerDayUseCase {
                     extraHourPrice: 0,
                     guestNumber: Number(guestNumber),
                 };
-
+                console.log("createProposalPerPersonInDb", createProposalPerPersonInDb)
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
 
