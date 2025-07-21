@@ -157,12 +157,13 @@ class CreateProposalPerPersonUseCase {
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-
+                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
+                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
+                    if (end < start) {
+                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
+                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, {
-                            start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
-                            end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
-                        })
+                        ? isWithinInterval(startDate, { start, end })
                         : false;
 
                     const isAffectedDay = fee.affectedDays
@@ -361,12 +362,13 @@ class CreateProposalPerPersonUseCase {
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-
+                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
+                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
+                    if (end < start) {
+                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
+                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, {
-                            start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
-                            end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
-                        })
+                        ? isWithinInterval(startDate, { start, end })
                         : false;
 
                     const isAffectedDay = fee.affectedDays

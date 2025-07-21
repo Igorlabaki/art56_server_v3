@@ -152,11 +152,14 @@ class CreateProposalPerDayUseCase {
                     console.log("isSurcharge", isSurcharge)
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
                     console.log("feeValue", feeValue)
+                    // Corrigir cálculo de temporada cruzando o ano
+                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
+                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
+                    if (end < start) {
+                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
+                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, {
-                            start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
-                            end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
-                        })
+                        ? isWithinInterval(startDate, { start, end })
                         : false;
                     console.log("isInSeason", isInSeason)
                     const isAffectedDay = fee.affectedDays
@@ -338,11 +341,14 @@ class CreateProposalPerDayUseCase {
                     console.log("fee", fee)
                     console.log("feeValue", feeValue)
                     console.log("fee", fee)
+                    // Corrigir cálculo de temporada cruzando o ano
+                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
+                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
+                    if (end < start) {
+                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
+                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, {
-                            start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
-                            end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
-                        })
+                        ? isWithinInterval(startDate, { start, end })
                         : false;
                     console.log("isInSeason", isInSeason)
                     const isAffectedDay = fee.affectedDays
