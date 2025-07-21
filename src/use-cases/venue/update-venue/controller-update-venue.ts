@@ -82,6 +82,7 @@ class UpdateVenueController {
             });
             return resp.json(venueById);
         } catch (error) {
+            console.log("error", error)
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
 
