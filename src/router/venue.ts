@@ -11,6 +11,7 @@ import { listPermittedVenueFactory } from "../use-cases/venue/list-permitted-ven
 import { makeGetVenueAnalyticsController } from "../use-cases/venue/get-venue-analytics/factory-get-venue-analytics";
 import multer from "multer";
 import { getWebDataFactory } from "../use-cases/webData/web/factory-get-web-data";
+import { updateVenuePaymentInfoFactory } from "../use-cases/venue/update-payment-info-venue/factory-update-venue";
 
 
 const venueRoutes = Router()
@@ -61,6 +62,11 @@ venueRoutes.get("/getWebData/:venueId?", async (req, res) => {
 // Update
 venueRoutes.put("/update",ensureAuthenticate, upload.single("file"), async (req, res) => {
     const controller = updateVenueFactory();  // Cria o controlador
+    await controller.handle(req, res);         // Chama o método handle de forma assíncrona
+})
+// Update
+venueRoutes.put("/update/payment-info",ensureAuthenticate, async (req, res) => {
+    const controller = updateVenuePaymentInfoFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 

@@ -11,6 +11,7 @@ import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue
 import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema"
 import { GetHubDataRequestParamSchema } from "../../zod/venue/get-hub-data-request-param"
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
+import { UpdateVenuePaymentInfoSchemaDb } from "../../zod/venue/update-payment-info-venue-params-schema"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -89,6 +90,27 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       }
 
       return newVenue;
+    });
+  }
+
+  async updatePaymentInfo(reference: UpdateVenuePaymentInfoSchemaDb): Promise<Venue | null> {
+    const { venueId } = reference;
+
+    const { pricePerPerson, pricePerPersonDay, pricePerPersonHour, pricePerDay } = reference.data;
+
+    const perPerson = Number(pricePerPerson?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || undefined;
+    const perDay = Number(pricePerDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || undefined;
+    const perPersonDay = Number(pricePerPersonDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || undefined;
+    const perPersonHour = Number(pricePerPersonHour?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || undefined; 
+
+    return await this.prisma.venue.update({
+      where: { id: venueId },
+      data: {
+          pricePerPerson: perPerson,
+          pricePerDay: perDay,
+          pricePerPersonDay: perPersonDay,
+          pricePerPersonHour: perPersonHour,
+      },
     });
   }
 

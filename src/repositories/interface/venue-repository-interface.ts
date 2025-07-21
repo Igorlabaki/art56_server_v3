@@ -9,6 +9,7 @@ import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-par
 import { UpdateVenueSchemaDb } from "../../zod/venue/update-venue-params-schema";
 import { GetHubDataRequestParamSchema } from "../../zod/venue/get-hub-data-request-param";
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema";
+import { UpdateVenuePaymentInfoSchemaDb } from "../../zod/venue/update-payment-info-venue-params-schema";
 
 export type ItemListVenueResponse = {
   id: string;
@@ -99,6 +100,7 @@ export interface HubDataResponse  {
 export interface VenueRepositoryInterface {
   delete: (params: string) => Promise<Venue | null>
   update: (params: UpdateVenueSchemaDb) => Promise<Venue | null>
+  updatePaymentInfo: (params: UpdateVenuePaymentInfoSchemaDb) => Promise<Venue | null>
   create: (params: CreateVenueDbSchema
   ) => Promise<Venue | null>
   getById: (params: GetVenueByIdRequestParamSchema) => Promise<Venue | null>
