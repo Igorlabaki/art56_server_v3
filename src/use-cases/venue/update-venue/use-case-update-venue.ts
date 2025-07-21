@@ -24,7 +24,7 @@ class UpdateVenueUseCase {
         const formattedVenue = {
             ...updatedVenue,
             // @ts-ignore
-            permissions: venue.UserPermission
+            permissions: venue.userVenuePermissions
               .map((up: { permissions: string }) => up.permissions) // 🔥 Extrai permissões
               .join(",").split(",") // 🔥 Junta em uma única string separada por vírgula
           };
