@@ -106,7 +106,6 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
 
     
     const currentOwnerIds = (currentVenue?.ownerVenue ?? []).map((relation) => relation.ownerId);
-
     const perPerson = Number(pricePerPerson?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPerson || 0;
     const perDay = Number(pricePerDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerDay || 0;
     const perPersonDay = Number(pricePerPersonDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPersonDay || 0;
