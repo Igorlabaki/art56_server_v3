@@ -104,8 +104,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       },
     });
 
-    
-    const currentOwnerIds = (currentVenue?.ownerVenue ?? []).map((relation) => relation.ownerId);
+  
     const perPerson = Number(pricePerPerson?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPerson || 0;
     const perDay = Number(pricePerDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerDay || 0;
     const perPersonDay = Number(pricePerPersonDay?.replace(/[^-\d,.-]/g, "").replace(",", ".")) || currentVenue?.pricePerPersonDay || 0;
@@ -129,6 +128,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     };
 
     if (owners) {
+      const currentOwnerIds = (currentVenue?.ownerVenue ?? []).map((relation) => relation.ownerId);
+      console.log("currentOwnerIds", currentOwnerIds)
+      console.log("owners", owners)
       const ownersToConnect = owners.filter((id) => !currentOwnerIds.includes(id));
       const ownersToDisconnect = currentOwnerIds.filter((id) => !owners.includes(id));
       updateData.ownerVenue = {
