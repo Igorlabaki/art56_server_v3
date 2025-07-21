@@ -322,27 +322,34 @@ class CreateProposalPerDayUseCase {
             console.log("[UseCase] Iniciando criação de proposta por pessoa por dia");
             const { seasonalFee } = venue;
             const daysBetween = differenceInCalendarDays(endDate, startDate);
+            console.log("daysBetween", daysBetween)
             let pricePerPersonDay = venue.pricePerPersonDay;
             console.log("pricePerPersonDay", pricePerPersonDay)
             if (seasonalFee?.length) {
                 const year = startDate.getFullYear();
+                console.log("year", year)
                 const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
+                console.log("startDate", startDate)
                 console.log("eventDayOfWeek", eventDayOfWeek)
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
-                    const feeValue = isSurcharge ? fee.fee : -fee.fee;
+                    console.log("isSurcharge", isSurcharge)
+                    const feeValue = isSurcharge ? fee.fee : -fee.fee;  
+                    console.log("fee", fee)
                     console.log("feeValue", feeValue)
+                    console.log("fee", fee)
                     const isInSeason = fee.startDay && fee.endDay
                         ? isWithinInterval(startDate, {
                             start: setYear(parse(fee.startDay, "dd/MM", new Date()), year),
                             end: setYear(parse(fee.endDay, "dd/MM", new Date()), year),
                         })
                         : false;
-
+                    console.log("isInSeason", isInSeason)
                     const isAffectedDay = fee.affectedDays
                         ? fee.affectedDays.split(",").map(d => d.trim().toLowerCase()).includes(eventDayOfWeek) || fee.affectedDays.includes("all")
                         : false;
-
+                    console.log("isAffectedDay", isAffectedDay)
+                    console.log("adjustment", adjustment + (isInSeason || isAffectedDay ? feeValue : 0))
                     return adjustment + (isInSeason || isAffectedDay ? feeValue : 0);
                 }, 0);
 
