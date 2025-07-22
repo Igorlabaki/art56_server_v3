@@ -137,6 +137,7 @@ class UpdateProposalPerPersonUseCase {
                     totalAmount: finalTotalAmount,
                     extraHoursQty,
                     extraHourPrice,
+                    serviceIds,
                     guestNumber: Number(guestNumber)
                 },
                 proposalId: proposal.id
@@ -213,6 +214,7 @@ class UpdateProposalPerPersonUseCase {
                     extraHourPrice,
                     extraHoursQty: 0,
                     basePrice: calcBasePrice,
+                    serviceIds,
                     guestNumber: Number(guestNumber)
                 },
                 proposalId: proposal.id
@@ -289,6 +291,7 @@ class UpdateProposalPerPersonUseCase {
                 basePrice,
                 totalAmount,
                 extraHoursQty,
+                serviceIds,
                 extraHourPrice,
                 guestNumber: Number(guestNumber),
             },
