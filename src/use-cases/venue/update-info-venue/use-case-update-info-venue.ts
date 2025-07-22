@@ -24,10 +24,7 @@ class UpdateInfoVenueUseCase {
 
         const formattedVenue = {
             ...updatedVenue,
-            // @ts-ignore
-            permissions: venue.userVenuePermissions
-              .map((up: { permissions: string }) => up.permissions) // 🔥 Extrai permissões
-              .join(",").split(",") // 🔥 Junta em uma única string separada por vírgula
+            // @ts-ignore🔥 Junta em uma única string separada por vírgula
           };
 
         const formatedResponse = {
