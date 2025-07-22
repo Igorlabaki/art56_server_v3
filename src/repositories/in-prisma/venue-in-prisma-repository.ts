@@ -116,7 +116,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async updateInfo(reference: UpdateVenueInfoSchemaDb): Promise<Venue | null> {
-    const { venueId, ...rest } = reference;
+    const { venueId,userId, ...rest } = reference;
 
     return await this.prisma.venue.update({
       where: { id: venueId },
