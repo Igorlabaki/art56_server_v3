@@ -12,6 +12,7 @@ import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-par
 import { GetHubDataRequestParamSchema } from "../../zod/venue/get-hub-data-request-param"
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
 import { UpdateVenuePaymentInfoSchemaDb } from "../../zod/venue/update-payment-info-venue-params-schema"
+import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-params-schema"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -110,6 +111,17 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           pricePerDay: perDay,
           pricePerPersonDay: perPersonDay,
           pricePerPersonHour: perPersonHour,
+      },
+    });
+  }
+
+  async updateInfo(reference: UpdateVenueInfoSchemaDb): Promise<Venue | null> {
+    const { venueId, ...rest } = reference;
+
+    return await this.prisma.venue.update({
+      where: { id: venueId },
+      data: {
+        ...rest
       },
     });
   }
