@@ -10,6 +10,10 @@ export const updateContactSchema = z.object({
     data: z.object({
         name: z.string().optional(),
         role: z.string().optional(),
+        instagramUrl: z.string().optional(),
+        facebookUrl: z.string().optional(),
+        tiktokUrl: z.string().optional(),
+        url: z.string().optional(),
         whatsapp: z.string().optional(),
         email: z.string().email().optional(),
         type: z.nativeEnum(ContactType).optional(),
