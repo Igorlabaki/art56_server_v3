@@ -15,7 +15,7 @@ export const updateContactSchema = z.object({
         tiktokUrl: z.string().optional(),
         url: z.string().optional(),
         whatsapp: z.string().optional(),
-        email: z.string().email().optional(),
+        email:  z.string().email().optional().or(z.literal("")),
         type: z.nativeEnum(ContactType).optional(),
     }),
 });

@@ -14,7 +14,7 @@ export const createContactSchema = z.object({
     facebookUrl: z.string().optional(),
     tiktokUrl: z.string().optional(),
     url: z.string().optional(),
-    email: z.string().email().optional(),
+    email:  z.string().email().optional().or(z.literal("")),
     type: z.nativeEnum(ContactType).optional(),
 });
 
