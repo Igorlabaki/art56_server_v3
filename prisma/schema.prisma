@@ -99,16 +99,16 @@ model UserOrganization {
 
 model UserVenuePermission {
   venueId            String
-  role                 String?
+  role               String?
   userOrganizationId String
   id                 String           @id @default(uuid())
   permissions        String           @db.LongText
   userOrganization   UserOrganization @relation(fields: [userOrganizationId], references: [id], onDelete: Cascade)
   venue              Venue            @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
+  @@unique([userOrganizationId, venueId])
   @@index([userOrganizationId])
   @@index([venueId])
-  @@unique([userOrganizationId, venueId]) 
   @@map("userVenuePermission")
 }
 
@@ -124,7 +124,7 @@ model UserOrganizationPermission {
 }
 
 model Proposal {
-  id                  String        @id @default(uuid())
+  id                  String            @id @default(uuid())
   completeCompanyName String?
   completeClientName  String
   cpf                 String?
@@ -139,36 +139,36 @@ model Proposal {
   type                ProposalType
   trafficSource       TrafficSource
   adressComplement    String?
-  guestNumber      Int
-  knowsVenue       Boolean           @default(false)
-  startDate        DateTime
-  endDate          DateTime
-  email            String
-  whatsapp         String
-  description      String            @db.LongText
-  hostMessage      String?           @db.LongText
-  basePrice        Float
-  extraHoursQty    Int
-  extraHourPrice   Float
-  totalAmount      Float
-  termsAccepted    Boolean           @default(false)
-  approved         Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  contact          Boolean?
-  paid             Boolean?          @default(false)
-  amountPaid       Float?            @default(0)
-  venueId          String
-  venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  personList       Person[]
-  histories        History[]
-  payments         Payment[]
-  dateEvents       DateEvent[]
-  proposalCosts    ProposalCost[]
-  proposalServices ProposalService[]
-  noificationList  Notification[]
-  scheduleList     Schedule[]
-  documents        Document[]
+  guestNumber         Int
+  knowsVenue          Boolean           @default(false)
+  startDate           DateTime
+  endDate             DateTime
+  email               String
+  whatsapp            String
+  description         String            @db.LongText
+  hostMessage         String?           @db.LongText
+  basePrice           Float
+  extraHoursQty       Int
+  extraHourPrice      Float
+  totalAmount         Float
+  termsAccepted       Boolean           @default(false)
+  approved            Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  contact             Boolean?
+  paid                Boolean?          @default(false)
+  amountPaid          Float?            @default(0)
+  venueId             String
+  venue               Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  personList          Person[]
+  histories           History[]
+  payments            Payment[]
+  dateEvents          DateEvent[]
+  proposalCosts       ProposalCost[]
+  proposalServices    ProposalService[]
+  noificationList     Notification[]
+  scheduleList        Schedule[]
+  documents           Document[]
 
   @@index([venueId])
   @@index([trafficSource])
@@ -375,7 +375,7 @@ model Venue {
   attachments           Attachment[]
   goals                 Goal[]
   EmailConfig           EmailConfig[]
-  userVenuePermissions   UserVenuePermission[]
+  userVenuePermissions  UserVenuePermission[]
 
   @@index([organizationId])
   @@map("venue")
@@ -410,14 +410,18 @@ model SeasonalFee {
 }
 
 model Contact {
-  id       String       @id @default(uuid())
-  name     String
-  role     String
-  whatsapp String
-  venueId  String
-  venue    Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  email    String?
-  type     ContactType? @default(TEAM_MEMBER)
+  id           String       @id @default(uuid())
+  name         String
+  role         String?
+  instagramUrl String?
+  facebookUrl  String?
+  tiktokUrl    String?
+  url          String?
+  whatsapp     String
+  venueId      String
+  venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  email        String?
+  type         ContactType? @default(TEAM_MEMBER)
 
   @@index([venueId])
   @@map("contact")
