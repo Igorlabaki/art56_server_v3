@@ -48,13 +48,16 @@ export class PrismaContactRepository implements ContactRepositoryInterface {
     });
   }
 
-  async list({ venueId, name }: ListContactRequestQuerySchema): Promise<Contact[]> {
+  async list({ venueId, name, type }: ListContactRequestQuerySchema): Promise<Contact[]> {
     return await this.prisma.contact.findMany({
       where: {
         ...(name && {
           name: {
             contains: name
           }
+        }),
+        ...(type && {
+          type: type
         }),
         venueId
       },
