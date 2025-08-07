@@ -49,6 +49,7 @@ export interface TrafficSourceTypes {
   tikTok: number;
   facebook: number;
   instagram: number;
+  airbnb: number;
 }
 
 export interface TrafegoCountResponse {

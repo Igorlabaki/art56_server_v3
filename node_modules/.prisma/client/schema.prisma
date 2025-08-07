@@ -358,6 +358,7 @@ model Venue {
   pricePerPersonHour    Float?
   standardEventDuration Int?
   maxGuest              Int
+  tieredPrice           TieredPrice?
   organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   texts                 Text[]
   contacts              Contact[]
@@ -379,6 +380,28 @@ model Venue {
 
   @@index([organizationId])
   @@map("venue")
+}
+
+model TieredPrice {
+  id        String   @id @default(uuid())
+  venueId   String   @unique
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  tiers     Tier[] // Lista de faixas dentro de um TieredPrice
+  createdAt DateTime @default(now())
+
+  @@map("tiered_price")
+}
+
+model Tier {
+  id            String      @id @default(uuid())
+  tieredPriceId String
+  minGuests     Int
+  maxGuests     Int
+  price         Float
+  tieredPrice   TieredPrice @relation(fields: [tieredPriceId], references: [id], onDelete: Cascade)
+
+  @@index([tieredPriceId])
+  @@map("tier")
 }
 
 model Goal {
@@ -720,6 +743,7 @@ enum PricingModel {
   PER_DAY
   PER_PERSON_DAY
   PER_PERSON_HOUR
+  TIERED
 }
 
 enum DocumentType {

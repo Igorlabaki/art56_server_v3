@@ -88,7 +88,7 @@ class CreateDateEventUseCase {
         }
 
 
-        if (newDateEvent) {
+        if (newDateEvent && !proposalId) {
             await this.notificationRepository.create({
                 type: "OTHER",
                 venueId: venueId,

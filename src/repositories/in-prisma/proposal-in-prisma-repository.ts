@@ -171,14 +171,17 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
           .trafficSource || 0,
     };
 
-    const trafegoList = Object.keys(trafficData)?.map((key) => ({
-      name: key,
-      count: trafficData[key as keyof TrafficSourceTypes],
-    }));
+    // Criar lista apenas com as fontes de tráfego (excluindo "all")
+    const trafegoList = Object.keys(trafficData)
+      .filter(key => key !== "all") // Excluir o campo "all"
+      .map((key) => ({
+        name: key,
+        count: trafficData[key as keyof TrafficSourceTypes],
+      }));
 
-    // Ordenando baseado no valor de 'todos'
+    // Ordenando baseado no valor de cada fonte
     const sortedSources = trafegoList.sort(
-      (a, b) => b.count / trafficData?.all - a.count / trafficData?.all
+      (a, b) => b.count - a.count
     );
 
     return { all: trafficData.all, sortedSources };
