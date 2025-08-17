@@ -35,7 +35,7 @@ proposalRoutes.put("/updatePerPerson",ensureAuthenticate, async (req, res) => {
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 }) 
 
-proposalRoutes.put("/updatePersonalInfo",ensureAuthenticate, async (req, res) => {
+proposalRoutes.put("/updatePersonalInfo", async (req, res) => {
     const controller = updateProposalPersonalInfoFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 }) 
