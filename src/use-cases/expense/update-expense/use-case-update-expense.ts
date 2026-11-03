@@ -3,6 +3,7 @@ import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-er
 import { UpdateExpenseRequestParams } from "../../../zod/expense/update-expense-params-schema"
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { ExpenseRepositoryInterface } from "../../../repositories/interface/expense-repository-interface"
+import { parseDateOnlyWallClock } from "../../../functions/wall-clock-datetime"
 
 class UpdateExpenseUseCase {
     constructor(private expenseRepository: ExpenseRepositoryInterface) { }
@@ -16,7 +17,7 @@ class UpdateExpenseUseCase {
         }
         //
         if (param.data.paymentDate) {
-            param.data.paymentDate = new Date(param.data.paymentDate).toISOString();
+            param.data.paymentDate = parseDateOnlyWallClock(param.data.paymentDate).toISOString();
         }
 
 

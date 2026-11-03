@@ -1,6 +1,13 @@
-import { format, isWithinInterval, parse, setYear } from "date-fns";
+import {
+    formatWallClockDateBr,
+    isWallClockDayInRange,
+    wallClockMonth,
+    wallClockWeekdayEn,
+    wallClockYear,
+} from "../../../functions/wall-clock-datetime";
 import { differenceInCalendarDays } from 'date-fns';
 import { transformDate } from "../../../functions/transform-date";
+import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -75,13 +82,7 @@ class CreateProposalPerDayUseCase {
                 venueId: params.venueId,
                 proposalId: newProposal.id,
                 content: `Novo orcamento do(a) ${newProposal.completeClientName
-                    } de permuta, para data  ${format(
-                        newProposal?.startDate,
-                        "dd/MM/yyyy"
-                    )} ate  a data ${format(
-                        newProposal?.endDate,
-                        "dd/MM/yyyy"
-                    )}`,
+                    } de permuta, para data  ${formatWallClockDateBr(newProposal.startDate)} ate  a data ${formatWallClockDateBr(newProposal.endDate)}`,
                 type: "PROPOSAL",
             });
 
@@ -118,18 +119,12 @@ class CreateProposalPerDayUseCase {
             let pricePerDay = venue.pricePerDay;
 
             if (seasonalFee?.length) {
-                const year = startDate.getFullYear();
-                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
+                const eventDayOfWeek = wallClockWeekdayEn(startDate);
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
-                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
-                    if (end < start) {
-                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
-                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, { start, end })
+                        ? isWallClockDayInRange(startDate, fee.startDay, fee.endDay)
                         : false;
                     const isAffectedDay = fee.affectedDays
                         ? fee.affectedDays.split(",").map(d => d.trim().toLowerCase()).includes(eventDayOfWeek) || fee.affectedDays.includes("all")
@@ -142,8 +137,8 @@ class CreateProposalPerDayUseCase {
 
             const totalPerSelectMonth = await this.proposalRepository.monthlyRevenueAnalysis({
                 venueId: venue.id,
-                year: startDate.getFullYear(),
-                month: startDate.getMonth() + 1,
+                year: wallClockYear(startDate),
+                month: wallClockMonth(startDate),
                 approved: true
             })
 
@@ -151,7 +146,7 @@ class CreateProposalPerDayUseCase {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
-                    targetMonth: String(startDate.getMonth() + 1)
+                    targetMonth: String(wallClockMonth(startDate))
                 })
 
                 if (goal?.increasePercent) {
@@ -163,9 +158,9 @@ class CreateProposalPerDayUseCase {
                 
                 let finalBasePrice = basePrice;
                 let finalTotalAmount = totalAmount;
-                if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                    finalBasePrice = venue.minimumPrice;
-                    finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+                if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                    finalBasePrice = resolveVenueMinimumPrice(venue, startDate);
+                    finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
                 }
 
                 const createProposalPerPersonInDb = {
@@ -186,7 +181,7 @@ class CreateProposalPerDayUseCase {
                 await this.notificationRepository.create({
                     venueId: params.venueId,
                     proposalId: newProposal.id,
-                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`,
+                    content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${formatWallClockDateBr(newProposal.startDate)}`,
                     type: "PROPOSAL",
                 });
 
@@ -219,9 +214,9 @@ class CreateProposalPerDayUseCase {
             const totalAmount = basePrice + (totalAmountService || 0);
             let finalBasePrice = basePrice;
             let finalTotalAmount = totalAmount;
-            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                finalBasePrice = venue.minimumPrice;
-                finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                finalBasePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
             }
 
             const createProposalPerDayInDb = {
@@ -242,7 +237,7 @@ class CreateProposalPerDayUseCase {
             await this.notificationRepository.create({
                 venueId: params.venueId,
                 proposalId: newProposal.id,
-                content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")} até ${format(newProposal.endDate, "dd/MM/yyyy")}`,
+                content: `Novo orçamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${formatWallClockDateBr(newProposal.startDate)} até ${formatWallClockDateBr(newProposal.endDate)}`,
                 type: "PROPOSAL",
             });
 
@@ -274,18 +269,12 @@ class CreateProposalPerDayUseCase {
             let pricePerPersonDay = venue.pricePerPersonDay;
 
             if (seasonalFee?.length) {
-                const year = startDate.getFullYear();
-                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
+                const eventDayOfWeek = wallClockWeekdayEn(startDate);
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
-                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
-                    if (end < start) {
-                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
-                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, { start, end })
+                        ? isWallClockDayInRange(startDate, fee.startDay, fee.endDay)
                         : false;
                     const isAffectedDay = fee.affectedDays
                         ? fee.affectedDays.split(",").map(d => d.trim().toLowerCase()).includes(eventDayOfWeek) || fee.affectedDays.includes("all")
@@ -298,8 +287,8 @@ class CreateProposalPerDayUseCase {
 
             const totalPerSelectMonth = await this.proposalRepository.monthlyRevenueAnalysis({
                 venueId: venue.id,
-                year: startDate.getFullYear(),
-                month: startDate.getMonth() + 1,
+                year: wallClockYear(startDate),
+                month: wallClockMonth(startDate),
                 approved: true
             })
 
@@ -307,7 +296,7 @@ class CreateProposalPerDayUseCase {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
-                    targetMonth: String(startDate.getMonth() + 1)
+                    targetMonth: String(wallClockMonth(startDate))
                 })
 
                 if (goal?.increasePercent) {
@@ -319,9 +308,9 @@ class CreateProposalPerDayUseCase {
 
                 let finalBasePrice = basePrice;
                 let finalTotalAmount = totalAmount;
-                if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                    finalBasePrice = venue.minimumPrice;
-                    finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+                if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                    finalBasePrice = resolveVenueMinimumPrice(venue, startDate);
+                    finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
                 }
 
                 createProposalPerDayInDb = {
@@ -353,13 +342,7 @@ class CreateProposalPerDayUseCase {
                             currency: "BRL",
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
-                        }).format(newProposal.totalAmount)}, para data  ${format(
-                            newProposal?.startDate,
-                            "dd/MM/yyyy"
-                        )} ate  a data ${format(
-                            newProposal?.endDate,
-                            "dd/MM/yyyy"
-                        )}`,
+                        }).format(newProposal.totalAmount)}, para data  ${formatWallClockDateBr(newProposal.startDate)} ate  a data ${formatWallClockDateBr(newProposal.endDate)}`,
                     type: "PROPOSAL",
                 });
 
@@ -401,9 +384,9 @@ class CreateProposalPerDayUseCase {
             const totalAmount = basePrice + (totalAmountService || 0);
             let finalBasePrice = basePrice;
             let finalTotalAmount = totalAmount;
-            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                finalBasePrice = venue.minimumPrice;
-                finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                finalBasePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
             }
 
             createProposalPerDayInDb = {
@@ -435,13 +418,7 @@ class CreateProposalPerDayUseCase {
                         currency: "BRL",
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                    }).format(newProposal.totalAmount)}, para data  ${format(
-                        newProposal?.startDate,
-                        "dd/MM/yyyy"
-                    )} ate  a data ${format(
-                        newProposal?.endDate,
-                        "dd/MM/yyyy"
-                    )}`,
+                    }).format(newProposal.totalAmount)}, para data  ${formatWallClockDateBr(newProposal.startDate)} ate  a data ${formatWallClockDateBr(newProposal.endDate)}`,
                 type: "PROPOSAL",
             });
 
@@ -480,12 +457,8 @@ class CreateProposalPerDayUseCase {
         } else {
             const basePrice = (Number(totalAmountInput) || 0) - (totalAmountService || 0);
             const totalAmount = Number(totalAmountInput) || 0;
-            let finalBasePrice = basePrice;
-            let finalTotalAmount = totalAmount;
-            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                finalBasePrice = venue.minimumPrice;
-                finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
-            }
+            const finalBasePrice = basePrice;
+            const finalTotalAmount = totalAmount;
 
             createProposalPerDayInDb = {
                 ...rest,
@@ -516,13 +489,7 @@ class CreateProposalPerDayUseCase {
                         currency: "BRL",
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                    }).format(newProposal.totalAmount)}, para data  ${format(
-                        newProposal?.startDate,
-                        "dd/MM/yyyy"
-                    )} ate  a data ${format(
-                        newProposal?.endDate,
-                        "dd/MM/yyyy"
-                    )}`,
+                    }).format(newProposal.totalAmount)}, para data  ${formatWallClockDateBr(newProposal.startDate)} ate  a data ${formatWallClockDateBr(newProposal.endDate)}`,
                 type: "PROPOSAL",
             });
 

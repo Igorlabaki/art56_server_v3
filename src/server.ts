@@ -1,3 +1,4 @@
+import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import { textRoutes } from "./router/text";
@@ -24,11 +25,14 @@ import { notificationRoutes } from "./router/notification";
 import { userorganizationRoutes } from "./router/userOrganization";
 import { userVenuePermissionRoutes } from "./router/userVenuePermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
+import { minimumPricePeriodRoutes } from "./router/minimum-price-period";
+import { venueRuleRoutes } from "./router/venue-rule";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
 import { emailRoutes } from "./router/email";
 import { emailConfigRoutes } from "./router/email-config";
 import { userOrganizationPermissionRoutes } from "./router/useOrganizationPermission";
+import { integrationsGoogleCalendarRoutes } from "./router/integrations-google-calendar";
 
 const app = express();
 
@@ -67,12 +71,15 @@ app.use('/schedule', scheduleRoutes)
 app.use('/dateEvent', dateEventRoutes)
 app.use('/attachment', attachmentRoutes)
 app.use('/seasonalFee', seasonalFeeRoutes)
+app.use('/minimumPricePeriod', minimumPricePeriodRoutes)
+app.use('/venue-rule', venueRuleRoutes)
 app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
 app.use('/userVenuePermission', userVenuePermissionRoutes)
 app.use('/userOrganization', userorganizationRoutes)
 app.use('/emailConfig', emailConfigRoutes)
 app.use('/userOrganizationPermission', userOrganizationPermissionRoutes)
+app.use('/integrations/google-calendar', integrationsGoogleCalendarRoutes)
 
 app.get('/', (req, res) => {
   res.send('API online!');

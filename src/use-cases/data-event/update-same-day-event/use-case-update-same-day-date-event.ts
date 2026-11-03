@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatWallClockDateBr } from "../../../functions/wall-clock-datetime";
 import { transformDate } from "../../../functions/transform-date";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { HttDateEventAvailableError } from "../../../errors/errors-type/http-date-not-available-error";
@@ -70,7 +70,7 @@ class UpdateSameDayDateEventUseCase {
                 type: updateDateEvent.type,
                 dataEventId: updateDateEvent.id,
                 venueId: updateDateEvent.venueId,
-                content: `Um(a) ${typeNotification?.display} foi atualziada(a), para data  ${format(startDate, "dd/MM/yyyy")}`,
+                content: `Um(a) ${typeNotification?.display} foi atualziada(a), para data  ${formatWallClockDateBr(startDate)}`,
             });
         }
 
@@ -80,7 +80,7 @@ class UpdateSameDayDateEventUseCase {
                 type: "OTHER",
                 dataEventId: updateDateEvent.id,
                 venueId: updateDateEvent.venueId,
-                content: `${updateDateEvent.title} foi atualizada(a), para data ${format(startDate, "dd/MM/yyyy")}`,
+                content: `${updateDateEvent.title} foi atualizada(a), para data ${formatWallClockDateBr(startDate)}`,
             });
         }
 

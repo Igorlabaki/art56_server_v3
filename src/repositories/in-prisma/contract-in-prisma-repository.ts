@@ -4,6 +4,13 @@ import { CreateContractRequestParams } from "../../zod/contract/create-contract-
 import { ListContractRequestQuerySchema } from "../../zod/contract/list-contract-query-schema";
 import { UpdateContractRequestParams } from "../../zod/contract/update-contract-params-schema";
 
+const clausesOrderedInclude = {
+  orderBy: [
+    { position: "asc" as const },
+    { createdAt: "asc" as const },
+  ],
+};
+
 export class PrismaContractRepository implements ContractRepositoryInterface {
   constructor(private readonly prisma: PrismaClient) { }
 
@@ -30,11 +37,7 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
         ...params,
       },
       include: {
-        clauses: {
-          orderBy: {
-            position: "asc"
-          }
-        }
+        clauses: clausesOrderedInclude,
       }
     });
   }
@@ -53,7 +56,7 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
         id: reference,
       },
       include: {
-        clauses: true
+        clauses: clausesOrderedInclude,
       }
     });
   }
@@ -144,7 +147,7 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
     return this.prisma.contract.findUnique({
       where: { id: contractId },
       include: { 
-        clauses: true, 
+        clauses: clausesOrderedInclude,
         venues: { select: { id: true } },
       },
     });
@@ -169,7 +172,7 @@ export class PrismaContractRepository implements ContractRepositoryInterface {
         organizationId,
       },
       include: {
-        clauses: true,
+        clauses: clausesOrderedInclude,
         venues: {
           select: {
             id: true,

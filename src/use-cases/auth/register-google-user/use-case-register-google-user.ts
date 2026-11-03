@@ -15,8 +15,10 @@ class RegisterGoogleUserUseCase {
     ) { }
 
     async execute({ googleToken, userData }: RegisterGoogleUserRequestParams) {
+        console.log("[RegisterGoogleUser] email:", userData?.email);
         // Validate if user exists
         const userAlreadyExists = await this.userRepository.getByEmail(userData.email)
+        console.log("[RegisterGoogleUser] userAlreadyExists:", !!userAlreadyExists, userAlreadyExists ? "id=" + userAlreadyExists.id : "");
 
         if (userAlreadyExists) {
             // Se usuário existe, verifica se já tem Google vinculado
@@ -60,6 +62,7 @@ class RegisterGoogleUserUseCase {
             return { accessToken, session }
         }
 
+        console.log("[RegisterGoogleUser] novo usuário, registrando...");
         const passwordHash = await hash(userData.password, 8)
         // Se não existe, registra novo usuário
         const newUser = await this.userRepository.register({

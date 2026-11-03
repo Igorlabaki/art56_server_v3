@@ -1,4 +1,4 @@
-import { parse } from "date-fns";
+import { parseDateOnlyWallClock } from "../../../functions/wall-clock-datetime";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { HttConfigurationError } from "../../../errors/errors-type/http-configuration-error";
 import { CreatePaymentRequestParams } from "../../../zod/payment/create-payment-params-schema";
@@ -29,7 +29,7 @@ class CreatePaymentUseCase {
     }
 
     console.log(paymentDate, "paymentDate")
-    const data = parse(paymentDate, "dd/MM/yyyy", new Date());
+    const data = parseDateOnlyWallClock(paymentDate);
     console.log(data, "data")
     const newPayment = await this.paymentRepository.create({
       venueId,

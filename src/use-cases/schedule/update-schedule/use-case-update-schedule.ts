@@ -1,4 +1,5 @@
 import { transformDate } from "../../../functions/transform-date";
+import { wallClockDateIsoFromDate } from "../../../functions/wall-clock-datetime";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { UpdateScheduleRequestParams } from "../../../zod/schedule/update-schedule-params-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -30,7 +31,7 @@ class UpdateScheduleUseCase {
         }
         //
 
-        const { startDate, endDate } = transformDate({ date: proposal.startDate.toLocaleDateString('pt-BR'), endHour: endHour, startHour: startHour, divisor: "/" })
+        const { startDate, endDate } = transformDate({ date: wallClockDateIsoFromDate(proposal.startDate), endHour: endHour, startHour: startHour })
 
         const updatedSchedule = await this.scheduleRepository.update({
             scheduleId,

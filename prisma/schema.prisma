@@ -143,7 +143,7 @@ model Proposal {
   knowsVenue          Boolean           @default(false)
   startDate           DateTime
   endDate             DateTime
-  email               String
+  email               String?
   whatsapp            String
   description         String            @db.LongText
   hostMessage         String?           @db.LongText
@@ -236,6 +236,20 @@ model Service {
   @@map("service")
 }
 
+model VenueRule {
+  id        String   @id @default(uuid())
+  title     String?  @db.VarChar(120)
+  text      String   @db.LongText
+  position  Int      @default(0)
+  venueId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+  @@map("venue_rule")
+}
+
 model Payment {
   id            String         @id @default(uuid())
   proposalId    String
@@ -305,22 +319,42 @@ model Notification {
 }
 
 model DateEvent {
-  id            String         @id @default(cuid())
-  title         String
-  startDate     DateTime
-  endDate       DateTime
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  proposalId    String?
-  venueId       String
-  type          DateEventType
-  venue         Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  proposal      Proposal?      @relation(fields: [proposalId], references: [id], onDelete: Cascade)
-  notifications Notification[]
+  id                String         @id @default(cuid())
+  title             String
+  startDate         DateTime
+  endDate           DateTime
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  proposalId        String?
+  venueId           String
+  type              DateEventType
+  googleEventId     String?
+  googleCalendarId  String?
+  venue             Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  proposal          Proposal?      @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  notifications     Notification[]
 
   @@index([proposalId])
   @@index([venueId])
   @@map("dataEvent")
+}
+
+model GoogleCalendarIntegration {
+  id                    String   @id @default(uuid())
+  userId                String
+  organizationId        String
+  googleCalendarId      String?
+  accessTokenEncrypted  String
+  refreshTokenEncrypted String
+  scope                 String
+  tokenExpiresAt        DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("google_calendar_integration")
 }
 
 model Venue {
@@ -365,6 +399,7 @@ model Venue {
   images                Image[]
   expenses              Expense[]
   services              Service[]
+  rules                 VenueRule[]
   Payment               Payment[]
   questions             Question[]
   proposals             Proposal[]
@@ -372,6 +407,7 @@ model Venue {
   ownerVenue            OwnerVenue[]
   notifications         Notification[]
   seasonalFee           SeasonalFee[]
+  minimumPricePeriods   MinimumPricePeriod[]
   contracts             Contract[]            @relation("ContractVenues")
   attachments           Attachment[]
   goals                 Goal[]
@@ -430,6 +466,21 @@ model SeasonalFee {
   venue        Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+}
+
+model MinimumPricePeriod {
+  id        String   @id @default(uuid())
+  title     String
+  startDay  String
+  endDay    String
+  price     Float
+  venueId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+  @@map("minimum_price_period")
 }
 
 model Contact {

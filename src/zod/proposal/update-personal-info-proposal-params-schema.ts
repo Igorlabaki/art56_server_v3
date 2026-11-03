@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredProposalEmail } from "./proposal-email-schema";
 
 export const updatePersonalInfoProposalSchema = z.object({
     proposalId: z.string(),
@@ -15,6 +16,7 @@ export const updatePersonalInfoProposalSchema = z.object({
         cnpj: z.string().optional(),
         completeClientName: z.string(),
         completeCompanyName: z.string().optional(),
+        email: requiredProposalEmail,
     })
 });
 

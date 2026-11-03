@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalProposalEmail } from "./proposal-email-schema";
 
 export const createProposalPerPersonRequestParamsSchema = z.object({
     date: z.string(),
@@ -10,7 +11,7 @@ export const createProposalPerPersonRequestParamsSchema = z.object({
     guestNumber: z.string(),
     description: z.string(),
     knowsVenue: z.boolean(),
-    email: z.string().email(),
+    email: optionalProposalEmail,
     userId: z.string().optional(),
     serviceIds: z.array(z.string()),
     totalAmountInput: z.string().optional(),

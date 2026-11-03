@@ -6,7 +6,7 @@ import { handleErrors } from "../../../errors/error-handler";
 import { CreatePaymentUseCase } from "./use-case-create-payment";
 import { CreatePaymentRequestParams, createPaymentSchema } from "../../../zod/payment/create-payment-params-schema";
 import { CreateDocumentUseCase } from "../../document/create-document/use-case-create-document";
-import { format, parse } from "date-fns";
+import { formatWallClockDateBr, parseDateOnlyWallClock } from "../../../functions/wall-clock-datetime";
 
 class CreatePaymentController {
     constructor(private createPaymentUseCase: CreatePaymentUseCase, private createDocumentUseCase : CreateDocumentUseCase) { }
@@ -36,8 +36,7 @@ class CreatePaymentController {
                 const response = await this.createPaymentUseCase.execute({ ...req.body, imageUrl: fileUrl });
                 console.log(response)
                 if(response.success){
-                    const parsedDate = parse(body.paymentDate, "dd/MM/yyyy", new Date());
-                    await this.createDocumentUseCase.execute({title: `Comprovante-${format(parsedDate, "dd/MM/yyyy")}` ,paymentId:response.data.id , imageUrl: fileUrl,fileType: "IMAGE", proposalId: body.proposalId});
+                    await this.createDocumentUseCase.execute({title: `Comprovante-${formatWallClockDateBr(parseDateOnlyWallClock(body.paymentDate))}` ,paymentId:response.data.id , imageUrl: fileUrl,fileType: "IMAGE", proposalId: body.proposalId});
                 }
           
                 return resp.status(201).json(response);

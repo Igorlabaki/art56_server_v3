@@ -7,6 +7,7 @@ import { HttConfigurationError } from "./errors-type/http-configuration-error";
 import { HttpResourceNotFoundError } from "./errors-type/http-resource-not-found-error";
 import { HttDateEventAvailableError } from "./errors-type/http-date-not-available-error";
 import { HttpInvalidCredentialsError } from "./errors-type/http-invalid-credentials-error";
+import { HttpForbiddenError } from "./errors-type/http-forbidden-error";
 import { PrismaClientKnownRequestError, PrismaClientValidationError } from "@prisma/client/runtime/library";
 
 export const handleErrors = (error: any) => {
@@ -19,7 +20,8 @@ export const handleErrors = (error: any) => {
         error instanceof HttConfigurationError ||
         error instanceof HttpResourceNotFoundError ||
         error instanceof HttDateEventAvailableError ||
-        error instanceof HttpInvalidCredentialsError
+        error instanceof HttpInvalidCredentialsError ||
+        error instanceof HttpForbiddenError
     ) {
         return {
             statusCode: error.statusCode,
@@ -86,6 +88,9 @@ export const handleErrors = (error: any) => {
             }
         };
     }
+    // [DEBUG] Log de erros que viram 500
+    console.error("[handleErrors] 500 - Server Error:", error?.message ?? String(error));
+    if (error instanceof Error && error.stack) console.error("[handleErrors] stack:", error.stack);
     // Resposta padrão para erros desconhecidos
     return {
         statusCode: 500,

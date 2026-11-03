@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalProposalEmail } from "./proposal-email-schema";
 
 export const updateProposalInDbParam = z.object({
     proposalId: z.string(),
@@ -18,7 +19,7 @@ export const updateProposalInDbParam = z.object({
         description: z.string().optional(),
         knowsVenue: z.boolean().optional(),
         adressComplement: z.string().optional(),
-        email: z.string().email().optional(),
+        email: optionalProposalEmail.optional(),
         extraHoursQty: z.number().optional(),
         extraHourPrice: z.number().optional(),
         serviceIds: z.array(z.string()).optional(),

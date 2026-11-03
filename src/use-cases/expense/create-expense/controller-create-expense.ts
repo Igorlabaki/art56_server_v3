@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
 import { CreateExpenseUseCase } from "./use-case-create-expense";
 import { createExpenseRequestParams, CreateExpenseRequestParams } from "../../../zod/expense/create-expense-params-schema";
+import { parseDateOnlyWallClock } from "../../../functions/wall-clock-datetime";
 
 class CreateExpenseController {
     constructor(private createExpenseUseCase: CreateExpenseUseCase) { }
@@ -12,7 +13,7 @@ class CreateExpenseController {
 
             // Converte paymentDate para ISO-8601 se existir
             if (body.paymentDate) {
-                body.paymentDate = new Date(body.paymentDate).toISOString();
+                body.paymentDate = parseDateOnlyWallClock(body.paymentDate).toISOString();
             }
 
             // Validate the request parms

@@ -8,6 +8,7 @@ import { PrismaNotificationRepository } from "../../../repositories/in-prisma/no
 import { PrismaUserRepository } from "../../../repositories/in-prisma/user-in-prisma-repository";
 import { PrismaHistoryRepository } from "../../../repositories/in-prisma/history-in-prisma-repository";
 import { PrismaGoalRepository } from "../../../repositories/in-prisma/goal-in-prisma-repository";
+import { PrismaUserVenuePermissionRepository } from "../../../repositories/in-prisma/user-venue-permission-in-prisma-repository";
 
 export const createProposalPerDayFactory = (): CreateProposalPerDayController => {
     const prismaUserRepository = new PrismaUserRepository(prismaClient);
@@ -17,10 +18,12 @@ export const createProposalPerDayFactory = (): CreateProposalPerDayController =>
     const prismaServiceRepository = new PrismaServiceRepository(prismaClient);
     const prismaProposalRepository = new PrismaProposalRepository(prismaClient);
     const prismaNotificationRepository = new PrismaNotificationRepository(prismaClient);
+    const prismaUserVenuePermissionRepository = new PrismaUserVenuePermissionRepository(prismaClient);
     const createProposalPerDayUseCase = new CreateProposalPerDayUseCase(
         prismaUserRepository,
         prismaGoalRepository,
         prismaVenueRepository,
+        prismaUserVenuePermissionRepository,
         prismaServiceRepository,
         prismaHistoryRepository,
         prismaProposalRepository,

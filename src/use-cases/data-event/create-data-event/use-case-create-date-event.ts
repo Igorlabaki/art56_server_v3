@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatWallClockDateBr } from "../../../functions/wall-clock-datetime";
 import { transformDate } from "../../../functions/transform-date";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { HttDateEventAvailableError } from "../../../errors/errors-type/http-date-not-available-error";
@@ -83,7 +83,7 @@ class CreateDateEventUseCase {
                 venueId: venueId,
                 proposalId: proposalId,
                 type: newDateEvent.type,
-                content: `Um(a) ${typeNotification?.display} foi marcado(a), para data  ${format(startDate, "dd/MM/yyyy")}`,
+                content: `Um(a) ${typeNotification?.display} foi marcado(a), para data  ${formatWallClockDateBr(startDate)}`,
             });
         }
 
@@ -93,7 +93,7 @@ class CreateDateEventUseCase {
                 type: "OTHER",
                 venueId: venueId,
                 dataEventId: newDateEvent.id,
-                content: `${newDateEvent.title} foi marcado(a), para data ${format(startDate, "dd/MM/yyyy")}`,
+                content: `${newDateEvent.title} foi marcado(a), para data ${formatWallClockDateBr(startDate)}`,
             });
         }
 

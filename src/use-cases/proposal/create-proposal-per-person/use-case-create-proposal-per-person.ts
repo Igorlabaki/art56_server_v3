@@ -1,4 +1,10 @@
-import { format, isWithinInterval, parse, setYear } from "date-fns";
+import {
+    formatWallClockDateBr,
+    isWallClockDayInRange,
+    wallClockMonth,
+    wallClockWeekdayEn,
+    wallClockYear,
+} from "../../../functions/wall-clock-datetime";
 import { transformDate } from "../../../functions/transform-date";
 import { calcCustomTotalAmount } from "../../../functions/calc-custom-total-amount";
 import { calcStandartTotalAmount } from "../../../functions/calc-standart-total-amount";
@@ -14,6 +20,7 @@ import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { calcBasePrice } from "../../../functions/calc-base-price";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
+import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
 import { Payment, SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
 import { UserOrganizationRepositoryInterface } from "../../../repositories/interface/user-organization-repository-interface";
@@ -97,7 +104,7 @@ class CreateProposalPerPersonUseCase {
                 throw Error("Erro na conexao com o banco de dados")
             }
 
-            const notificationContent = `Novo orcamento do(a) ${newProposal.completeClientName} de permuta, para data ${format(newProposal?.startDate, "dd/MM/yyyy")}`;
+            const notificationContent = `Novo orcamento do(a) ${newProposal.completeClientName} de permuta, para data ${formatWallClockDateBr(newProposal.startDate)}`;
 
             // Criar notificação no banco
             await this.notificationRepository.create({
@@ -151,19 +158,13 @@ class CreateProposalPerPersonUseCase {
 
             // Aplica ajustes de sazonalidade no preço por pessoa
             if (seasonalFee?.length) {
-                const year = startDate.getFullYear();
-                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
+                const eventDayOfWeek = wallClockWeekdayEn(startDate);
 
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
-                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
-                    if (end < start) {
-                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
-                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, { start, end })
+                        ? isWallClockDayInRange(startDate, fee.startDay, fee.endDay)
                         : false;
 
                     const isAffectedDay = fee.affectedDays
@@ -179,8 +180,8 @@ class CreateProposalPerPersonUseCase {
 
             const totalPerSelectMonth = await this.proposalRepository.monthlyRevenueAnalysis({
                 venueId: venue.id,
-                year: startDate.getFullYear(),
-                month: startDate.getMonth() + 1,
+                year: wallClockYear(startDate),
+                month: wallClockMonth(startDate),
                 approved: true
             })
 
@@ -188,7 +189,7 @@ class CreateProposalPerPersonUseCase {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
-                    targetMonth: String(startDate.getMonth() + 1)
+                    targetMonth: String(wallClockMonth(startDate))
                 })
 
                 if (goal?.increasePercent) {
@@ -210,9 +211,9 @@ class CreateProposalPerPersonUseCase {
                 let basePrice = calculatedBasePrice;
                 let finalTotalAmount = totalAmount;
                 
-                if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                    basePrice = venue.minimumPrice;
-                    finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+                if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                    basePrice = resolveVenueMinimumPrice(venue, startDate);
+                    finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
                 }
 
                 // Cria a proposta
@@ -231,7 +232,7 @@ class CreateProposalPerPersonUseCase {
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
                 console.log("newProposal", newProposal)
-                const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+                const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${formatWallClockDateBr(newProposal.startDate)}`;
 
                 // Envia notificação e histórico
                 await this.notificationRepository.create({
@@ -285,9 +286,9 @@ class CreateProposalPerPersonUseCase {
             let basePrice = calculatedBasePrice;
             let finalTotalAmount = totalAmount;
             
-            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                basePrice = venue.minimumPrice;
-                finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                basePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
             }
 
             // Cria a proposta
@@ -306,7 +307,7 @@ class CreateProposalPerPersonUseCase {
             const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
             if (!newProposal) throw Error("Erro na conexao com o banco de dados");
 
-            const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+            const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${formatWallClockDateBr(newProposal.startDate)}`;
 
             // Envia notificação e histórico
             await this.notificationRepository.create({
@@ -356,19 +357,13 @@ class CreateProposalPerPersonUseCase {
 
             // Aplica ajustes de sazonalidade no preço por pessoa por hora
             if (seasonalFee?.length) {
-                const year = startDate.getFullYear();
-                const eventDayOfWeek = format(startDate, "EEEE").toLowerCase();
+                const eventDayOfWeek = wallClockWeekdayEn(startDate);
 
                 const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
                     const isSurcharge = fee.type === "SURCHARGE";
                     const feeValue = isSurcharge ? fee.fee : -fee.fee;
-                    const start = setYear(parse(fee.startDay ?? "", "dd/MM", new Date()), year);
-                    let end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year);
-                    if (end < start) {
-                        end = setYear(parse(fee.endDay ?? "", "dd/MM", new Date()), year + 1);
-                    }
                     const isInSeason = fee.startDay && fee.endDay
-                        ? isWithinInterval(startDate, { start, end })
+                        ? isWallClockDayInRange(startDate, fee.startDay, fee.endDay)
                         : false;
 
                     const isAffectedDay = fee.affectedDays
@@ -384,8 +379,8 @@ class CreateProposalPerPersonUseCase {
 
             const totalPerSelectMonth = await this.proposalRepository.monthlyRevenueAnalysis({
                 venueId: venue.id,
-                year: startDate.getFullYear(),
-                month: startDate.getMonth() + 1,
+                year: wallClockYear(startDate),
+                month: wallClockMonth(startDate),
                 approved: true
             })
 
@@ -393,7 +388,7 @@ class CreateProposalPerPersonUseCase {
                 const goal = await this.goalRepository.findByVenueAndRevenue({
                     venueId: venue.id,
                     monthlyRevenue: totalPerSelectMonth,
-                    targetMonth: String(startDate.getMonth() + 1)
+                    targetMonth: String(wallClockMonth(startDate))
                 })
 
                 if (goal?.increasePercent) {
@@ -414,9 +409,9 @@ class CreateProposalPerPersonUseCase {
                 let basePrice = calculatedBasePrice;
                 let finalTotalAmount = totalAmount;
                 
-                if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                    basePrice = venue.minimumPrice;
-                    finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+                if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                    basePrice = resolveVenueMinimumPrice(venue, startDate);
+                    finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
                 }
 
                 // Cria a proposta
@@ -435,7 +430,7 @@ class CreateProposalPerPersonUseCase {
                 const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
                 if (!newProposal) throw Error("Erro na conexao com o banco de dados");
 
-                const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+                const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${formatWallClockDateBr(newProposal.startDate)}`;
 
                 // Envia notificação e histórico
                 await this.notificationRepository.create({
@@ -483,9 +478,9 @@ class CreateProposalPerPersonUseCase {
             let basePrice = calculatedBasePrice;
             let finalTotalAmount = totalAmount;
             
-            if (venue.minimumPrice && totalAmount < venue.minimumPrice) {
-                basePrice = venue.minimumPrice;
-                finalTotalAmount = venue.minimumPrice + (totalAmountService || 0);
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                basePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
             }
 
             // Criação da proposta
@@ -504,7 +499,7 @@ class CreateProposalPerPersonUseCase {
             const newProposal = await this.proposalRepository.createPerPerson(createProposalPerPersonInDb);
             if (!newProposal) throw Error("Erro na conexão com o banco de dados");
 
-            const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${format(newProposal.startDate, "dd/MM/yyyy")}`;
+            const notificationContent = `Novo orcamento de ${newProposal.completeClientName} no valor de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(newProposal.totalAmount)}, para ${formatWallClockDateBr(newProposal.startDate)}`;
 
             // Envia notificação e histórico
             await this.notificationRepository.create({
@@ -597,10 +592,7 @@ class CreateProposalPerPersonUseCase {
                         currency: "BRL",
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                    }).format(newProposal.totalAmount)}, para data  ${format(
-                        newProposal?.startDate,
-                        "dd/MM/yyyy"
-                    )}`,
+                    }).format(newProposal.totalAmount)}, para data  ${formatWallClockDateBr(newProposal.startDate)}`,
                 type: "PROPOSAL",
             });
 

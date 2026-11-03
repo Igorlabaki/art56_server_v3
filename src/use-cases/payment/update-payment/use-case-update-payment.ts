@@ -1,4 +1,4 @@
-import { parse, isValid } from "date-fns";
+import { parseDateOnlyWallClock } from "../../../functions/wall-clock-datetime";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { HttConfigurationError } from "../../../errors/errors-type/http-configuration-error";
 import { UpdatePaymentRequestParams } from "../../../zod/payment/update-payment-params-schema";
@@ -36,8 +36,10 @@ class UpdatePaymentUseCase {
         }
 
         // Converte e valida a data
-        const formattedDate = parse(paymentDate, "dd/MM/yyyy", new Date());
-        if (!isValid(formattedDate)) {
+        let formattedDate: Date;
+        try {
+            formattedDate = parseDateOnlyWallClock(paymentDate);
+        } catch {
             throw new HttpBadRequestError("Data de pagamento inválida.");
         }
 

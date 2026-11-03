@@ -1,6 +1,8 @@
+import { SeasonalFee, Venue } from "@prisma/client";
 import { transformDate } from "../../../functions/transform-date";
+import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
 import { calcCustomTotalAmount } from "../../../functions/calc-custom-total-amount";
-import { calcStandartTotalAmount } from "../../../functions/calc-standart-total-amount";
+import { adjustProposalUnitPrice } from "../../../functions/adjust-proposal-unit-price";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
 import { UpdateProposalInDbParam } from "../../../zod/proposal/update-proposal-in-db-params-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -8,6 +10,7 @@ import { VenueRepositoryInterface } from "../../../repositories/interface/venue-
 import { HistoryRepositoryInterface } from "../../../repositories/interface/history-repository-interface";
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
+import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
 import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
 import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
@@ -19,6 +22,7 @@ class UpdateProposalPerPersonUseCase {
         private serviceRepository: ServiceRepositoryInterface,
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
+        private goalRepository: GoalRepositoryInterface,
     ) { }
 
     async execute(param: UpdateProposalPerPersonRequestParams) {
@@ -115,18 +119,29 @@ class UpdateProposalPerPersonUseCase {
             });
 
             const eventDurantion = calcEventDuration(startDate, endDate);
+            const venueWithFees = venue as Venue & { seasonalFee?: SeasonalFee[] };
+            const { unitPrice: pricePerPerson } = await adjustProposalUnitPrice({
+                unitPrice: venue.pricePerPerson,
+                seasonalFee: venueWithFees.seasonalFee,
+                startDate,
+                venueId: venue.id,
+                proposalRepository: this.proposalRepository,
+                goalRepository: this.goalRepository,
+            });
 
-            const basePrice = Number(guestNumber) * venue.pricePerPerson
+            const calculatedBasePrice = Number(guestNumber) * pricePerPerson;
+            const extraHourPrice = calcExtraHourPrice(calculatedBasePrice);
+            const extraHoursQty = venue.standardEventDuration
+                ? calcExtraHoursQty(eventDurantion, venue.standardEventDuration)
+                : 0;
+            const totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
 
-            const extraHourPrice = calcExtraHourPrice(basePrice);
-            const extraHoursQty = calcExtraHoursQty(eventDurantion, Number(venue.standardEventDuration));
-
-            const totalAmount = basePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
-
-            // Se tiver preço mínimo e o total for menor, usa o mínimo
-            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
-                ? venue.minimumPrice
-                : totalAmount;
+            let basePrice = calculatedBasePrice;
+            let finalTotalAmount = totalAmount;
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                basePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
+            }
 
             updateProposalInDbParam = {
                 data: {
@@ -194,16 +209,41 @@ class UpdateProposalPerPersonUseCase {
             });
 
             const eventDurantion = calcEventDuration(startDate, endDate);
+            const venueWithFees = venue as Venue & { seasonalFee?: SeasonalFee[] };
+            const { unitPrice: pricePerPersonHour, hasMonthlyRevenue } = await adjustProposalUnitPrice({
+                unitPrice: venue.pricePerPersonHour,
+                seasonalFee: venueWithFees.seasonalFee,
+                startDate,
+                venueId: venue.id,
+                proposalRepository: this.proposalRepository,
+                goalRepository: this.goalRepository,
+            });
 
-            const calcBasePrice = eventDurantion * (Number(guestNumber) * venue.pricePerPersonHour)
+            let calculatedBasePrice: number;
+            let extraHourPrice: number;
+            let extraHoursQty: number;
+            let totalAmount: number;
 
-            const extraHourPrice = calcBasePrice / eventDurantion;
-            const totalAmount = calcBasePrice + (totalAmountService || 0);
+            if (hasMonthlyRevenue) {
+                calculatedBasePrice = Number(guestNumber) * pricePerPersonHour;
+                extraHourPrice = calcExtraHourPrice(calculatedBasePrice);
+                extraHoursQty = venue.standardEventDuration
+                    ? calcExtraHoursQty(eventDurantion, venue.standardEventDuration)
+                    : 0;
+                totalAmount = calculatedBasePrice + (totalAmountService || 0) + extraHourPrice * extraHoursQty;
+            } else {
+                calculatedBasePrice = eventDurantion * (Number(guestNumber) * pricePerPersonHour);
+                extraHourPrice = calculatedBasePrice / eventDurantion;
+                extraHoursQty = 0;
+                totalAmount = calculatedBasePrice + (totalAmountService || 0);
+            }
 
-            // Se tiver preço mínimo e o total for menor, usa o mínimo
-            const finalTotalAmount = venue.minimumPrice && totalAmount < venue.minimumPrice
-                ? venue.minimumPrice
-                : totalAmount;
+            let basePrice = calculatedBasePrice;
+            let finalTotalAmount = totalAmount;
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                basePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
+            }
 
             updateProposalInDbParam = {
                 data: {
@@ -212,8 +252,8 @@ class UpdateProposalPerPersonUseCase {
                     startDate,
                     totalAmount: finalTotalAmount,
                     extraHourPrice,
-                    extraHoursQty: 0,
-                    basePrice: calcBasePrice,
+                    extraHoursQty,
+                    basePrice,
                     serviceIds,
                     guestNumber: Number(guestNumber)
                 },

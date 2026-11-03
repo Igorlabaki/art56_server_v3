@@ -11,7 +11,7 @@ export interface CreateProposalInDbParams {
   guestNumber: number
   startDate: Date
   venueId: string
-  email: string
+  email: string | null
   whatsapp: string
   basePrice: number
   type: ProposalType
@@ -32,7 +32,7 @@ export type ProposalWithRelations = Proposal & {
 export interface ItemListProposalResponse{
   id: string,
   completeClientName: string,
-  email: string,
+  email: string | null,
   totalAmount: number,
 }
 

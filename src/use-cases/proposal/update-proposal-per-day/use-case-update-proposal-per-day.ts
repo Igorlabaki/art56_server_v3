@@ -1,6 +1,9 @@
 
+import { SeasonalFee, Venue } from "@prisma/client";
 import { differenceInCalendarDays } from "date-fns";
 import { transformDate } from "../../../functions/transform-date";
+import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
+import { adjustProposalUnitPrice } from "../../../functions/adjust-proposal-unit-price";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
 import { UpdateProposalInDbParam } from "../../../zod/proposal/update-proposal-in-db-params-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -8,6 +11,7 @@ import { VenueRepositoryInterface } from "../../../repositories/interface/venue-
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface";
 import { HistoryRepositoryInterface } from "../../../repositories/interface/history-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
+import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
 import { UpdateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
 
 class UpdateProposalPerDayUseCase {
@@ -17,6 +21,7 @@ class UpdateProposalPerDayUseCase {
         private serviceRepository: ServiceRepositoryInterface,
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
+        private goalRepository: GoalRepositoryInterface,
     ) { }
 
     async execute(param: UpdateProposalPerDayRequestParams) {
@@ -109,8 +114,23 @@ class UpdateProposalPerDayUseCase {
         if(Number(totalAmountInput) === proposal.totalAmount && venue.pricingModel === "PER_DAY" && venue.pricePerDay){
 
             const daysBetween = differenceInCalendarDays(endDate, startDate);
-            const basePrice = daysBetween * venue.pricePerDay
-            const totalAmount = basePrice + (totalAmountService || 0)
+            const venueWithFees = venue as Venue & { seasonalFee?: SeasonalFee[] };
+            const { unitPrice: pricePerDay } = await adjustProposalUnitPrice({
+                unitPrice: venue.pricePerDay,
+                seasonalFee: venueWithFees.seasonalFee,
+                startDate,
+                venueId: venue.id,
+                proposalRepository: this.proposalRepository,
+                goalRepository: this.goalRepository,
+            });
+            const calculatedBasePrice = daysBetween * pricePerDay;
+            const totalAmount = calculatedBasePrice + (totalAmountService || 0);
+            let basePrice = calculatedBasePrice;
+            let finalTotalAmount = totalAmount;
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                basePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
+            }
           
             updateProposalInDbParam = {
                 data:{
@@ -118,7 +138,7 @@ class UpdateProposalPerDayUseCase {
                     endDate,
                     startDate,
                     basePrice,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
                     guestNumber: Number(guestNumber)
@@ -171,8 +191,23 @@ class UpdateProposalPerDayUseCase {
         if(Number(totalAmountInput) === proposal.totalAmount && venue.pricingModel === "PER_PERSON_DAY" && venue.pricePerPersonDay){
 
             const daysBetween = differenceInCalendarDays(endDate, startDate);
-            const basePrice = daysBetween * (Number(guestNumber) * venue.pricePerPersonDay)
-            const totalAmount = basePrice + (totalAmountService || 0)
+            const venueWithFees = venue as Venue & { seasonalFee?: SeasonalFee[] };
+            const { unitPrice: pricePerPersonDay } = await adjustProposalUnitPrice({
+                unitPrice: venue.pricePerPersonDay,
+                seasonalFee: venueWithFees.seasonalFee,
+                startDate,
+                venueId: venue.id,
+                proposalRepository: this.proposalRepository,
+                goalRepository: this.goalRepository,
+            });
+            const calculatedBasePrice = daysBetween * (pricePerPersonDay * Number(guestNumber));
+            const totalAmount = calculatedBasePrice + (totalAmountService || 0);
+            let basePrice = calculatedBasePrice;
+            let finalTotalAmount = totalAmount;
+            if (resolveVenueMinimumPrice(venue, startDate) && totalAmount < resolveVenueMinimumPrice(venue, startDate)) {
+                basePrice = resolveVenueMinimumPrice(venue, startDate);
+                finalTotalAmount = resolveVenueMinimumPrice(venue, startDate) + (totalAmountService || 0);
+            }
           
             updateProposalInDbParam = {
                 data:{
@@ -180,7 +215,7 @@ class UpdateProposalPerDayUseCase {
                     endDate,
                     startDate,
                     basePrice,
-                    totalAmount,
+                    totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
                     guestNumber: Number(guestNumber)

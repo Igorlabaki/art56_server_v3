@@ -9,6 +9,11 @@ class RegisterGoogleUserController {
     async handle(req: Request, resp: Response) {
         try {
             const body: RegisterGoogleUserRequestParams = req.body;
+            // [DEBUG] Log payload (sem dados sensíveis)
+            console.log("[POST /auth/register/google] body:", {
+                hasGoogleToken: !!body?.googleToken,
+                userData: body?.userData ? { email: body.userData.email, name: body.userData.name, googleId: body.userData.googleId, hasPicture: !!body.userData.picture, hasPassword: !!body.userData?.password } : undefined,
+            });
             // Validate the request parms
             registerGoogleUserSchema.parse(body);
 
@@ -18,6 +23,9 @@ class RegisterGoogleUserController {
             return resp.json(response);
 
         } catch (error) {
+            // [DEBUG] Log do erro completo no servidor
+            console.error("[POST /auth/register/google] error:", error instanceof Error ? error.message : String(error));
+            if (error instanceof Error && error.stack) console.error("[POST /auth/register/google] stack:", error.stack);
             // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
 

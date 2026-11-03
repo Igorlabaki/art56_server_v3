@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { verify } from "jsonwebtoken"
+import { JwtPayload, verify } from "jsonwebtoken";
 import { HttpTokenError } from "../errors/errors-type/http-token-error";
 import { handleErrors } from "../errors/error-handler";
+import { AuthenticatedRequest } from "../types/authenticated-request";
 
 export function ensureAuthenticate(req: Request, resp: Response, next: NextFunction): void {
     const authToken = req.headers.authorization;
@@ -9,20 +10,24 @@ export function ensureAuthenticate(req: Request, resp: Response, next: NextFunct
     if (!authToken) {
         const errorResponse = handleErrors(new HttpTokenError());
         resp.status(errorResponse.statusCode).json(errorResponse.body);
-        return
+        return;
     }
 
     const [, token] = authToken.split(" ");
 
     try {
-        verify(token, process.env.JWT_SECRET_KEY!);
+        const decoded = verify(token, process.env.JWT_SECRET_KEY!) as JwtPayload;
+        if (!decoded || typeof decoded.id !== "string") {
+            const errorResponse = handleErrors(new HttpTokenError());
+            resp.status(errorResponse.statusCode).json(errorResponse.body);
+            return;
+        }
+        (req as AuthenticatedRequest).user = { id: decoded.id };
         next();
     } catch (error) {
-
-        // Captura e formata o erro
         const errorResponse = handleErrors(error);
         resp.status(errorResponse.statusCode).json(errorResponse.body);
-        return
+        return;
     }
 }
 

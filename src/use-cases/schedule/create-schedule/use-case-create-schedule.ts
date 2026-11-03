@@ -1,4 +1,5 @@
 import { transformDate } from "../../../functions/transform-date";
+import { wallClockDateIsoFromDate } from "../../../functions/wall-clock-datetime";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { CreateScheduleRequestParams } from "../../../zod/schedule/create-schedule-params-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -19,7 +20,7 @@ class CreateScheduleUseCase {
       throw new HttpResourceNotFoundError("Orcamento")
     }
 
-    const { startDate, endDate } = transformDate({ date: proposal.startDate.toLocaleDateString('pt-BR'), endHour: params.endHour, startHour: params.startHour, divisor: "/" })
+    const { startDate, endDate } = transformDate({ date: wallClockDateIsoFromDate(proposal.startDate), endHour: params.endHour, startHour: params.startHour })
 
     const newSchedule = await this.scheduleRepository.create({
       ...rest,

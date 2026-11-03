@@ -9,6 +9,8 @@ export const updateDateEventDbSchema = z.object({
       startDate: z.date().optional(),
       startHour: z.string().optional(),
       type: z.enum(["PRODUCTION", "BARTER", "OTHER", "EVENT", "OVERNIGHT","VISIT"]).optional(),
+      googleEventId: z.string().nullable().optional(),
+      googleCalendarId: z.string().nullable().optional(),
     })
 });
 

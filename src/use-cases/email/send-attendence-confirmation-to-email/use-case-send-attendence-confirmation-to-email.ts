@@ -1,5 +1,5 @@
-import { format } from "date-fns";
 import nodemailer from "nodemailer";
+import { formatWallClockDateBr, formatWallClockTime } from "../../../functions/wall-clock-datetime";
 
 interface ISendAttendenceConfimationEmailParams {
   proposal: {
@@ -33,11 +33,11 @@ export class SendAttendeceConfirmationEmailCase {
 
   async execute({ proposal, userId, username, venue, guest }: ISendAttendenceConfimationEmailParams) {
 
-    const startDay = format(proposal.startDate, "dd/MM/yyyy");
-    const endDay = format(proposal.endDate, "dd/MM/yyyy");
+    const startDay = formatWallClockDateBr(proposal.startDate);
+    const endDay = formatWallClockDateBr(proposal.endDate);
 
-    const startTime = format(proposal.startDate, "HH:mm");
-    const endTime = format(proposal.endDate, "HH:mm");
+    const startTime = formatWallClockTime(proposal.startDate);
+    const endTime = formatWallClockTime(proposal.endDate);
 
     const eventDateTime =
   startDay === endDay
