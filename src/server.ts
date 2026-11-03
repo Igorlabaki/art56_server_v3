@@ -27,6 +27,7 @@ import { userVenuePermissionRoutes } from "./router/userVenuePermission";
 import { seasonalFeeRoutes } from "./router/seasonal-fee";
 import { minimumPricePeriodRoutes } from "./router/minimum-price-period";
 import { venueRuleRoutes } from "./router/venue-rule";
+import { venueAmenityRoutes } from "./router/venue-amenity";
 import { attachmentRoutes } from "./router/attachment";
 import { goalRoutes } from "./router/goal";
 import { emailRoutes } from "./router/email";
@@ -73,6 +74,7 @@ app.use('/attachment', attachmentRoutes)
 app.use('/seasonalFee', seasonalFeeRoutes)
 app.use('/minimumPricePeriod', minimumPricePeriodRoutes)
 app.use('/venue-rule', venueRuleRoutes)
+app.use('/venue-amenity', venueAmenityRoutes)
 app.use('/notification', notificationRoutes)
 app.use('/organization', organizationRoutes)
 app.use('/userVenuePermission', userVenuePermissionRoutes)
