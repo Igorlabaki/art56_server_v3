@@ -1,4 +1,13 @@
 import { z } from "zod";
+import { tourVideoUrlSchema } from "./tour-video-url-schema";
+
+export const proposalColorSchema = z
+    .union([
+        z.literal("").transform(() => null),
+        z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+        z.null(),
+    ])
+    .optional();
 
 export const updateVenueSchemaRequest = z.object({
     venueId: z.string(),
@@ -25,7 +34,11 @@ export const updateVenueSchemaRequest = z.object({
     facebookUrl: z.string().optional(),
     tiktokUrl: z.string().optional(),
     instagramUrl: z.string().optional(),
+    tourVideoUrl: tourVideoUrlSchema,
     logoUrl: z.string().optional(),
+    proposalPrimaryColor: proposalColorSchema,
+    proposalSecondaryColor: proposalColorSchema,
+    proposalTextColor: proposalColorSchema,
     pricePerPerson: z.string().optional(),
     pricePerPersonDay: z.string().optional(),
     pricePerPersonHour: z.string().optional(),

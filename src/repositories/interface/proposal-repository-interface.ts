@@ -71,9 +71,93 @@ type TrafficSource = "AIRBNB" | "GOOGLE" | "INSTAGRAM" | "TIKTOK" | "OTHER" | "F
 
 type ProposalType = "EVENT" | "OTHER" | "BARTER" | "PRODUCTION" | "OVERNIGHT"
 
+export interface ProposalPresentationImage {
+  id: string;
+  imageUrl: string;
+  description: string | null;
+  position: number;
+}
+
+export interface ProposalImageCatalogItem {
+  id: string;
+  imageUrl: string;
+  description: string | null;
+  position: number;
+  isShowOnProposal: boolean;
+}
+
+export interface ProposalPresentationAmenity {
+  name: string;
+  position: number;
+}
+
+export interface ProposalPresentation {
+  name: string;
+  description: string | null;
+  logoUrl: string | null;
+  city: string;
+  state: string;
+  neighborhood: string;
+  street: string;
+  streetNumber: string;
+  maxGuest: number;
+  hasOvernightStay: boolean;
+  checkIn: string | null;
+  checkOut: string | null;
+  minimumNights: number | null;
+  openingHour: string | null;
+  closingHour: string | null;
+  url: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  tiktokUrl: string | null;
+  tourVideoUrl: string | null;
+  whatsappNumber: string | null;
+  proposalPrimaryColor: string | null;
+  proposalSecondaryColor: string | null;
+  proposalTextColor: string | null;
+  canReorder: boolean;
+  images: ProposalPresentationImage[];
+  catalog: ProposalImageCatalogItem[];
+  amenities: ProposalPresentationAmenity[];
+}
+
+export interface ProposalPresentationRecord extends Omit<ProposalPresentation, "canReorder" | "catalog"> {
+  venueId: string;
+}
+
+export interface VenueImageForReorder {
+  id: string;
+  imageUrl: string;
+  description: string | null;
+  position: number;
+}
+
+export interface VenueImagesForReorder {
+  venueId: string;
+  visible: VenueImageForReorder[];
+  hiddenPositions: number[];
+}
+
+export interface VenueImagesForChoice {
+  venueId: string;
+  images: ProposalImageCatalogItem[];
+}
+
+export interface ImageChoiceUpdate {
+  id: string;
+  position: number;
+  isShowOnProposal: boolean;
+}
+
 export interface ProposalRepositoryInterface {
   delete: (params: string) => Promise<Proposal | null>
   getById: (params: string) => Promise<ProposalWithRelations | null>
+  getPresentation: (proposalId: string) => Promise<ProposalPresentationRecord | null>
+  listVenueImagesForReorder: (proposalId: string) => Promise<VenueImagesForReorder | null>
+  applyImagePositions: (updates: { id: string; position: number }[]) => Promise<void>
+  listVenueImageCatalog: (proposalId: string) => Promise<VenueImagesForChoice | null>
+  applyImageChoice: (updates: ImageChoiceUpdate[]) => Promise<void>
   update: (params: UpdateProposalInDbParam) => Promise<Proposal | null> 
   updateServices: (params: UpdateProposalServices) => Promise<Proposal | null> 
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>

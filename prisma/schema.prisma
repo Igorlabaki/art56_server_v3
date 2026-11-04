@@ -380,10 +380,14 @@ model Venue {
   facebookUrl           String?
   isShowOnOrganization  Boolean?              @default(false)
   logoUrl               String?
+  proposalPrimaryColor  String?               @db.VarChar(7)
+  proposalSecondaryColor String?              @db.VarChar(7)
+  proposalTextColor     String?               @db.VarChar(7)
   minimumPrice          Float?                @default(0)
   whatsappNumber        String?
   tiktokUrl             String?
   instagramUrl          String?
+  tourVideoUrl          String?               @db.VarChar(2048)
   street                String
   streetNumber          String
   complement            String?
@@ -571,6 +575,7 @@ model Image {
   responsiveMode       String?
   tag                  String?
   isShowOnOrganization Boolean?      @default(false)
+  isShowOnProposal     Boolean?      @default(false)
   venueId              String? // Tornando opcional
   organizationId       String? // Novo campo opcional
   venue                Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)

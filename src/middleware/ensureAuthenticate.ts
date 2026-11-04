@@ -31,6 +31,28 @@ export function ensureAuthenticate(req: Request, resp: Response, next: NextFunct
     }
 }
 
+export function readOptionalUserId(req: Request): string | null {
+    const authToken = req.headers.authorization;
+    if (!authToken) {
+        return null;
+    }
+
+    const [, token] = authToken.split(" ");
+    if (!token) {
+        return null;
+    }
+
+    try {
+        const decoded = verify(token, process.env.JWT_SECRET_KEY!) as JwtPayload;
+        if (!decoded || typeof decoded.id !== "string") {
+            return null;
+        }
+        return decoded.id;
+    } catch {
+        return null;
+    }
+}
+
 /* import { NextFunction, Request, Response } from "express";
 import { JwtPayload, verify } from "jsonwebtoken";
 import { PrismaSessionRepository } from "../repositories/in-prisma/session-in-prisma-repository";

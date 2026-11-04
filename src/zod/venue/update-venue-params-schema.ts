@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { proposalColorSchema } from "./update-venue-params-schema-db";
+import { tourVideoUrlSchema } from "./tour-video-url-schema";
 
 export const updateVenueSchemaDb = z.object({
     venueId: z.string(),
@@ -29,7 +31,11 @@ export const updateVenueSchemaDb = z.object({
         facebookUrl: z.string().optional(),
         tiktokUrl: z.string().optional(),
         instagramUrl: z.string().optional(),
+        tourVideoUrl: tourVideoUrlSchema,
         logoUrl: z.string().optional(),
+        proposalPrimaryColor: proposalColorSchema,
+        proposalSecondaryColor: proposalColorSchema,
+        proposalTextColor: proposalColorSchema,
         pricePerPerson: z.string().optional(),
         pricePerPersonDay: z.string().optional(),
         pricePerPersonHour: z.string().optional(),

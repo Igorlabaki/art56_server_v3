@@ -1,10 +1,11 @@
 import { Prisma, PrismaClient, Proposal } from "@prisma/client"
 import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
-import { CreateProposalInDbParams, ItemListProposalResponse, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices } from "../interface/proposal-repository-interface"
+import { CreateProposalInDbParams, ImageChoiceUpdate, ItemListProposalResponse, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalPresentationRecord, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices, VenueImagesForChoice, VenueImagesForReorder } from "../interface/proposal-repository-interface"
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
+import { sortImagePositionUpdates } from "../../functions/plan-visible-image-positions";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -216,6 +217,214 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         },
       }
     })
+  }
+
+  async getPresentation(proposalId: string): Promise<ProposalPresentationRecord | null> {
+    const proposal = await this.prisma.proposal.findUnique({
+      where: { id: proposalId },
+      select: {
+        venue: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            logoUrl: true,
+            city: true,
+            state: true,
+            neighborhood: true,
+            street: true,
+            streetNumber: true,
+            maxGuest: true,
+            hasOvernightStay: true,
+            checkIn: true,
+            checkOut: true,
+            minimumNights: true,
+            openingHour: true,
+            closingHour: true,
+            url: true,
+            instagramUrl: true,
+            facebookUrl: true,
+            tiktokUrl: true,
+            tourVideoUrl: true,
+            whatsappNumber: true,
+            proposalPrimaryColor: true,
+            proposalSecondaryColor: true,
+            proposalTextColor: true,
+            images: {
+              where: { isShowOnProposal: true },
+              select: {
+                id: true,
+                imageUrl: true,
+                description: true,
+                position: true,
+              },
+              orderBy: [{ position: "asc" }, { id: "asc" }],
+            },
+            amenities: {
+              select: {
+                name: true,
+                position: true,
+              },
+              orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+            },
+          },
+        },
+      },
+    });
+
+    if (!proposal?.venue) {
+      return null;
+    }
+
+    const venue = proposal.venue;
+    return {
+      venueId: venue.id,
+      name: venue.name,
+      description: venue.description,
+      logoUrl: venue.logoUrl,
+      city: venue.city,
+      state: venue.state,
+      neighborhood: venue.neighborhood,
+      street: venue.street,
+      streetNumber: venue.streetNumber,
+      maxGuest: venue.maxGuest,
+      hasOvernightStay: venue.hasOvernightStay,
+      checkIn: venue.checkIn,
+      checkOut: venue.checkOut,
+      minimumNights: venue.minimumNights,
+      openingHour: venue.openingHour,
+      closingHour: venue.closingHour,
+      url: venue.url,
+      instagramUrl: venue.instagramUrl,
+      facebookUrl: venue.facebookUrl,
+      tiktokUrl: venue.tiktokUrl,
+      tourVideoUrl: venue.tourVideoUrl,
+      whatsappNumber: venue.whatsappNumber,
+      proposalPrimaryColor: venue.proposalPrimaryColor,
+      proposalSecondaryColor: venue.proposalSecondaryColor,
+      proposalTextColor: venue.proposalTextColor,
+      images: venue.images.map((image) => ({
+        id: image.id,
+        imageUrl: image.imageUrl,
+        description: image.description,
+        position: image.position,
+      })),
+      amenities: venue.amenities.map((amenity) => ({
+        name: amenity.name,
+        position: amenity.position,
+      })),
+    };
+  }
+
+  async listVenueImagesForReorder(proposalId: string): Promise<VenueImagesForReorder | null> {
+    const proposal = await this.prisma.proposal.findUnique({
+      where: { id: proposalId },
+      select: {
+        venue: {
+          select: {
+            id: true,
+            images: {
+              select: {
+                id: true,
+                imageUrl: true,
+                description: true,
+                position: true,
+                isShowOnProposal: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!proposal?.venue) {
+      return null;
+    }
+
+    const visible = proposal.venue.images
+      .filter((image) => image.isShowOnProposal === true)
+      .map((image) => ({
+        id: image.id,
+        imageUrl: image.imageUrl,
+        description: image.description,
+        position: image.position,
+      }))
+      .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+    const hiddenPositions = proposal.venue.images
+      .filter((image) => image.isShowOnProposal !== true)
+      .map((image) => image.position);
+
+    return {
+      venueId: proposal.venue.id,
+      visible,
+      hiddenPositions,
+    };
+  }
+
+  async applyImagePositions(updates: { id: string; position: number }[]): Promise<void> {
+    const ordered = sortImagePositionUpdates(updates);
+    await this.prisma.$transaction(
+      ordered.map((item: { id: string; position: number }) =>
+        this.prisma.image.update({
+          where: { id: item.id },
+          data: { position: item.position },
+        })
+      )
+    );
+  }
+
+  async listVenueImageCatalog(proposalId: string): Promise<VenueImagesForChoice | null> {
+    const proposal = await this.prisma.proposal.findUnique({
+      where: { id: proposalId },
+      select: {
+        venue: {
+          select: {
+            id: true,
+            images: {
+              select: {
+                id: true,
+                imageUrl: true,
+                description: true,
+                position: true,
+                isShowOnProposal: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!proposal?.venue) {
+      return null;
+    }
+
+    return {
+      venueId: proposal.venue.id,
+      images: proposal.venue.images
+        .map((image) => ({
+          id: image.id,
+          imageUrl: image.imageUrl,
+          description: image.description,
+          position: image.position,
+          isShowOnProposal: image.isShowOnProposal === true,
+        }))
+        .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)),
+    };
+  }
+
+  async applyImageChoice(updates: ImageChoiceUpdate[]): Promise<void> {
+    const ordered = [...updates].sort((left, right) => left.id.localeCompare(right.id));
+    await this.prisma.$transaction(
+      ordered.map((item) =>
+        this.prisma.image.update({
+          where: { id: item.id },
+          data: {
+            position: item.position,
+            isShowOnProposal: item.isShowOnProposal,
+          },
+        })
+      )
+    );
   }
 
   async delete(reference: string): Promise<Proposal | null> {
