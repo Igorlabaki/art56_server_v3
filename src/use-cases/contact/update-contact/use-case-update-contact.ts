@@ -6,8 +6,15 @@ import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-reso
 class UpdateContactUseCase {
     constructor(private contactRepository: ContactRepositoryInterface) { }
 
+    async load(contactId: string) {
+        const contact = await this.contactRepository.getById(contactId)
+        if (!contact) {
+            throw new HttpResourceNotFoundError("Contacto")
+        }
+        return contact
+    }
+
     async execute(param: UpdateContactRequestParams) {
-        // Validate if contact exists
         const contact = await this.contactRepository.getById(param.contactId)
 
         if (!contact) {

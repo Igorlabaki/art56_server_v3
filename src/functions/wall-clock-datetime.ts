@@ -86,6 +86,44 @@ export function isWallClockDayInRange(event: Date, startDay: string, endDay: str
   return iso >= startIso && iso <= endIso;
 }
 
+export type ProposalListRange = { gte: Date; lt: Date };
+
+function isUtcCivilDay(year: number, month: number, day: number): boolean {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+/** Intervalo [gte, lt) do mes ou do dia, em componentes UTC. `null` quando nao ha mes. */
+export function proposalListRange(input: {
+  month?: number;
+  year?: number;
+  day?: number;
+  now?: Date;
+}): ProposalListRange | "invalid-day" | null {
+  if (input.month === undefined) return null;
+
+  const year = input.year ?? (input.now ?? new Date()).getUTCFullYear();
+  const month = input.month;
+
+  if (input.day === undefined) {
+    return {
+      gte: new Date(Date.UTC(year, month - 1, 1)),
+      lt: new Date(Date.UTC(year, month, 1)),
+    };
+  }
+
+  if (!isUtcCivilDay(year, month, input.day)) return "invalid-day";
+
+  return {
+    gte: new Date(Date.UTC(year, month - 1, input.day)),
+    lt: new Date(Date.UTC(year, month - 1, input.day + 1)),
+  };
+}
+
 export function parseDateOnlyWallClock(date: string): Date {
   const trimmed = date.trim();
   if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {

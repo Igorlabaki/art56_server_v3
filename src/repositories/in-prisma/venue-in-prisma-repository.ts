@@ -13,6 +13,7 @@ import { GetHubDataRequestParamSchema } from "../../zod/venue/get-hub-data-reque
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema"
 import { UpdateVenuePaymentInfoSchemaDb } from "../../zod/venue/update-payment-info-venue-params-schema"
 import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-params-schema"
+import { uniqueProposalYears } from "../../functions/proposal-years"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -471,8 +472,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const firstDayOfLastMonth = params?.month === 'all' ? new Date(selectedYear - 1, 0, 1) : new Date(selectedYear, selectedMonth - 1, 1);
     const lastDayOfLastMonth = params?.month === 'all' ? new Date(selectedYear - 1, 11, 31) : new Date(selectedYear, selectedMonth, 0);
 
-    // Busca o venue com contagens e próximos eventos
-    const venue = await this.prisma.venue.findUnique({
+    // Anos do seletor: independem do filtro; cada ano vem do startDate de um orçamento deste espaço
+    const [venue, proposalStarts] = await Promise.all([
+      this.prisma.venue.findUnique({
       where: { id: venueId },
       select: {
         DateEvent: {
@@ -550,9 +552,18 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           }
         }
       }
-    });
+    }),
+      this.prisma.proposal.findMany({
+        where: { venueId },
+        select: { startDate: true },
+      }),
+    ]);
 
     if (!venue) return null;
+
+    const proposalYears = uniqueProposalYears(
+      proposalStarts.map((proposal) => proposal.startDate)
+    );
 
     // Próximo evento (type: EVENT)
     const nextEvent = venue.DateEvent.find(event => 
@@ -689,7 +700,8 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         endDate: nextVisit.endDate,
         type: nextVisit.type,
         proposalId: nextVisit.proposal?.id || null
-      } : null
+      } : null,
+      proposalYears,
     };
   }
 }

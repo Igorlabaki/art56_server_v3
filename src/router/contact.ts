@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import { SERVICE_IMAGE_MAX_BYTES } from "../functions/service-image";
 import { createContactFactory } from "../use-cases/contact/create-contact/factory-create-contact";
 import { deleteContactFactory } from "../use-cases/contact/delete-contact/factory-delete-contact";
 import { listContactFactory } from "../use-cases/contact/list-contact/factory-list-contact";
@@ -6,9 +8,13 @@ import { updateContactFactory } from "../use-cases/contact/update-contact/factor
 
 
 const contactRoutes = Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: SERVICE_IMAGE_MAX_BYTES },
+});
 
 // Create
-contactRoutes.post("/create", async (req, res) => {
+contactRoutes.post("/create", upload.single("file"), async (req, res) => {
     const controller = createContactFactory();  
     await controller.handle(req, res);       
 })
@@ -26,7 +32,7 @@ contactRoutes.delete("/delete/:contactId", async (req, res) => {
 })
 
 // Update
-contactRoutes.put("/update", async (req, res) => {
+contactRoutes.put("/update", upload.single("file"), async (req, res) => {
     const controller = updateContactFactory();  
     await controller.handle(req, res);       
 })

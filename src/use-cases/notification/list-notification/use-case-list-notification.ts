@@ -1,23 +1,75 @@
+import { Notification } from "@prisma/client";
+import { NotificationListDbQuery, NotificationListSummary, NotificationRepositoryInterface } from "../../../repositories/interface/notification-repository-interface";
 import { ListNotificationRequestQuerySchema } from "../../../zod/notification/list-notification-query-schema";
-import { NotificationRepositoryInterface } from "../../../repositories/interface/notification-repository-interface";
+
+const PAGE_SIZE = 10;
+const UNPAGED_LIMIT = 25;
+
+type ListNotificationsResponse = {
+  success: true;
+  message: string;
+  data: {
+    notificationList: Notification[];
+    summary?: NotificationListSummary;
+  };
+  count: number;
+  type: "List";
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
 class ListNotificationsUseCase {
   constructor(private notificationRepository: NotificationRepositoryInterface) { }
 
-  async execute(venueId: string) {
-    const notificationList = await this.notificationRepository.list(venueId);
+  async execute(query: ListNotificationRequestQuerySchema): Promise<ListNotificationsResponse> {
+    const paged = query.page !== undefined;
+    const dbQuery: NotificationListDbQuery = {
+      venueId: query.venueId,
+      q: query.q,
+      type: query.type,
+      isRead: query.isRead,
+      skip: paged ? (query.page! - 1) * PAGE_SIZE : 0,
+      take: paged ? PAGE_SIZE : UNPAGED_LIMIT,
+    };
+    const summaryQuery: NotificationListDbQuery = {
+      venueId: dbQuery.venueId,
+      q: dbQuery.q,
+      type: dbQuery.type,
+      isRead: dbQuery.isRead,
+      now: new Date(),
+    };
 
-    const formatedResponse = {
+    const [{ items, total }, summary] = await Promise.all([
+      this.notificationRepository.list(dbQuery),
+      query.summary ? this.notificationRepository.summarize(summaryQuery) : Promise.resolve(null),
+    ]);
+
+    const body: ListNotificationsResponse = {
       success: true,
-      message: `Lista de notificationos com ${notificationList?.length} items`,
+      message: `Lista de notificationos com ${items.length} items`,
       data: {
-        notificationList: notificationList
+        notificationList: items,
+        ...(summary ? { summary } : {}),
       },
-      count: notificationList?.length,
-      type: "List"
-    }
+      count: items.length,
+      type: "List",
+    };
 
-    return formatedResponse;
+    if (!paged) return body;
+
+    return {
+      ...body,
+      pagination: {
+        page: query.page!,
+        pageSize: PAGE_SIZE,
+        total,
+        totalPages: total === 0 ? 0 : Math.ceil(total / PAGE_SIZE),
+      },
+    };
   }
 }
 

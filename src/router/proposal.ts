@@ -13,6 +13,8 @@ import { createProposalPerPersonFactory } from "../use-cases/proposal/create-pro
 import { updateProposalPerDayFactory } from "../use-cases/proposal/update-proposal-per-day/factory-update-proposal-per-day";
 import { updateProposalPersonalInfoFactory } from "../use-cases/proposal/update-personal-info-proposal/factory-update-proposal-personal-info";
 import { createProposalPerDayFactory } from "../use-cases/proposal/create-proposal-per-day/factory-create-proposal-per-person";
+import { replaceProposalIndicationsFactory } from "../use-cases/proposal/replace-proposal-indications/factory-replace-proposal-indications";
+import { listProposalIndicationsFactory } from "../use-cases/proposal/list-proposal-indications/factory-list-proposal-indications";
 
 
 const proposalRoutes = Router()
@@ -34,6 +36,17 @@ proposalRoutes.get("/byId/:proposalId", async (req, res) => {
     const controller = getProposalByidFactory();
     await controller.handle(req, res);
 })
+
+// Gravacao autenticada. A leitura abaixo fica publica de proposito.
+proposalRoutes.put("/indications/:proposalId", ensureAuthenticate, async (req, res) => {
+    const controller = replaceProposalIndicationsFactory();
+    await controller.handle(req, res);
+});
+
+proposalRoutes.get("/indications/:proposalId", async (req, res) => {
+    const controller = listProposalIndicationsFactory();
+    await controller.handle(req, res);
+});
 
 proposalRoutes.get("/presentation/:proposalId", async (req, res) => {
     const controller = getProposalPresentationFactory();

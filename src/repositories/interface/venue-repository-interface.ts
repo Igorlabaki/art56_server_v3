@@ -68,6 +68,7 @@ export interface VenueAnalyticsResponse {
     type: string;
     proposalId: string | null;
   } | null;
+  proposalYears: number[];
 }
 
 export interface WebDataResponse  {

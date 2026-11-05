@@ -1,6 +1,5 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
-import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
@@ -31,11 +30,51 @@ export type ProposalWithRelations = Proposal & {
   personList: Person[];
 };
 
-export interface ItemListProposalResponse{
-  id: string,
-  completeClientName: string,
-  email: string | null,
-  totalAmount: number,
+export type ProposalListStatus = "ABERTO" | "FECHADO";
+
+export interface ProposalListRow {
+  id: string;
+  completeClientName: string;
+  email: string | null;
+  endDate: Date;
+  startDate: Date;
+  totalAmount: number;
+  approved: boolean;
+}
+
+export interface ItemListProposalResponse extends ProposalListRow {
+  status: ProposalListStatus;
+}
+
+export interface ProposalListDailyBucket {
+  day: string;
+  count: number;
+  amount: number;
+  approved: number;
+}
+
+export interface ProposalWindowDailyAmount {
+  day: string;
+  amount: number;
+  maxAmount: number;
+}
+
+export interface ProposalWindowQuery {
+  venueId: string;
+  range?: { gte: Date; lt: Date };
+}
+
+export interface ListProposalDbQuery {
+  venueId: string;
+  completeClientName?: string;
+  email?: string;
+  approved?: boolean;
+  minAmount?: number;
+  range?: { gte: Date; lt: Date };
+  sortBy: "startDate" | "totalAmount" | "status";
+  sortDir: "asc" | "desc";
+  skip?: number;
+  take?: number;
 }
 
 export interface UpdateProposalServices{
@@ -169,5 +208,7 @@ export interface ProposalRepositoryInterface {
   monthlyRevenueAnalysis: (params: MonthlyRevenueAnalysisParams) => Promise<number | null>
   updatePersonalInfo: (params: UpdatePersonalInfoProposalSchema) => Promise<Proposal | null> 
   trafficCount: (params: GetTrafficCountVenueDbSchema) => Promise<TrafegoCountResponse | null>
-  list: (params: ListProposalRequestQuerySchema) => Promise<ItemListProposalResponse[] | null>
+  list: (params: ListProposalDbQuery) => Promise<{ items: ProposalListRow[]; total: number }>
+  summarize: (params: ListProposalDbQuery) => Promise<ProposalListDailyBucket[]>
+  summarizeWindow: (params: ProposalWindowQuery) => Promise<ProposalWindowDailyAmount[]>
 }

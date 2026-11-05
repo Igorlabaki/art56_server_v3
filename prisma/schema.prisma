@@ -169,8 +169,10 @@ model Proposal {
   noificationList     Notification[]
   scheduleList        Schedule[]
   documents           Document[]
+  indications         ProposalIndication[]
 
   @@index([venueId])
+  @@index([venueId, startDate])
   @@index([trafficSource])
   @@index([email, startDate])
   @@index([completeClientName, startDate])
@@ -522,14 +524,53 @@ model Contact {
   venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
   email        String?
   type         ContactType? @default(TEAM_MEMBER)
+  category     PartnerCategory?
+  logoUrl      String?
+  description  String?      @db.VarChar(400)
+  indications  ProposalIndication[]
 
   @@index([venueId])
   @@map("contact")
 }
 
+model ProposalIndication {
+  id         String   @id @default(uuid())
+  proposalId String
+  contactId  String
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([proposalId, contactId])
+  @@index([proposalId])
+  @@index([contactId])
+  @@map("proposal_indication")
+}
+
 enum ContactType {
   TEAM_MEMBER // Membro da equipe
   SUPPLIER // Fornecedor
+}
+
+enum PartnerCategory {
+  BUFFET
+  CHURRASCO
+  BAR
+  DJ
+  MUSICA_AO_VIVO
+  FOTOGRAFIA
+  FILMAGEM
+  DECORACAO
+  CENOGRAFIA
+  BOLOS_DOCES
+  RECREACAO
+  ENTRETENIMENTO
+  CERIMONIAL
+  AUDIOVISUAL
+  MOBILIARIO
+  BRINDES
+  OUTROS
 }
 
 model OwnerVenue {

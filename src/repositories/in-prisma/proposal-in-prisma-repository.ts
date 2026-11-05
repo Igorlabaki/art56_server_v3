@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient, Proposal } from "@prisma/client"
-import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
+import { ListProposalDbQuery, ProposalListDailyBucket, ProposalListRow } from "../interface/proposal-repository-interface";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
-import { CreateProposalInDbParams, ImageChoiceUpdate, ItemListProposalResponse, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalPresentationRecord, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices, VenueImagesForChoice, VenueImagesForReorder } from "../interface/proposal-repository-interface"
+import { CreateProposalInDbParams, ImageChoiceUpdate, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalPresentationRecord, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices, VenueImagesForChoice, VenueImagesForReorder } from "../interface/proposal-repository-interface"
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
@@ -479,44 +479,111 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
-  async list({ venueId, email, completeClientName, month, year, approved }: ListProposalRequestQuerySchema): Promise<ItemListProposalResponse[] | null> {
-    return await this.prisma.proposal.findMany({
-      where: {
-        venueId,
-        ...(email && {
-          email: {
-            contains: email,
-          },
-        }),
-        ...(completeClientName && {
-          completeClientName: {
-            contains: completeClientName,
-          },
-        }),
-        approved: approved ? true : false,
-        ...(month && {
-          startDate: {
-            gte: new Date(
-              year ? Number(year) : new Date().getFullYear(),
-              Number(month) - 1,
-              1
-            ), // Início do mês
-            lt: new Date(year ? Number(year) : new Date().getFullYear(), Number(month), 1),
-          },
-        }),
-      },
-      select: {
-        id: true,
-        completeClientName: true,
-        email: true,
-        endDate: true,
-        startDate: true,
-        totalAmount: true,
-      },
-      orderBy: {
-        startDate: "asc",
-      },
-    })
+  async list(query: ListProposalDbQuery): Promise<{ items: ProposalListRow[]; total: number }> {
+    const where = {
+      venueId: query.venueId,
+      ...(query.email && {
+        email: { contains: query.email },
+      }),
+      ...(query.completeClientName && {
+        completeClientName: { contains: query.completeClientName },
+      }),
+      ...(query.approved !== undefined && { approved: query.approved }),
+      ...(query.minAmount !== undefined && { totalAmount: { gte: query.minAmount } }),
+      ...(query.range && {
+        startDate: { gte: query.range.gte, lt: query.range.lt },
+      }),
+    };
+    const orderField = query.sortBy === "status" ? "approved" : query.sortBy;
+    const orderBy = [{ [orderField]: query.sortDir }, { id: "asc" as const }];
+    const select = {
+      id: true,
+      completeClientName: true,
+      email: true,
+      endDate: true,
+      startDate: true,
+      totalAmount: true,
+      approved: true,
+    };
+
+    if (query.take === undefined) {
+      const items = await this.prisma.proposal.findMany({ where, select, orderBy });
+      return { items, total: items.length };
+    }
+
+    const [total, items] = await Promise.all([
+      this.prisma.proposal.count({ where }),
+      this.prisma.proposal.findMany({
+        where,
+        select,
+        orderBy,
+        skip: query.skip ?? 0,
+        take: query.take,
+      }),
+    ]);
+
+    return { items, total };
+  }
+
+  async summarize(query: ListProposalDbQuery): Promise<ProposalListDailyBucket[]> {
+    // startDate e DATETIME. DATE_FORMAT le o calendario gravado, que e o wall-clock.
+    const filters: Prisma.Sql[] = [Prisma.sql`venueId = ${query.venueId}`];
+    if (query.range) {
+      filters.push(Prisma.sql`startDate >= ${query.range.gte}`);
+      filters.push(Prisma.sql`startDate < ${query.range.lt}`);
+    }
+    if (query.approved !== undefined) {
+      filters.push(Prisma.sql`approved = ${query.approved}`);
+    }
+    if (query.minAmount !== undefined) {
+      filters.push(Prisma.sql`totalAmount >= ${query.minAmount}`);
+    }
+    if (query.completeClientName) {
+      filters.push(Prisma.sql`completeClientName LIKE ${containsLike(query.completeClientName)}`);
+    }
+    if (query.email) {
+      filters.push(Prisma.sql`email LIKE ${containsLike(query.email)}`);
+    }
+
+    const rows = await this.prisma.$queryRaw<Array<{ day: string; count: bigint; amount: number | null; approved: bigint | number | null }>>(Prisma.sql`
+      SELECT DATE_FORMAT(\`startDate\`, '%Y-%m-%d') AS day,
+             COUNT(*) AS count,
+             COALESCE(SUM(\`totalAmount\`), 0) AS amount,
+             COALESCE(SUM(\`approved\`), 0) AS approved
+      FROM \`proposal\`
+      WHERE ${Prisma.join(filters, " AND ")}
+      GROUP BY DATE_FORMAT(\`startDate\`, '%Y-%m-%d')
+    `);
+
+    return rows.map((row) => ({
+      day: String(row.day).slice(0, 10),
+      count: Number(row.count),
+      amount: Number(row.amount ?? 0),
+      approved: Number(row.approved ?? 0),
+    }));
+  }
+
+  async summarizeWindow(query: { venueId: string; range?: { gte: Date; lt: Date } }) {
+    const filters: Prisma.Sql[] = [Prisma.sql`venueId = ${query.venueId}`];
+    if (query.range) {
+      filters.push(Prisma.sql`startDate >= ${query.range.gte}`);
+      filters.push(Prisma.sql`startDate < ${query.range.lt}`);
+    }
+
+    const rows = await this.prisma.$queryRaw<Array<{ day: string; amount: number | null; maxAmount: number | null }>>(Prisma.sql`
+      SELECT DATE_FORMAT(\`startDate\`, '%Y-%m-%d') AS day,
+             COALESCE(SUM(CASE WHEN \`approved\` = 1 THEN \`totalAmount\` ELSE 0 END), 0) AS amount,
+             COALESCE(MAX(\`totalAmount\`), 0) AS maxAmount
+      FROM \`proposal\`
+      WHERE ${Prisma.join(filters, " AND ")}
+      GROUP BY DATE_FORMAT(\`startDate\`, '%Y-%m-%d')
+    `);
+
+    return rows.map((row) => ({
+      day: String(row.day).slice(0, 10),
+      amount: Number(row.amount ?? 0),
+      maxAmount: Number(row.maxAmount ?? 0),
+    }));
   }
 
   async analysisByMonth({ year, venueId, approved }: GetVenueAnalysisByMonthDbSchema): Promise<any> {
@@ -567,6 +634,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     return totalAmount
 
   }
+}
+
+function containsLike(value: string): string {
+  return `%${value.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 }
 
 function serviceLineRows(serviceLines: ServiceQuoteLine[] | undefined, serviceIds: string[] | undefined) {

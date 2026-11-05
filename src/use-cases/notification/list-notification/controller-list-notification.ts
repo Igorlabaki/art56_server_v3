@@ -8,9 +8,11 @@ class ListNotificationController {
 
   async handle(req: Request, resp: Response) {
     try {
-      const { venueId }  = req.params
-      // Esperar a execução do caso de uso
-      const response = await this.listNotificationsUseCase.execute(venueId);
+      const query: ListNotificationRequestQuerySchema = listNotificationRequestQuerySchema.parse({
+        ...req.query,
+        venueId: req.params.venueId,
+      });
+      const response = await this.listNotificationsUseCase.execute(query);
       // Retornar o token
       return resp.status(200).json(response);
     } catch (error) {

@@ -9,9 +9,11 @@ import { createVenueRuleSchema } from "../../zod/venue-rule/create-venue-rule-sc
 import { updateVenueRuleSchema } from "../../zod/venue-rule/update-venue-rule-schema";
 import { CreateVenueRuleUseCase } from "./create-venue-rule/use-case-create-venue-rule";
 import { DeleteVenueRuleUseCase } from "./delete-venue-rule/use-case-delete-venue-rule";
+import { ListPublicVenueRuleUseCase } from "./list-public-venue-rule/use-case-list-public-venue-rule";
 import { ListVenueRuleUseCase } from "./list-venue-rule/use-case-list-venue-rule";
 import { UpdateVenueRuleUseCase } from "./update-venue-rule/use-case-update-venue-rule";
 import { VenueRuleAuthorizer } from "./venue-rule-authorizer";
+import { venueRuleRoutes } from "../../router/venue-rule";
 
 function authorizerFor(permissionsByVenue: Record<string, string>) {
     return new VenueRuleAuthorizer(
@@ -170,5 +172,84 @@ describe("venue rule", () => {
             title: null,
             text: "Texto",
         })).rejects.toBeInstanceOf(HttpResourceNotFoundError);
+    });
+
+    it("lista publica devolve so id, titulo, texto e posicao, sem authorizer", async () => {
+        const repository = new FakeVenueRuleRepository();
+        repository.items.push(
+            {
+                id: "rule-late",
+                title: null,
+                text: "<b>sem html</b>",
+                position: 2,
+                venueId: "venue-a",
+                createdAt: new Date(2026, 0, 2),
+                updatedAt: new Date(),
+            },
+            {
+                id: "rule-first",
+                title: "Horario",
+                text: "Ate as 22h",
+                position: 0,
+                venueId: "venue-a",
+                createdAt: new Date(2026, 0, 3),
+                updatedAt: new Date(),
+            },
+            {
+                id: "rule-other",
+                title: "Outro",
+                text: "Nao mostrar",
+                position: 0,
+                venueId: "venue-b",
+                createdAt: new Date(2026, 0, 1),
+                updatedAt: new Date(),
+            },
+        );
+        const venues = {
+            getById: async ({ venueId }: { venueId: string }) =>
+                venueId === "venue-a" ? ({ id: venueId } as never) : null,
+        };
+        const list = new ListPublicVenueRuleUseCase(repository, venues);
+
+        const listed = await list.execute("venue-a");
+        expect(listed.data).toEqual([
+            { id: "rule-first", title: "Horario", text: "Ate as 22h", position: 0 },
+            { id: "rule-late", title: null, text: "<b>sem html</b>", position: 2 },
+        ]);
+        expect(listed.count).toBe(2);
+
+        const emptyRepository = new FakeVenueRuleRepository();
+        const empty = await new ListPublicVenueRuleUseCase(emptyRepository, venues).execute("venue-a");
+        expect(empty.data).toEqual([]);
+
+        await expect(list.execute("venue-x")).rejects.toBeInstanceOf(HttpResourceNotFoundError);
+    });
+
+    it("recusa listar e apagar sem token e publica a rota antes da autenticacao", async () => {
+        const repository = new FakeVenueRuleRepository();
+        repository.items.push({
+            id: "rule-1",
+            title: null,
+            text: "Original",
+            position: 0,
+            venueId: "venue-a",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+        const list = new ListVenueRuleUseCase(repository, editor);
+        const remove = new DeleteVenueRuleUseCase(repository, editor);
+        await expect(list.execute(undefined, "venue-a")).rejects.toBeInstanceOf(HttpTokenError);
+        await expect(remove.execute(undefined, "rule-1")).rejects.toBeInstanceOf(HttpTokenError);
+        expect(repository.deletes).toBe(0);
+
+        const markers = (venueRuleRoutes as unknown as { stack: { name: string; route?: { path: string } }[] }).stack
+            .map((layer) => layer.route?.path ?? layer.name);
+        const authAt = markers.indexOf("ensureAuthenticate");
+        expect(markers.indexOf("/public/:venueId")).toBeGreaterThanOrEqual(0);
+        expect(authAt).toBeGreaterThan(markers.indexOf("/public/:venueId"));
+        expect(markers.indexOf("/list/:venueId")).toBeGreaterThan(authAt);
+        expect(markers.indexOf("/create")).toBeGreaterThan(authAt);
+        expect(markers.indexOf("/update")).toBeGreaterThan(authAt);
+        expect(markers.indexOf("/delete/:ruleId")).toBeGreaterThan(authAt);
     });
 });

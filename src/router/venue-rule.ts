@@ -3,10 +3,16 @@ import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 import { AuthenticatedRequest } from "../types/authenticated-request";
 import { createVenueRuleFactory } from "../use-cases/venue-rule/create-venue-rule/factory-create-venue-rule";
 import { deleteVenueRuleFactory } from "../use-cases/venue-rule/delete-venue-rule/factory-delete-venue-rule";
+import { listPublicVenueRuleFactory } from "../use-cases/venue-rule/list-public-venue-rule/factory-list-public-venue-rule";
 import { listVenueRuleFactory } from "../use-cases/venue-rule/list-venue-rule/factory-list-venue-rule";
 import { updateVenueRuleFactory } from "../use-cases/venue-rule/update-venue-rule/factory-update-venue-rule";
 
 const venueRuleRoutes = Router();
+
+venueRuleRoutes.get("/public/:venueId", async (req, res) => {
+    const controller = listPublicVenueRuleFactory();
+    await controller.handle(req, res);
+});
 
 venueRuleRoutes.use(ensureAuthenticate);
 

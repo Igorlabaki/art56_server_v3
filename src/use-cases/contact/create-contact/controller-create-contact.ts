@@ -1,27 +1,32 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
-import { CreateContactUseCase } from "./use-case-create-contact";
+import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
+import { assertContactLogoFile, readContactBody } from "../../../functions/contact-logo";
+import { uploadContactLogo } from "../../../functions/contact-logo-storage";
 import { CreateContactRequestParams, createContactSchema } from "../../../zod/contact/create-contact-params-schema";
+import { CreateContactUseCase } from "./use-case-create-contact";
+
+type UploadedLogo = { buffer: Buffer; size: number; mimetype: string };
 
 class CreateContactController {
   constructor(private createContactUseCase: CreateContactUseCase) {}
 
-  async handle(req: Request, resp: Response) {
+  async handle(req: Request & { file?: UploadedLogo }, resp: Response) {
     try {
-        const body: CreateContactRequestParams = req.body;
-        // Validate the request parms
-        createContactSchema.parse(body);
-
-        // Esperar a execução do caso de uso
+        const parsed = createContactSchema.parse(readContactBody(req.body));
+        const type = parsed.type ?? "TEAM_MEMBER";
+        if (req.file && type !== "SUPPLIER") {
+            throw new HttpBadRequestError("Membro da equipe nao tem logo nem descricao");
+        }
+        if (req.file) assertContactLogoFile(req.file);
+        const body: CreateContactRequestParams = req.file
+            ? { ...parsed, logoUrl: await uploadContactLogo(req.file) }
+            : parsed;
         const response = await this.createContactUseCase.execute(body);
-        // Retornar o token
         return resp.status(201).json(response);
 
     } catch (error) {
-        // Chamar o handleErrors para formatar o erro
         const errorResponse = handleErrors(error);
-
-        // Retornar a resposta formatada
         return resp.status(errorResponse.statusCode).json(errorResponse.body);
     }
 }

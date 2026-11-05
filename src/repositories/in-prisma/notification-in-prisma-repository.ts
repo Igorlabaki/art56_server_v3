@@ -1,9 +1,40 @@
-import { PrismaClient, Notification, User } from "@prisma/client";
-import { NotificationRepositoryInterface } from "../interface/notification-repository-interface";
-import { ListNotificationRequestQuerySchema } from "../../zod/notification/list-notification-query-schema";
+import { Prisma, PrismaClient, Notification, NotificationType } from "@prisma/client";
+import { NotificationListDbQuery, NotificationListSummary, NotificationRepositoryInterface } from "../interface/notification-repository-interface";
 import { CreateNotificationRequestParams } from "../../zod/notification/create-notification-params-schema";
 import { DeleteNotificationRequestParamSchema } from "../../zod/notification/delete-notification-param-schema";
 import { GetByidNotificationRequestParamSchema } from "../../zod/notification/get-by-id-notification-param-schema";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function notificationListWhere(query: NotificationListDbQuery): Prisma.NotificationWhereInput {
+  return {
+    venueId: query.venueId,
+    ...(query.q ? { content: { contains: query.q } } : {}),
+    ...(query.type ? { type: query.type } : {}),
+    ...(query.isRead !== undefined ? { isRead: query.isRead } : {}),
+  };
+}
+
+function intersectWhere(
+  base: Prisma.NotificationWhereInput,
+  extra: { isRead?: boolean; type?: NotificationType },
+): Prisma.NotificationWhereInput | null {
+  if (extra.isRead !== undefined && base.isRead !== undefined && extra.isRead !== base.isRead) return null;
+  if (extra.type !== undefined && base.type !== undefined && extra.type !== base.type) return null;
+  return { ...base, ...extra };
+}
+
+export function notificationSummaryWheres(query: NotificationListDbQuery, now: Date) {
+  const base = notificationListWhere(query);
+  const since7 = new Date(now.getTime() - 7 * DAY_MS);
+  const since30 = new Date(now.getTime() - 30 * DAY_MS);
+  return {
+    unread: intersectWhere(base, { isRead: false }),
+    last7Days: { ...base, createdAt: { gte: since7 } },
+    last30Days: { ...base, createdAt: { gte: since30 } },
+    newProposals: intersectWhere({ ...base, createdAt: { gte: since30 } }, { type: "PROPOSAL" }),
+  };
+}
 export class PrismaNotificationRepository implements NotificationRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -52,15 +83,43 @@ export class PrismaNotificationRepository implements NotificationRepositoryInter
     })
   }
 
-  async list(reference: string): Promise<Notification[] | null> {
-    return await this.prisma.notification.findMany({
+  async list(query: NotificationListDbQuery): Promise<{ items: Notification[]; total: number }> {
+    const where = notificationListWhere(query);
+    const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
+    const [total, items] = await Promise.all([
+      this.prisma.notification.count({ where }),
+      this.prisma.notification.findMany({
+        where,
+        orderBy,
+        skip: query.skip ?? 0,
+        take: query.take,
+      }),
+    ]);
+    return { items, total };
+  }
+
+  async summarize(query: NotificationListDbQuery): Promise<NotificationListSummary> {
+    const wheres = notificationSummaryWheres(query, query.now ?? new Date());
+    const countOrZero = (where: Prisma.NotificationWhereInput | null) =>
+      where ? this.prisma.notification.count({ where }) : Promise.resolve(0);
+    const [unread, last7Days, last30Days, newProposals] = await Promise.all([
+      countOrZero(wheres.unread),
+      countOrZero(wheres.last7Days),
+      countOrZero(wheres.last30Days),
+      countOrZero(wheres.newProposals),
+    ]);
+    return { unread, last7Days, last30Days, newProposals };
+  }
+
+  async markUnreadAsRead(params: { venueId: string; proposalId?: string }): Promise<number> {
+    const result = await this.prisma.notification.updateMany({
       where: {
-        venueId: reference
+        venueId: params.venueId,
+        isRead: false,
+        ...(params.proposalId ? { proposalId: params.proposalId } : {}),
       },
-      orderBy:{
-        createdAt: "desc"
-      },
-      take:25
-    })
+      data: { isRead: true },
+    });
+    return result.count;
   }
 }
