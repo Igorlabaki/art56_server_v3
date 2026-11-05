@@ -18,6 +18,10 @@ export const updateProposalPerPersonRequestParams = z.object({
         totalAmountInput: z.string(),
         userId: z.string().optional(),
         serviceIds: z.array(z.string()),
+        serviceHours: z.array(z.object({
+            serviceId: z.string(),
+            hours: z.number().int().min(0).max(8760),
+        })).max(100).optional(),
         adressComplement: z.string().optional(),
         type: z.enum(["EVENT" , "OTHER" , "BARTER" , "PRODUCTION"]), 
         trafficSource: z.enum(["AIRBNB" , "GOOGLE" , "INSTAGRAM" , "TIKTOK" , "OTHER" , "FRIEND" , "FACEBOOK"])

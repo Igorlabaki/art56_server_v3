@@ -15,7 +15,7 @@ import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/upda
 import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
-import { quoteServiceLines, sumServiceQuote } from "../../../functions/quote-service-lines";
+import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
 class UpdateProposalPerPersonUseCase {
     constructor(
         private userRepository: UserRepositoryInterface,
@@ -36,7 +36,7 @@ class UpdateProposalPerPersonUseCase {
         }
         //
 
-        const { date, endHour, startHour, totalAmountInput, serviceIds, guestNumber, venueId, userId, ...rest } = param.data
+        const { date, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, venueId, userId, ...rest } = param.data
 
         const venue = await this.venueRepository.getById({ venueId: param.data.venueId })
 
@@ -45,13 +45,17 @@ class UpdateProposalPerPersonUseCase {
         }
 
         const quotedDates = transformDate({ date, endHour, startHour, divisor: "/" })
+        const quotedServices = await this.serviceRepository.listForQuote(param.data.venueId, serviceIds)
+        const hoursByServiceId = serviceHoursMap(serviceHours)
+        assertChosenServiceHours(serviceIds, quotedServices, hoursByServiceId, calcEventDuration(quotedDates.startDate, quotedDates.endDate))
         const serviceLines = quoteServiceLines({
             venueId: param.data.venueId,
             serviceIds,
-            services: await this.serviceRepository.listForQuote(param.data.venueId, serviceIds),
+            services: quotedServices,
             guestNumber: Number(guestNumber),
             startDate: quotedDates.startDate,
             endDate: quotedDates.endDate,
+            hoursByServiceId,
         })
         const totalAmountService = sumServiceQuote(serviceLines)
         const withLines = (update: UpdateProposalInDbParam): UpdateProposalInDbParam => ({

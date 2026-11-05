@@ -1,6 +1,6 @@
-import { Person } from "@prisma/client";
 import { HttpStandartError } from "../../../errors/errors-type/htttp-standart-error";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
+import { peopleWithinGuestCap } from "../../../functions/people-within-guest-cap";
 import { CreatePersonRequestParams } from "../../../zod/person/create-person-params-schema";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { PersonRepositoryInterface } from "../../../repositories/interface/person-repository-interface";
@@ -21,7 +21,14 @@ class CreatePersonUseCase {
       throw new HttpResourceNotFoundError("Orcamento")
     }
 
-    if(proposal.personList.filter((item:Person) => item.type === "GUEST").length === proposal.guestNumber){
+    const savedGuestCount = proposal.personList.filter((item) => item.type === "GUEST").length;
+    const toCreate = peopleWithinGuestCap({
+      people: [params],
+      savedGuestCount,
+      guestNumber: proposal.guestNumber,
+    });
+
+    if (toCreate.length === 0) {
       throw new HttpStandartError("Nao ha mais vaga na lista de convidados")
     }
 

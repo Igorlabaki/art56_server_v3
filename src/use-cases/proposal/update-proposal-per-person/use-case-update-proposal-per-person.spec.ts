@@ -1,5 +1,7 @@
 import { SeasonalFee } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
+import { SERVICE_HOURS_MESSAGE, serviceHoursOverEventMessage } from "../../../functions/quote-service-lines";
 import { UpdateProposalPerPersonUseCase } from "./use-case-update-proposal-per-person";
 import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
 
@@ -178,5 +180,130 @@ describe("UpdateProposalPerPersonUseCase", () => {
             unitPrice: 99,
             amount: 1188,
         });
+    });
+
+    function hourlyVenue() {
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_PERSON",
+            pricePerPerson: 100,
+            standardEventDuration: 6,
+            minimumPrice: null,
+            seasonalFee: [],
+        });
+    }
+
+    it("grava a quantidade escolhida do servico por hora", async () => {
+        hourlyVenue();
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "led",
+            venueId: "venue-1",
+            price: 250,
+            pricingType: "PER_HOUR",
+        }]);
+
+        await run({
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 3 }],
+            totalAmountInput: "1",
+        });
+
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([{
+            serviceId: "led",
+            pricingType: "PER_HOUR",
+            unitPrice: 250,
+            quantity: 3,
+            amount: 750,
+        }]);
+    });
+
+    it("permuta grava a quantidade escolhida e mantem o total zero", async () => {
+        hourlyVenue();
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "led",
+            venueId: "venue-1",
+            price: 250,
+            pricingType: "PER_HOUR",
+        }]);
+
+        const response = await run({
+            type: "BARTER",
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 3 }],
+        });
+
+        expect(response.data.totalAmount).toBe(0);
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([
+            expect.objectContaining({ serviceId: "led", quantity: 3, amount: 750 }),
+        ]);
+    });
+
+    it("recusa servico por hora sem horas, com zero ou acima da duracao", async () => {
+        hourlyVenue();
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "led",
+            venueId: "venue-1",
+            price: 250,
+            pricingType: "PER_HOUR",
+        }]);
+
+        await expect(run({ serviceIds: ["led"] })).rejects.toBeInstanceOf(HttpBadRequestError);
+        await expect(run({
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 0 }],
+        })).rejects.toThrow(SERVICE_HOURS_MESSAGE);
+        await expect(run({
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 1.5 as never }],
+        })).rejects.toThrow(SERVICE_HOURS_MESSAGE);
+        await expect(run({
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 7 }],
+        })).rejects.toThrow(serviceHoursOverEventMessage(6));
+        expect(proposalRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("grava zero quando o evento tambem tem duracao zero", async () => {
+        hourlyVenue();
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "led",
+            venueId: "venue-1",
+            price: 250,
+            pricingType: "PER_HOUR",
+        }]);
+
+        await run({
+            startHour: "10:00",
+            endHour: "10:00",
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 0 }],
+            totalAmountInput: "1",
+        });
+
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines[0]).toMatchObject({
+            serviceId: "led",
+            quantity: 0,
+            amount: 0,
+        });
+    });
+
+    it("servico fixo sem serviceHours grava quantidade 1", async () => {
+        hourlyVenue();
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "limpeza",
+            venueId: "venue-1",
+            price: 300,
+            pricingType: "FIXED",
+        }]);
+
+        await run({ serviceIds: ["limpeza"], totalAmountInput: "1" });
+
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([{
+            serviceId: "limpeza",
+            pricingType: "FIXED",
+            unitPrice: 300,
+            quantity: 1,
+            amount: 300,
+        }]);
     });
 });

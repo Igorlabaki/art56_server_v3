@@ -138,7 +138,7 @@ describe("horas na criacao por pessoa", () => {
         }));
     });
 
-    it("a edicao por pessoa nao recebe serviceHours", () => {
+    it("a edicao por pessoa conserva serviceHours", () => {
         const parsed = updateProposalPerPersonRequestParams.parse({
             proposalId: "proposal-1",
             data: {
@@ -148,6 +148,19 @@ describe("horas na criacao por pessoa", () => {
                 serviceHours: [{ serviceId: "led", hours: 3 }],
             },
         });
-        expect(parsed.data).not.toHaveProperty("serviceHours");
+        expect(parsed.data.serviceHours).toEqual([{ serviceId: "led", hours: 3 }]);
+    });
+
+    it("a edicao por pessoa recusa hora fracionada", () => {
+        const parsed = updateProposalPerPersonRequestParams.safeParse({
+            proposalId: "proposal-1",
+            data: {
+                ...base,
+                totalAmountInput: "0",
+                serviceIds: ["led"],
+                serviceHours: [{ serviceId: "led", hours: 1.5 }],
+            },
+        });
+        expect(parsed.success).toBe(false);
     });
 });
