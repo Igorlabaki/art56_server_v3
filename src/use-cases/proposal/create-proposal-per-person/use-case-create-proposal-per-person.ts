@@ -21,10 +21,9 @@ import { calcBasePrice } from "../../../functions/calc-base-price";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
+import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
 import { Payment, SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
-import { UserOrganizationRepositoryInterface } from "../../../repositories/interface/user-organization-repository-interface";
-import { FirebaseNotificationService } from "../../../services/firebase-notification-service";
 
 class CreateProposalPerPersonUseCase {
     constructor(
@@ -35,45 +34,27 @@ class CreateProposalPerPersonUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
-        private userOrganizationRepository: UserOrganizationRepositoryInterface,
     ) { }
-
-    private async sendNotificationToAdmins({venueId, proposalId, content}:{venueId: string, proposalId: string, content: string}) {
-        // Buscar a venue para obter a organização
-        const venue = await this.venueRepository.getById({ venueId });
-        if (!venue) return;
-       
-        // Buscar todas as permissões de usuário para esta venue
-        const userOrganizations = await this.userOrganizationRepository.listByOrganization({
-            organizationId: venue.organizationId,
-            venueId,
-        });
-        console.log("userOrganizations", userOrganizations)
-        if (!userOrganizations) return;
-
-        const notificationService = FirebaseNotificationService.getInstance();
-        console.log("notificationService", notificationService)
-        // Para cada permissão, buscar o usuário e enviar notificação se tiver token FCM
-         userOrganizations.map(async (userOrganization) => {
-            if (userOrganization.user.fcmToken) {
-                await notificationService.sendNotification(
-                    userOrganization.user.fcmToken,
-                    "Novo Orçamento",
-                    content
-                );
-            }
-        })
-    }
 
     async execute(params: CreateProposalPerPersonRequestParamsSchema) {
         let createProposalPerPersonInDb: CreateProposalInDbParams;
         console.log("cheguei no usecase")
-        const { date, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId, ...rest } = params
+        const { date, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, ...rest } = params
 
-        const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
-            serviceIds,
+        const quotedDates = transformDate({ date, endHour, startHour, divisor: "/" })
+        const quotedServices = await this.serviceRepository.listForQuote(params.venueId, serviceIds)
+        const hoursByServiceId = serviceHoursMap(serviceHours)
+        assertChosenServiceHours(serviceIds, quotedServices, hoursByServiceId, calcEventDuration(quotedDates.startDate, quotedDates.endDate))
+        const serviceLines = quoteServiceLines({
             venueId: params.venueId,
+            serviceIds,
+            services: quotedServices,
+            guestNumber: Number(guestNumber),
+            startDate: quotedDates.startDate,
+            endDate: quotedDates.endDate,
+            hoursByServiceId,
         })
+        const totalAmountService = sumServiceQuote(serviceLines)
         const totalAmountInputFormated = totalAmountInput ? Number(totalAmountInput) : 0
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] } & { Payment: Payment[] };
         console.log("venue", venue)
@@ -89,6 +70,7 @@ class CreateProposalPerPersonUseCase {
                 endDate,
                 startDate,
                 serviceIds,
+                serviceLines,
                 basePrice: 0,
                 totalAmount: 0,
                 extraHoursQty: 0,
@@ -113,9 +95,6 @@ class CreateProposalPerPersonUseCase {
                 content: notificationContent,
                 type: "PROPOSAL",
             });
-
-            // Enviar notificação para os administradores
-            await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
             if (userId) {
                 const user = await this.userRepository.getById(userId)
@@ -223,6 +202,7 @@ class CreateProposalPerPersonUseCase {
                     startDate,
                     basePrice,
                     serviceIds,
+                serviceLines,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: extraHoursQtyCalculated,
                     extraHourPrice,
@@ -241,9 +221,6 @@ class CreateProposalPerPersonUseCase {
                     content: notificationContent,
                     type: "PROPOSAL",
                 });
-
-                // Enviar notificação para os administradores
-                await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -298,6 +275,7 @@ class CreateProposalPerPersonUseCase {
                 startDate,
                 basePrice,
                 serviceIds,
+                serviceLines,
                 totalAmount: finalTotalAmount,
                 extraHoursQty: extraHoursQtyCalculated,
                 extraHourPrice,
@@ -318,10 +296,6 @@ class CreateProposalPerPersonUseCase {
             });
 
             
-            // Enviar notificação para os administradores
-            const lognotification = await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
-            console.log("lognotification", lognotification)
-
             if (userId) {
                 const user = await this.userRepository.getById(userId);
                 if (!user) throw new HttpResourceNotFoundError("Usuário");
@@ -421,6 +395,7 @@ class CreateProposalPerPersonUseCase {
                     startDate,
                     basePrice,
                     serviceIds,
+                serviceLines,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: extraHoursQtyCalculated,
                     extraHourPrice,
@@ -439,9 +414,6 @@ class CreateProposalPerPersonUseCase {
                     content: notificationContent,
                     type: "PROPOSAL",
                 });
-
-                // Enviar notificação para os administradores
-                await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
                 if (userId) {
                     const user = await this.userRepository.getById(userId);
@@ -490,6 +462,7 @@ class CreateProposalPerPersonUseCase {
                 startDate,
                 basePrice,
                 serviceIds,
+                serviceLines,
                 totalAmount: finalTotalAmount,
                 extraHoursQty: 0,
                 extraHourPrice,
@@ -508,9 +481,6 @@ class CreateProposalPerPersonUseCase {
                 content: notificationContent,
                 type: "PROPOSAL",
             });
-
-            // Enviar notificação para os administradores
-            await this.sendNotificationToAdmins({venueId: params.venueId, proposalId: newProposal.id, content: notificationContent});
 
             if (userId) {
                 const user = await this.userRepository.getById(userId);
@@ -566,6 +536,7 @@ class CreateProposalPerPersonUseCase {
                 startDate,
                 basePrice,
                 serviceIds,
+                serviceLines,
                 totalAmount,
                 extraHoursQty,
                 extraHourPrice,

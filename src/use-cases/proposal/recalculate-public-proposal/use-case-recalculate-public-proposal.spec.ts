@@ -7,11 +7,12 @@ const HISTORY_ACTION = "Cliente atualizou data, convidados e horas pelo link";
 describe("RecalculatePublicProposalUseCase", () => {
     const proposalRepository = {
         getById: vi.fn(),
-        update: vi.fn(async (param: { proposalId: string }) => ({ id: param.proposalId })),
+        update: vi.fn(async (param: { proposalId: string; data: { serviceLines?: unknown } }) => ({ id: param.proposalId })),
         monthlyRevenueAnalysis: vi.fn(async () => null as number | null),
     };
     const venueRepository = { getById: vi.fn() };
-    const serviceRepository = { getByProposalServiceListTotalAmount: vi.fn(async () => 0) };
+    const cleanup = [{ id: "svc-limpeza", venueId: "venue-1", price: 300, pricingType: "FIXED" as const }];
+    const serviceRepository = { listForQuote: vi.fn(async () => cleanup) };
     const historyRepository = { create: vi.fn() };
     const goalRepository = { findByVenueAndRevenue: vi.fn() };
 
@@ -38,7 +39,7 @@ describe("RecalculatePublicProposalUseCase", () => {
         vi.clearAllMocks();
         proposalRepository.getById.mockResolvedValue(sameDay);
         proposalRepository.monthlyRevenueAnalysis.mockResolvedValue(null);
-        serviceRepository.getByProposalServiceListTotalAmount.mockResolvedValue(300);
+        serviceRepository.listForQuote.mockResolvedValue(cleanup);
         venueRepository.getById.mockResolvedValue({
             id: "venue-1",
             maxGuest: 80,
@@ -99,9 +100,20 @@ describe("RecalculatePublicProposalUseCase", () => {
             "extraHoursQty",
             "guestNumber",
             "serviceIds",
+            "serviceLines",
             "startDate",
             "totalAmount",
         ]);
+        const firstLines = proposalRepository.update.mock.calls[0][0].data.serviceLines;
+        const secondLines = proposalRepository.update.mock.calls[1][0].data.serviceLines;
+        expect(secondLines).toEqual(firstLines);
+        expect(firstLines).toEqual([{
+            serviceId: "svc-limpeza",
+            pricingType: "FIXED",
+            unitPrice: 300,
+            quantity: 1,
+            amount: 300,
+        }]);
     });
 
     it("troca a locacao pelo minimo e tira as horas extras", async () => {
@@ -115,7 +127,12 @@ describe("RecalculatePublicProposalUseCase", () => {
             minimumPricePeriods: [],
             seasonalFee: [],
         });
-        serviceRepository.getByProposalServiceListTotalAmount.mockResolvedValue(0);
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "svc-limpeza",
+            venueId: "venue-1",
+            price: 100,
+            pricingType: "FIXED",
+        }]);
 
         const response = await run({ guestNumber: 2, hours: 8 });
 
@@ -123,7 +140,7 @@ describe("RecalculatePublicProposalUseCase", () => {
             basePrice: 5000,
             extraHoursQty: 0,
             extraHourPrice: 0,
-            totalAmount: 5000,
+            totalAmount: 5100,
         });
     });
 
@@ -137,7 +154,8 @@ describe("RecalculatePublicProposalUseCase", () => {
             minimumPrice: null,
             seasonalFee: [],
         });
-        serviceRepository.getByProposalServiceListTotalAmount.mockResolvedValue(0);
+        proposalRepository.getById.mockResolvedValue({ ...sameDay, proposalServices: [] });
+        serviceRepository.listForQuote.mockResolvedValue([]);
 
         const response = await run({ guestNumber: 4, hours: 8 });
 
@@ -160,7 +178,8 @@ describe("RecalculatePublicProposalUseCase", () => {
             minimumPrice: null,
             seasonalFee: [],
         });
-        serviceRepository.getByProposalServiceListTotalAmount.mockResolvedValue(0);
+        proposalRepository.getById.mockResolvedValue({ ...sameDay, proposalServices: [] });
+        serviceRepository.listForQuote.mockResolvedValue([]);
 
         const response = await run({ guestNumber: 40, hours: 5 });
 
@@ -205,6 +224,33 @@ describe("RecalculatePublicProposalUseCase", () => {
             })).rejects.toBeInstanceOf(HttpBadRequestError);
             expect(proposalRepository.update).not.toHaveBeenCalled();
         }
+    });
+
+    it("conserva as horas escolhidas e segue os convidados no servico por pessoa", async () => {
+        proposalRepository.getById.mockResolvedValue({
+            ...sameDay,
+            proposalServices: [
+                { serviceId: "svc-hora", pricingType: "PER_HOUR", quantity: 3 },
+                { serviceId: "svc-pessoa", pricingType: "PER_PERSON", quantity: 10 },
+                { serviceId: "svc-sem-qtd", pricingType: "PER_HOUR" },
+            ],
+        });
+        serviceRepository.listForQuote.mockResolvedValue([
+            { id: "svc-hora", venueId: "venue-1", price: 50, pricingType: "PER_HOUR" },
+            { id: "svc-pessoa", venueId: "venue-1", price: 10, pricingType: "PER_PERSON" },
+            { id: "svc-sem-qtd", venueId: "venue-1", price: 20, pricingType: "PER_HOUR" },
+        ]);
+
+        await run({ hours: 8, guestNumber: 12 });
+
+        const written = proposalRepository.update.mock.calls.at(-1)?.[0].data;
+        expect(written.serviceLines).toEqual([
+            { serviceId: "svc-hora", pricingType: "PER_HOUR", unitPrice: 50, quantity: 3, amount: 150 },
+            { serviceId: "svc-pessoa", pricingType: "PER_PERSON", unitPrice: 10, quantity: 12, amount: 120 },
+            { serviceId: "svc-sem-qtd", pricingType: "PER_HOUR", unitPrice: 20, quantity: 8, amount: 160 },
+        ]);
+        expect(written.basePrice).toBe(2160);
+        expect(written.extraHoursQty).toBe(2);
     });
 
     it("registra o historico do link sem usuario", async () => {

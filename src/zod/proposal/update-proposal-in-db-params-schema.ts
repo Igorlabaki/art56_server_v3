@@ -23,6 +23,13 @@ export const updateProposalInDbParam = z.object({
         extraHoursQty: z.number().optional(),
         extraHourPrice: z.number().optional(),
         serviceIds: z.array(z.string()).optional(),
+        serviceLines: z.array(z.object({
+            serviceId: z.string(),
+            pricingType: z.enum(["FIXED", "PER_HOUR", "PER_PERSON"]),
+            unitPrice: z.number(),
+            quantity: z.number(),
+            amount: z.number(),
+        })).optional(),
         type: z.enum(["PRODUCTION", "BARTER", "OTHER", "EVENT"]).optional(),
         trafficSource: z.enum(["AIRBNB", "GOOGLE", "INSTAGRAM", "TIKTOK", "OTHER", "FRIEND", "FACEBOOK"]).optional(),
     })

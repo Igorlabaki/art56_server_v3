@@ -1,29 +1,30 @@
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
 import { CreateServiceRequestParams } from "../../../zod/services/create-service-params-schema"
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface"
+import { ServiceAuthorizer } from "../service-authorizer"
 
 class CreateServiceUseCase {
     constructor(
         private serviceRepository: ServiceRepositoryInterface,
+        private authorizer: ServiceAuthorizer,
     ) { }
 
-    async execute(params: CreateServiceRequestParams) {
+    async execute(userId: string | undefined, params: CreateServiceRequestParams) {
+        await this.authorizer.assert(userId, params.venueId)
 
-        const serviceAlreadyExists = await this.serviceRepository.getByName({name: params.name, venueId: params.venueId})
+        const serviceAlreadyExists = await this.serviceRepository.getByName({ name: params.name, venueId: params.venueId })
 
         if (serviceAlreadyExists) {
             throw new HttpConflictError("Servico")
         }
 
-        // Validate if user exists
         const newService = await this.serviceRepository.create(params)
 
         if (!newService) {
             throw new HttpConflictError("Servico")
         }
-        //
 
-        const formatedResponse = {
+        return {
             success: true,
             message: "Servico foi registrado com sucesso",
             data: {
@@ -32,8 +33,6 @@ class CreateServiceUseCase {
             count: 1,
             type: "Service"
         }
-
-        return formatedResponse
     }
 }
 

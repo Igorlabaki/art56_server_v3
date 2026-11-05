@@ -1,4 +1,5 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
+import { ServiceQuoteLine } from "../../functions/quote-service-lines";
 import { ListProposalRequestQuerySchema } from "../../zod/proposal/list-proposal-query-schema";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
@@ -16,6 +17,7 @@ export interface CreateProposalInDbParams {
   basePrice: number
   type: ProposalType
   serviceIds?: string[] | []
+  serviceLines?: ServiceQuoteLine[]
   description: string
   totalAmount: number
   knowsVenue: boolean
@@ -39,6 +41,7 @@ export interface ItemListProposalResponse{
 export interface UpdateProposalServices{
   proposalId: string;
   serviceIds: string[]
+  serviceLines?: ServiceQuoteLine[]
 }
 
 export interface TrafficSourceTypes {

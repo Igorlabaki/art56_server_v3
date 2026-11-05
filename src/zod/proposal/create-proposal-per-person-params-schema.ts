@@ -14,6 +14,10 @@ export const createProposalPerPersonRequestParamsSchema = z.object({
     email: optionalProposalEmail,
     userId: z.string().optional(),
     serviceIds: z.array(z.string()),
+    serviceHours: z.array(z.object({
+        serviceId: z.string(),
+        hours: z.number().int().min(0).max(8760),
+    })).max(100).optional(),
     totalAmountInput: z.string().optional(),
     type: z.enum(["PRODUCTION", "BARTER", "OTHER", "EVENT"]), 
     trafficSource: z.enum(["AIRBNB", "GOOGLE", "INSTAGRAM", "TIKTOK", "OTHER", "FRIEND", "FACEBOOK"]),

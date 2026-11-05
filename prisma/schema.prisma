@@ -208,13 +208,17 @@ model Person {
 }
 
 model ProposalService {
-  id         String   @id @default(uuid())
-  proposalId String
-  serviceId  String
-  teste      String?
-  joinedAt   DateTime @default(now())
-  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  id          String              @id @default(uuid())
+  proposalId  String
+  serviceId   String
+  teste       String?
+  pricingType ServicePricingType?
+  unitPrice   Float?
+  quantity    Int?
+  amount      Float?
+  joinedAt    DateTime            @default(now())
+  service     Service             @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  proposal    Proposal            @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
   @@index([serviceId])
@@ -222,11 +226,14 @@ model ProposalService {
 }
 
 model Service {
-  id               String            @id @default(uuid())
+  id               String             @id @default(uuid())
   name             String
   price            Float
+  pricingType      ServicePricingType @default(FIXED)
+  description      String?            @db.VarChar(500)
+  imageUrl         String?            @db.Text
   venueId          String
-  rpaRequired      Boolean           @default(false)
+  rpaRequired      Boolean            @default(false)
   rpaMinPeople     Int?
   proposalServices ProposalService[]
   venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
@@ -815,6 +822,12 @@ enum PricingModel {
   PER_PERSON_DAY
   PER_PERSON_HOUR
   TIERED
+}
+
+enum ServicePricingType {
+  FIXED
+  PER_HOUR
+  PER_PERSON
 }
 
 enum DocumentType {

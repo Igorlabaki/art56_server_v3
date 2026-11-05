@@ -15,6 +15,7 @@ import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/upda
 import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
+import { quoteServiceLines, sumServiceQuote } from "../../../functions/quote-service-lines";
 class UpdateProposalPerPersonUseCase {
     constructor(
         private userRepository: UserRepositoryInterface,
@@ -43,9 +44,19 @@ class UpdateProposalPerPersonUseCase {
             throw new HttpResourceNotFoundError("Locacao")
         }
 
-        const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
-            serviceIds,
+        const quotedDates = transformDate({ date, endHour, startHour, divisor: "/" })
+        const serviceLines = quoteServiceLines({
             venueId: param.data.venueId,
+            serviceIds,
+            services: await this.serviceRepository.listForQuote(param.data.venueId, serviceIds),
+            guestNumber: Number(guestNumber),
+            startDate: quotedDates.startDate,
+            endDate: quotedDates.endDate,
+        })
+        const totalAmountService = sumServiceQuote(serviceLines)
+        const withLines = (update: UpdateProposalInDbParam): UpdateProposalInDbParam => ({
+            ...update,
+            data: { ...update.data, serviceLines },
         })
 
         let updateProposalInDbParam: UpdateProposalInDbParam;
@@ -74,9 +85,9 @@ class UpdateProposalPerPersonUseCase {
                 });
             }
 
-            const updateProposal = await this.proposalRepository.update(
+            const updateProposal = await this.proposalRepository.update(withLines(
                 updateProposalInDbParam
-            );
+            ));
 
             if (!updateProposal) {
                 throw Error("Erro na conexao com o banco de dados")
@@ -165,9 +176,9 @@ class UpdateProposalPerPersonUseCase {
                 });
             }
 
-            const updatedProposal = await this.proposalRepository.update(
+            const updatedProposal = await this.proposalRepository.update(withLines(
                 updateProposalInDbParam
-            );
+            ));
 
             if (!updatedProposal) {
                 throw Error("Erro na conexao com o banco de dados")
@@ -267,9 +278,9 @@ class UpdateProposalPerPersonUseCase {
                 });
             }
 
-            const updatedProposal = await this.proposalRepository.update(
+            const updatedProposal = await this.proposalRepository.update(withLines(
                 updateProposalInDbParam
-            );
+            ));
 
             if (!updatedProposal) {
                 throw Error("Erro na conexao com o banco de dados")
@@ -345,9 +356,9 @@ class UpdateProposalPerPersonUseCase {
             });
         }
 
-        const updatedProposal = await this.proposalRepository.update(
+        const updatedProposal = await this.proposalRepository.update(withLines(
             updateProposalInDbParam
-        );
+        ));
 
         if (!updatedProposal) {
             throw Error("Erro na conexao com o banco de dados")

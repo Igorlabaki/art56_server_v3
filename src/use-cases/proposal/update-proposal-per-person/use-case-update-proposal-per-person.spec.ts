@@ -18,7 +18,7 @@ function fee(partial: Partial<SeasonalFee> & Pick<SeasonalFee, "type" | "fee">):
 describe("UpdateProposalPerPersonUseCase", () => {
     const proposalRepository = {
         getById: vi.fn(),
-        update: vi.fn(async (param: { proposalId: string; data: { totalAmount: number } }) => ({
+        update: vi.fn(async (param: { proposalId: string; data: { totalAmount: number; serviceLines?: unknown[] } }) => ({
             id: param.proposalId,
             totalAmount: param.data.totalAmount,
         })),
@@ -32,7 +32,7 @@ describe("UpdateProposalPerPersonUseCase", () => {
         getById: vi.fn(),
     };
     const serviceRepository = {
-        getByProposalServiceListTotalAmount: vi.fn(async () => 0),
+        listForQuote: vi.fn(async (): Promise<Array<{ id: string; venueId: string; price: number; pricingType: string }>> => []),
     };
 
     const useCase = new UpdateProposalPerPersonUseCase(
@@ -65,7 +65,7 @@ describe("UpdateProposalPerPersonUseCase", () => {
         vi.clearAllMocks();
         proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 1 });
         proposalRepository.monthlyRevenueAnalysis.mockResolvedValue(null);
-        serviceRepository.getByProposalServiceListTotalAmount.mockResolvedValue(0);
+        serviceRepository.listForQuote.mockResolvedValue([]);
     });
 
     function run(data: Partial<UpdateProposalPerPersonRequestParams["data"]> = {}) {
@@ -137,5 +137,46 @@ describe("UpdateProposalPerPersonUseCase", () => {
         const response = await run({ type: "BARTER" });
 
         expect(response.data.totalAmount).toBe(0);
+    });
+
+    it("grava a linha por pessoa e regrava a quantidade quando os convidados mudam", async () => {
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_PERSON",
+            pricePerPerson: 100,
+            standardEventDuration: 6,
+            minimumPrice: null,
+            seasonalFee: [],
+        });
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "open-bar",
+            venueId: "venue-1",
+            price: 40,
+            pricingType: "PER_PERSON",
+        }]);
+
+        await run({ serviceIds: ["open-bar"], totalAmountInput: "1" });
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "open-bar",
+            venueId: "venue-1",
+            price: 99,
+            pricingType: "PER_PERSON",
+        }]);
+        const stored = proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines;
+        expect(stored).toEqual([{
+            serviceId: "open-bar",
+            pricingType: "PER_PERSON",
+            unitPrice: 40,
+            quantity: 10,
+            amount: 400,
+        }]);
+
+        await run({ serviceIds: ["open-bar"], guestNumber: "12", totalAmountInput: "1" });
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines[0]).toMatchObject({
+            serviceId: "open-bar",
+            quantity: 12,
+            unitPrice: 99,
+            amount: 1188,
+        });
     });
 });

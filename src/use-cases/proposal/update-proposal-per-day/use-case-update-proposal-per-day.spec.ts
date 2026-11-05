@@ -17,7 +17,7 @@ function fee(partial: Partial<SeasonalFee> & Pick<SeasonalFee, "type" | "fee">):
 describe("UpdateProposalPerDayUseCase", () => {
     const proposalRepository = {
         getById: vi.fn(),
-        update: vi.fn(async (param: { proposalId: string; data: { totalAmount: number } }) => ({
+        update: vi.fn(async (param: { proposalId: string; data: { totalAmount: number; serviceLines?: unknown[] } }) => ({
             id: param.proposalId,
             totalAmount: param.data.totalAmount,
         })),
@@ -28,7 +28,7 @@ describe("UpdateProposalPerDayUseCase", () => {
         getById: vi.fn(),
     };
     const serviceRepository = {
-        getByProposalServiceListTotalAmount: vi.fn(async () => 0),
+        listForQuote: vi.fn(async (): Promise<Array<{ id: string; venueId: string; price: number; pricingType: string }>> => []),
     };
 
     const useCase = new UpdateProposalPerDayUseCase(
@@ -61,7 +61,7 @@ describe("UpdateProposalPerDayUseCase", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 1 });
-        serviceRepository.getByProposalServiceListTotalAmount.mockResolvedValue(0);
+        serviceRepository.listForQuote.mockResolvedValue([]);
     });
 
     it("recalcula diaria com adicional e desconto da data de inicio", async () => {
@@ -100,5 +100,36 @@ describe("UpdateProposalPerDayUseCase", () => {
         });
 
         expect(response.data.totalAmount).toBe(900);
+    });
+
+    it("cobra a hora do servico pelo intervalo do evento, nao pelas diarias", async () => {
+        proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 1 });
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_DAY",
+            pricePerDay: 100,
+            minimumPrice: null,
+            seasonalFee: [],
+        });
+        serviceRepository.listForQuote.mockResolvedValue([{
+            id: "dj",
+            venueId: "venue-1",
+            price: 10,
+            pricingType: "PER_HOUR",
+        }]);
+
+        const response = await useCase.execute({
+            proposalId: "proposal-1",
+            data: { ...baseData, serviceIds: ["dj"], totalAmountInput: "1" },
+        });
+
+        expect(response.data.totalAmount).toBe(760);
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([{
+            serviceId: "dj",
+            pricingType: "PER_HOUR",
+            unitPrice: 10,
+            quantity: 56,
+            amount: 560,
+        }]);
     });
 });

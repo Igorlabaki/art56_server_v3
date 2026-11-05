@@ -5,6 +5,7 @@ import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
 import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
 import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
+import { quoteServiceLines, sumServiceQuote } from "../../../functions/quote-service-lines";
 import { transformDate } from "../../../functions/transform-date";
 import {
     formatWallClockTime,
@@ -96,12 +97,26 @@ class RecalculatePublicProposalUseCase {
             endHour,
         });
 
-        const serviceIds = proposalServices(proposal as { proposalServices?: { serviceId: string }[] })
-            .map((item) => item.serviceId);
-        const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
-            serviceIds,
+        const storedServices = proposalServices(proposal as {
+            proposalServices?: { serviceId: string; quantity?: number | null; pricingType?: string | null }[];
+        });
+        const serviceIds = storedServices.map((item) => item.serviceId);
+        const hoursByServiceId: Record<string, number> = {};
+        for (const item of storedServices) {
+            if (item.pricingType === "PER_HOUR" && typeof item.quantity === "number") {
+                hoursByServiceId[item.serviceId] = item.quantity;
+            }
+        }
+        const serviceLines = quoteServiceLines({
             venueId: venue.id,
-        }) || 0;
+            serviceIds,
+            services: await this.serviceRepository.listForQuote(venue.id, serviceIds),
+            guestNumber: params.guestNumber,
+            startDate,
+            endDate,
+            hoursByServiceId,
+        });
+        const totalAmountService = sumServiceQuote(serviceLines);
 
         const amounts = await this.calculateAmounts({
             venue,
@@ -123,6 +138,7 @@ class RecalculatePublicProposalUseCase {
                 extraHourPrice: amounts.extraHourPrice,
                 totalAmount: amounts.totalAmount,
                 serviceIds,
+                serviceLines,
             },
         });
 
@@ -339,7 +355,9 @@ function endHourOnTheSameDay(startHour: string, hours: number): string {
     return `${String(endHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function proposalServices(proposal: { proposalServices?: { serviceId: string }[] }) {
+function proposalServices(proposal: {
+    proposalServices?: { serviceId: string; quantity?: number | null; pricingType?: string | null }[];
+}) {
     return proposal.proposalServices ?? [];
 }
 

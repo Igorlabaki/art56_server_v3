@@ -7,6 +7,7 @@ import { getProposalPresentationFactory } from "../use-cases/proposal/get-propos
 import { reorderProposalImagesFactory } from "../use-cases/proposal/reorder-proposal-images/factory-reorder-proposal-images";
 import { chooseProposalImageFactory } from "../use-cases/proposal/choose-proposal-image/factory-choose-proposal-image";
 import { recalculatePublicProposalFactory } from "../use-cases/proposal/recalculate-public-proposal/factory-recalculate-public-proposal";
+import { updatePublicProposalServicesFactory } from "../use-cases/proposal/update-public-proposal-services/factory-update-public-proposal-services";
 import { updateProposalPerPersonFactory } from "../use-cases/proposal/update-proposal-per-person/factory-update-proposal-per-person";
 import { createProposalPerPersonFactory } from "../use-cases/proposal/create-proposal-per-person/factory-create-proposal-per-person";
 import { updateProposalPerDayFactory } from "../use-cases/proposal/update-proposal-per-day/factory-update-proposal-per-day";
@@ -53,6 +54,17 @@ proposalRoutes.put("/presentation/:proposalId/image-choice", ensureAuthenticate,
 proposalRoutes.put("/presentation/:proposalId/recalculate", async (req, res) => {
     const controller = recalculatePublicProposalFactory();
     await controller.handle(req, res);
+});
+
+// Publico de proposito: quem tem o link marca os servicos deste orcamento. Obrigatorio e corpo estreito ficam no use case.
+proposalRoutes.get("/presentation/:proposalId/services", async (req, res) => {
+    const controller = updatePublicProposalServicesFactory();
+    await controller.list(req, res);
+});
+
+proposalRoutes.put("/presentation/:proposalId/services", async (req, res) => {
+    const controller = updatePublicProposalServicesFactory();
+    await controller.update(req, res);
 });
 
 proposalRoutes.put("/updatePerPerson",ensureAuthenticate, async (req, res) => {

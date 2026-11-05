@@ -20,7 +20,7 @@ class AuthenticateUserUseCase {
         private sessionRepository: SessionRepositoryInterface
     ) { }
 
-    async execute({ password, email, fcmToken }: IRequest) {
+    async execute({ password, email }: IRequest) {
         // Validate if user exists
         const userAlreadyExists = await this.userRepository.getByEmail(email)
 
@@ -36,11 +36,6 @@ class AuthenticateUserUseCase {
             throw new HttpInvalidCredentialsError()
         }
         //
-
-        /* // Update FCM token if provided
-        if (fcmToken) {
-            await this.userRepository.updateFcmToken(userAlreadyExists.id, fcmToken)
-        } */
 
         // Provide token to user
         const accessTokenProvider = new AccessTokenProvider()

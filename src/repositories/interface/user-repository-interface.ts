@@ -19,7 +19,6 @@ export interface UserRepositoryInterface {
   register: (params: RegisterUserRequestParams) => Promise<User | null>
   forgotPassword: (params: ForgotPasswordDbParams) => Promise<User | null>
   updatePassword: (params: UpdatePasswordDbSchema ) => Promise<User | null>
-  updateFcmToken: (userId: string, fcmToken: string) => Promise<User | null>
   resetPassword: (params: ResetPasswordRequestParams) => Promise<User | null>
   update: (params: UpdateUserRequestParams) => Promise<UserWithPartial | null>
   getByPasswordResetToken: (params: GetByPasswordResetToken ) => Promise<UserWithPartial | null>

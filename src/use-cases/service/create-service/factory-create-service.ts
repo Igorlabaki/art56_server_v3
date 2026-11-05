@@ -1,12 +1,17 @@
-import prismaClient from "../../../services/prisma-client";
-import { CreateServiceUseCase } from "./use-case-create-service";
-import { CreateServiceController } from "./controller-create-service";
 import { PrismaServiceRepository } from "../../../repositories/in-prisma/service-in-prisma-repository";
+import { PrismaUserVenuePermissionRepository } from "../../../repositories/in-prisma/user-venue-permission-in-prisma-repository";
+import { PrismaVenueRepository } from "../../../repositories/in-prisma/venue-in-prisma-repository";
+import prismaClient from "../../../services/prisma-client";
+import { ServiceAuthorizer } from "../service-authorizer";
+import { CreateServiceController } from "./controller-create-service";
+import { CreateServiceUseCase } from "./use-case-create-service";
 
 export const createServiceFactory = (): CreateServiceController => {
     const prismaServiceRepository = new PrismaServiceRepository(prismaClient);
-    const createServiceUseCase = new CreateServiceUseCase(prismaServiceRepository);
-    const createServiceController = new CreateServiceController(createServiceUseCase);
-
-    return createServiceController;
+    const authorizer = new ServiceAuthorizer(
+        new PrismaVenueRepository(prismaClient),
+        new PrismaUserVenuePermissionRepository(prismaClient),
+    );
+    const createServiceUseCase = new CreateServiceUseCase(prismaServiceRepository, authorizer);
+    return new CreateServiceController(createServiceUseCase);
 };

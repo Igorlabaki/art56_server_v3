@@ -5,7 +5,6 @@ import { updateUserFactory } from "../use-cases/user/update/factory-update-user"
 import { listUserFactory } from "../use-cases/user/list-user/factory-list-user";
 import { deleteUserFactory } from "../use-cases/user/delete-user/factory-delete-user";
 import { getByIdUserFactory } from "../use-cases/user/get-by-id/factory-get-by-id-user";
-import { updateFcmTokenFactory } from "../use-cases/user/update-fcm-token/factory-update-fcm-token";
 import { createNewUserFactory } from "../use-cases/user/create-new-user/factory-create-new-user-text";
 import { updateUserPasswordFactory } from "../use-cases/user/update-password/factory-update-user-password";
 import { getByEmailUserFactory } from "../use-cases/user/get-by-email/factory-get-by-email-user";
@@ -58,12 +57,5 @@ userRoutes.get("/list?:organizationId?/:email?", (req, res) => {
     const controller = listUserFactory();
     controller.handle(req, res);
 });
-
-// Update FCM Token
-userRoutes.put("/fcm-token", async (req, res) => {
-    const controller = updateFcmTokenFactory();
-    await controller.handle(req, res);
-})
-
 
 export { userRoutes }

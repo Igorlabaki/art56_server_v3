@@ -6,13 +6,14 @@ import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
 import { sortImagePositionUpdates } from "../../functions/plan-visible-image-positions";
+import { ServiceQuoteLine } from "../../functions/quote-service-lines";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
 
   async createPerPerson(params: CreateProposalInDbParams): Promise<Proposal | null> {
 
-    const { serviceIds, venueId, ...rest } = params
+    const { serviceIds, serviceLines, venueId, ...rest } = params
 
     const x = await this.prisma.proposal.create({
       data: {
@@ -24,9 +25,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         },
         proposalServices: {
           createMany: {
-            data: params.serviceIds?.map((serviceId: string) => ({
-              serviceId: serviceId,
-            })) || [],
+            data: serviceLineRows(serviceLines, serviceIds),
           },
         },
       },
@@ -38,16 +37,14 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   async createPerDay(params: CreateProposalInDbParams): Promise<Proposal | null> {
 
-    const { serviceIds, ...rest } = params
+    const { serviceIds, serviceLines, ...rest } = params
 
     return await this.prisma.proposal.create({
       data: {
         ...rest,
         proposalServices: {
           createMany: {
-            data: params.serviceIds?.map((serviceId: string) => ({
-              serviceId: serviceId,
-            })) || [],
+            data: serviceLineRows(serviceLines, serviceIds),
           },
         },
       },
@@ -55,7 +52,19 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
   async update(reference: UpdateProposalInDbParam): Promise<Proposal | null> {
-    const { serviceIds, ...rest } = reference.data
+    const { serviceIds, serviceLines, ...rest } = reference.data
+    if (serviceLines) {
+      return await this.prisma.proposal.update({
+        where: { id: reference.proposalId },
+        data: {
+          ...rest,
+          proposalServices: {
+            deleteMany: {},
+            create: serviceLineRows(serviceLines, serviceIds),
+          },
+        },
+      })
+    }
     const currentServices = await this.prisma.proposal.findUnique({
       where: { id: reference.proposalId },
       include: {
@@ -90,7 +99,18 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
-  async updateServices({ serviceIds, proposalId }: UpdateProposalServices): Promise<Proposal | null> {
+  async updateServices({ serviceIds, serviceLines, proposalId }: UpdateProposalServices): Promise<Proposal | null> {
+    if (serviceLines) {
+      return await this.prisma.proposal.update({
+        where: { id: proposalId },
+        data: {
+          proposalServices: {
+            deleteMany: {},
+            create: serviceLineRows(serviceLines, serviceIds),
+          },
+        },
+      })
+    }
     const currentServices = await this.prisma.proposal.findUnique({
       where: { id: proposalId },
       include: {
@@ -547,5 +567,18 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     return totalAmount
 
   }
+}
+
+function serviceLineRows(serviceLines: ServiceQuoteLine[] | undefined, serviceIds: string[] | undefined) {
+  if (serviceLines) {
+    return serviceLines.map((line) => ({
+      serviceId: line.serviceId,
+      pricingType: line.pricingType,
+      unitPrice: line.unitPrice,
+      quantity: line.quantity,
+      amount: line.amount,
+    }))
+  }
+  return serviceIds?.map((serviceId) => ({ serviceId })) || []
 }
 

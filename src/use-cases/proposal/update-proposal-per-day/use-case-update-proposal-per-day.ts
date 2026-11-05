@@ -13,6 +13,7 @@ import { HistoryRepositoryInterface } from "../../../repositories/interface/hist
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
 import { UpdateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
+import { quoteServiceLines, sumServiceQuote } from "../../../functions/quote-service-lines";
 
 class UpdateProposalPerDayUseCase {
     constructor(
@@ -36,13 +37,21 @@ class UpdateProposalPerDayUseCase {
 
         const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds,guestNumber,userId, ...rest } = param.data
         
-        const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
-             serviceIds,
-             venueId: param.data.venueId,
-         })
-         
          const { startDate } = transformDate({ date: startDay, endHour: endHour, startHour: startHour, divisor: "/" })
          const { endDate } = transformDate({ date: endDay, endHour: endHour, startHour: startHour, divisor: "/" })
+         const serviceLines = quoteServiceLines({
+             venueId: param.data.venueId,
+             serviceIds,
+             services: await this.serviceRepository.listForQuote(param.data.venueId, serviceIds),
+             guestNumber: Number(guestNumber),
+             startDate,
+             endDate,
+         })
+         const totalAmountService = sumServiceQuote(serviceLines)
+         const withLines = (update: UpdateProposalInDbParam): UpdateProposalInDbParam => ({
+             ...update,
+             data: { ...update.data, serviceLines },
+         })
  
          const venue = await this.venueRepository.getById({venueId: param.data.venueId})
  
@@ -75,9 +84,9 @@ class UpdateProposalPerDayUseCase {
                 });
             }
 
-            const updateProposal = await this.proposalRepository.update(
+            const updateProposal = await this.proposalRepository.update(withLines(
                 updateProposalInDbParam
-            );
+            ));
 
             if (!updateProposal) {
                 throw Error("Erro na conexao com o banco de dados")
@@ -153,9 +162,9 @@ class UpdateProposalPerDayUseCase {
                 });
             }
 
-            const updatedProposal = await this.proposalRepository.update(
+            const updatedProposal = await this.proposalRepository.update(withLines(
                 updateProposalInDbParam
-            );
+            ));
 
             if (!updatedProposal) {
                 throw Error("Erro na conexao com o banco de dados")
@@ -230,9 +239,9 @@ class UpdateProposalPerDayUseCase {
                 });
             }
 
-            const updatedProposal = await this.proposalRepository.update(
+            const updatedProposal = await this.proposalRepository.update(withLines(
                 updateProposalInDbParam
-            );
+            ));
 
             if (!updatedProposal) {
                 throw Error("Erro na conexao com o banco de dados")
@@ -288,9 +297,9 @@ class UpdateProposalPerDayUseCase {
             });
         }
 
-        const updatedProposal = await this.proposalRepository.update(
+        const updatedProposal = await this.proposalRepository.update(withLines(
             updateProposalInDbParam
-        );
+        ));
 
         if (!updatedProposal) {
             throw Error("Erro na conexao com o banco de dados")

@@ -6,8 +6,10 @@ import {
     wallClockYear,
 } from "../../../functions/wall-clock-datetime";
 import { differenceInCalendarDays } from 'date-fns';
+import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { transformDate } from "../../../functions/transform-date";
 import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
+import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -36,12 +38,7 @@ class CreateProposalPerDayUseCase {
     async execute(params: CreateProposalPerDayRequestParamsSchema) {
         let createProposalPerDayInDb: CreateProposalInDbParams;
 
-        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, guestNumber, userId, ...rest } = params
-
-        const totalAmountService = await this.serviceRepository.getByProposalServiceListTotalAmount({
-            serviceIds,
-            venueId: params.venueId,
-        })
+        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, ...rest } = params
 
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
 
@@ -54,6 +51,19 @@ class CreateProposalPerDayUseCase {
 
         const { startDate } = transformDate({ date: params.startDay, endHour: params.endHour, startHour: venue.checkIn ? venue.checkIn : params.startHour, divisor: "/" })
         const { endDate } = transformDate({ date: params.endDay, endHour: venue.checkOut ? venue.checkOut : params.endHour, startHour: venue.checkOut ? venue.checkOut : params.endHour, divisor: "/" })
+        const quotedServices = await this.serviceRepository.listForQuote(params.venueId, serviceIds)
+        const hoursByServiceId = serviceHoursMap(serviceHours)
+        assertChosenServiceHours(serviceIds, quotedServices, hoursByServiceId, calcEventDuration(startDate, endDate))
+        const serviceLines = quoteServiceLines({
+            venueId: params.venueId,
+            serviceIds,
+            services: quotedServices,
+            guestNumber: Number(guestNumber),
+            startDate,
+            endDate,
+            hoursByServiceId,
+        })
+        const totalAmountService = sumServiceQuote(serviceLines)
 
         if (params.type === "BARTER") {
             createProposalPerDayInDb = {
@@ -61,6 +71,7 @@ class CreateProposalPerDayUseCase {
                 endDate,
                 startDate,
                 serviceIds,
+                serviceLines,
                 basePrice: 0,
                 totalAmount: 0,
                 extraHoursQty: 0,
@@ -169,6 +180,7 @@ class CreateProposalPerDayUseCase {
                     startDate,
                     basePrice: finalBasePrice,
                     serviceIds,
+                serviceLines,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
                     extraHourPrice: 0,
@@ -224,6 +236,7 @@ class CreateProposalPerDayUseCase {
                 endDate,
                 startDate,
                 serviceIds,
+                serviceLines,
                 basePrice: finalBasePrice,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
@@ -318,6 +331,7 @@ class CreateProposalPerDayUseCase {
                     endDate,
                     startDate,
                     serviceIds,
+                serviceLines,
                     basePrice: finalBasePrice,
                     totalAmount: finalTotalAmount,
                     extraHoursQty: 0,
@@ -394,6 +408,7 @@ class CreateProposalPerDayUseCase {
                 endDate,
                 startDate,
                 serviceIds,
+                serviceLines,
                 basePrice: finalBasePrice,
                 totalAmount: finalTotalAmount,
                 extraHoursQty: 0,
@@ -466,6 +481,7 @@ class CreateProposalPerDayUseCase {
                 startDate,
                 basePrice: finalBasePrice,
                 serviceIds,
+                serviceLines,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
                 guestNumber: Number(guestNumber),
