@@ -14,6 +14,7 @@ import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected
 import { UpdateVenuePaymentInfoSchemaDb } from "../../zod/venue/update-payment-info-venue-params-schema"
 import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-params-schema"
 import { uniqueProposalYears } from "../../functions/proposal-years"
+import { sameMonthEventWhere, sameMonthNumber, sameMonthRevenueByYear } from "../../functions/same-month-revenue-by-year"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -565,6 +566,27 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       proposalStarts.map((proposal) => proposal.startDate)
     );
 
+    const monthNumber = sameMonthNumber(params?.month) ?? (params?.month === "all" ? null : today.getMonth() + 1);
+    const sameMonthEvents = monthNumber === null || proposalYears.length === 0
+      ? []
+      : await this.prisma.dateEvent.findMany({
+        where: sameMonthEventWhere(venueId, monthNumber, proposalYears),
+        select: {
+          startDate: true,
+          proposal: { select: { totalAmount: true } },
+        },
+      });
+    const sameMonthRevenue = monthNumber === null
+      ? null
+      : sameMonthRevenueByYear({
+        month: monthNumber,
+        years: proposalYears,
+        events: sameMonthEvents.map((event) => ({
+          startDate: event.startDate,
+          totalAmount: event.proposal?.totalAmount ?? null,
+        })),
+      });
+
     // Próximo evento (type: EVENT)
     const nextEvent = venue.DateEvent.find(event => 
       event.startDate > today && 
@@ -702,6 +724,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         proposalId: nextVisit.proposal?.id || null
       } : null,
       proposalYears,
+      sameMonthRevenueByYear: sameMonthRevenue,
     };
   }
 }

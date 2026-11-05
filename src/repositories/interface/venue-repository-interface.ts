@@ -69,6 +69,10 @@ export interface VenueAnalyticsResponse {
     proposalId: string | null;
   } | null;
   proposalYears: number[];
+  sameMonthRevenueByYear: {
+    year: number;
+    revenue: number;
+  }[] | null;
 }
 
 export interface WebDataResponse  {
