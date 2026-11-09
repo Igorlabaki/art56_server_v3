@@ -1,5 +1,6 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
+import { MonthlyAverageProposal } from "../../functions/monthly-average-by-years";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
 import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analysis-by-month-db-schema";
@@ -205,6 +206,7 @@ export interface ProposalRepositoryInterface {
   createPerDay: (params: CreateProposalInDbParams) => Promise<Proposal | null>
   createPerPerson: (params: CreateProposalInDbParams) => Promise<Proposal | null>
   analysisByMonth: (params: GetVenueAnalysisByMonthDbSchema) => Promise<Proposal[] | null>
+  revenueYearsProposals: (venueId: string) => Promise<{ years: number[]; proposals: MonthlyAverageProposal[] }>
   monthlyRevenueAnalysis: (params: MonthlyRevenueAnalysisParams) => Promise<number | null>
   updatePersonalInfo: (params: UpdatePersonalInfoProposalSchema) => Promise<Proposal | null> 
   trafficCount: (params: GetTrafficCountVenueDbSchema) => Promise<TrafegoCountResponse | null>

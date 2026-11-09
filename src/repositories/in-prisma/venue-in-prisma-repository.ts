@@ -14,7 +14,8 @@ import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected
 import { UpdateVenuePaymentInfoSchemaDb } from "../../zod/venue/update-payment-info-venue-params-schema"
 import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-params-schema"
 import { uniqueProposalYears } from "../../functions/proposal-years"
-import { sameMonthEventWhere, sameMonthNumber, sameMonthRevenueByYear } from "../../functions/same-month-revenue-by-year"
+import { revenueEventWhere, revenueYears, sameMonthEventWhere, sameMonthNumber, sameMonthRevenueByYear } from "../../functions/same-month-revenue-by-year"
+import { previousYearWindow, yearlyChange } from "../../functions/yearly-change"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -473,8 +474,10 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const firstDayOfLastMonth = params?.month === 'all' ? new Date(selectedYear - 1, 0, 1) : new Date(selectedYear, selectedMonth - 1, 1);
     const lastDayOfLastMonth = params?.month === 'all' ? new Date(selectedYear - 1, 11, 31) : new Date(selectedYear, selectedMonth, 0);
 
+    const previousYear = previousYearWindow(selectedYear, params?.month === 'all' ? null : selectedMonth);
+
     // Anos do seletor: independem do filtro; cada ano vem do startDate de um orçamento deste espaço
-    const [venue, proposalStarts] = await Promise.all([
+    const [venue, proposalStarts, revenueEvents] = await Promise.all([
       this.prisma.venue.findUnique({
       where: { id: venueId },
       select: {
@@ -501,6 +504,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
                 startDate: {
                   gte: firstDayOfLastMonth,
                   lte: lastDayOfLastMonth
+                }
+              },
+              // Eventos do mesmo período no ano anterior
+              {
+                startDate: {
+                  gte: previousYear.start,
+                  lte: previousYear.end
                 }
               },
               // Próximos eventos e visitas (sempre em relação à data atual)
@@ -544,6 +554,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
                   gte: firstDayOfLastMonth,
                   lte: lastDayOfLastMonth
                 }
+              },
+              // Propostas do mesmo período no ano anterior
+              {
+                startDate: {
+                  gte: previousYear.start,
+                  lte: previousYear.end
+                }
               }
             ]
           },
@@ -558,6 +575,14 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         where: { venueId },
         select: { startDate: true },
       }),
+      // Anos do Desempenho Mensal: so os anos em que o espaço teve receita
+      this.prisma.dateEvent.findMany({
+        where: revenueEventWhere(venueId),
+        select: {
+          startDate: true,
+          proposal: { select: { totalAmount: true } },
+        },
+      }),
     ]);
 
     if (!venue) return null;
@@ -565,12 +590,18 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const proposalYears = uniqueProposalYears(
       proposalStarts.map((proposal) => proposal.startDate)
     );
+    const yearsWithRevenue = revenueYears(
+      revenueEvents.map((event) => ({
+        startDate: event.startDate,
+        totalAmount: event.proposal?.totalAmount ?? null,
+      }))
+    );
 
     const monthNumber = sameMonthNumber(params?.month) ?? (params?.month === "all" ? null : today.getMonth() + 1);
-    const sameMonthEvents = monthNumber === null || proposalYears.length === 0
+    const sameMonthEvents = monthNumber === null || yearsWithRevenue.length === 0
       ? []
       : await this.prisma.dateEvent.findMany({
-        where: sameMonthEventWhere(venueId, monthNumber, proposalYears),
+        where: sameMonthEventWhere(venueId, monthNumber, yearsWithRevenue),
         select: {
           startDate: true,
           proposal: { select: { totalAmount: true } },
@@ -580,7 +611,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       ? null
       : sameMonthRevenueByYear({
         month: monthNumber,
-        years: proposalYears,
+        years: yearsWithRevenue,
         events: sameMonthEvents.map((event) => ({
           startDate: event.startDate,
           totalAmount: event.proposal?.totalAmount ?? null,
@@ -677,6 +708,27 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       isPositive: monthlyRevenue >= lastMonthRevenue
     };
 
+    const inPreviousYear = (date: Date) => date >= previousYear.start && date <= previousYear.end;
+    const previousYearEvents = venue.DateEvent.filter(event =>
+      event.type === 'EVENT' && inPreviousYear(event.startDate)
+    );
+    const previousYearRevenue = previousYearEvents
+      .filter(event => event.proposal?.totalAmount)
+      .reduce((total: number, event) => total + event.proposal!.totalAmount, 0);
+    const previousYearVisits = venue.DateEvent.filter(event =>
+      event.type === 'VISIT' && inPreviousYear(event.startDate)
+    ).length;
+    const previousYearProposals = venue.proposals.filter(proposal =>
+      inPreviousYear(proposal.startDate)
+    ).length;
+
+    const yearlyChangeByKpi = {
+      events: yearlyChange(eventsThisMonth, previousYearEvents.length),
+      proposals: yearlyChange(proposalsThisMonth, previousYearProposals),
+      visits: yearlyChange(visitsThisMonth, previousYearVisits),
+      revenue: yearlyChange(monthlyRevenue, previousYearRevenue),
+    };
+
     // Se month for 'all', calcula a receita de cada mês
     const monthlyRevenueList = params?.month === 'all' ? Array.from({ length: 12 }, (_, monthIndex) => {
       const monthStart = new Date(selectedYear, monthIndex, 1);
@@ -706,6 +758,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
       visitsVariation,
       monthlyRevenue,
       revenueVariation,
+      yearlyChange: yearlyChangeByKpi,
       monthlyRevenueList,
       nextEvent: nextEvent ? {
         id: nextEvent.id,

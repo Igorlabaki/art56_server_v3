@@ -6,6 +6,7 @@ import { ListVenueRequestQuerySchema } from "../../zod/venue/list-venue-query-sc
 import { ListPermittedVenueRequestQuerySchema } from "../../zod/venue/list-venue-permitted-query-schema";
 
 import { GetVenueAnalyticsParams } from "../../zod/venue/get-venue-analytics-params-schema";
+import { YearlyChange } from "../../functions/yearly-change";
 import { UpdateVenueSchemaDb } from "../../zod/venue/update-venue-params-schema";
 import { GetHubDataRequestParamSchema } from "../../zod/venue/get-hub-data-request-param";
 import { GetSelectedVenueRequestParamSchema } from "../../zod/venue/get-selected-venue-param-schema";
@@ -48,6 +49,7 @@ export interface VenueAnalyticsResponse {
     value: number;
     isPositive: boolean;
   };
+  yearlyChange: YearlyChange;
   monthlyRevenueList: {
     month: number;
     revenue: number;

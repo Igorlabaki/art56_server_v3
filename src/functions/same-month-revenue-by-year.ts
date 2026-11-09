@@ -1,3 +1,4 @@
+import { uniqueProposalYears } from "./proposal-years";
 import { wallClockMonth, wallClockYear } from "./wall-clock-datetime";
 
 export interface SameMonthRevenueEvent {
@@ -17,6 +18,23 @@ export function sameMonthNumber(month: string | undefined): number | null {
   const parsed = Number(month);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 12) return null;
   return parsed;
+}
+
+export function revenueEventWhere(venueId: string) {
+  return {
+    venueId,
+    type: "EVENT" as const,
+    proposal: { is: { totalAmount: { gt: 0 } } },
+  };
+}
+
+/** Anos wall-clock com algum evento de receita, em qualquer mes, do mais antigo ao mais recente. */
+export function revenueYears(events: SameMonthRevenueEvent[]): number[] {
+  return uniqueProposalYears(
+    events
+      .filter((event) => event.totalAmount != null && event.totalAmount > 0)
+      .map((event) => event.startDate),
+  );
 }
 
 export function sameMonthEventWhere(venueId: string, month: number, years: number[]) {

@@ -3,6 +3,7 @@ import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-reso
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 import { GetVenueAnalysisByMonthSchema } from "../../../zod/venue/get-venue-analysis-by-month-params-schema";
+import { monthlyAverageByYears } from "../../../functions/monthly-average-by-years";
 
 
 class GetVenueAnalysisByMonthUseCase {
@@ -11,7 +12,7 @@ class GetVenueAnalysisByMonthUseCase {
         private proposalRepository: ProposalRepositoryInterface
     ) { }
 
-    async execute({ venueId, year, approved }: GetVenueAnalysisByMonthSchema) {
+    async execute({ venueId, year, approved, average }: GetVenueAnalysisByMonthSchema) {
         // Validate if venue exists
         const venue = await this.venueRepository.getById({ venueId })
 
@@ -113,7 +114,11 @@ class GetVenueAnalysisByMonthUseCase {
         const resultEventsByMonthArray = Object.values(resultEventsByMonth);
         const resultProposalByMonthArray = Object.values(resultProposalByMonth);
 
-        
+        // Media de cada mes nos anos com receita, mesma regra de anos do Desempenho Mensal
+        const averageSource = average === "true"
+            ? await this.proposalRepository.revenueYearsProposals(venueId)
+            : null;
+
         const formatedResponse = {
             success: true,
             message: `Sucesso`,
@@ -122,6 +127,10 @@ class GetVenueAnalysisByMonthUseCase {
                 approved: allApprovedData,
                 analysisEventsByMonth: resultEventsByMonthArray,
                 analysisProposalByMonth: resultProposalByMonthArray,
+                ...(averageSource && {
+                    averageYears: averageSource.years,
+                    averageByMonth: monthlyAverageByYears(averageSource),
+                }),
             },
             count: 1,
             type: "Analysis By Month"

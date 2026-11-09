@@ -7,6 +7,8 @@ import { GetVenueAnalysisByMonthDbSchema } from "../../zod/venue/get-venue-analy
 import { UpdatePersonalInfoProposalSchema } from "../../zod/proposal/update-personal-info-proposal-params-schema";
 import { sortImagePositionUpdates } from "../../functions/plan-visible-image-positions";
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
+import { MonthlyAverageProposal, yearsProposalWhere } from "../../functions/monthly-average-by-years";
+import { revenueEventWhere, revenueYears } from "../../functions/same-month-revenue-by-year";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -609,6 +611,29 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         startDate: "asc",
       },
     });
+  }
+
+  async revenueYearsProposals(venueId: string): Promise<{ years: number[]; proposals: MonthlyAverageProposal[] }> {
+    const revenueEvents = await this.prisma.dateEvent.findMany({
+      where: revenueEventWhere(venueId),
+      select: {
+        startDate: true,
+        proposal: { select: { totalAmount: true } },
+      },
+    });
+    const years = revenueYears(
+      revenueEvents.map((event) => ({
+        startDate: event.startDate,
+        totalAmount: event.proposal?.totalAmount ?? null,
+      }))
+    );
+    if (years.length === 0) return { years, proposals: [] };
+
+    const proposals = await this.prisma.proposal.findMany({
+      where: yearsProposalWhere(venueId, years),
+      select: { startDate: true, approved: true },
+    });
+    return { years, proposals };
   }
 
   async monthlyRevenueAnalysis({ year, month, venueId, approved }: MonthlyRevenueAnalysisParams): Promise<number> {

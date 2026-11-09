@@ -4,6 +4,7 @@ export const getVenueAnalysisByMonthSchema = z.object({
     year: z.string(),
     venueId: z.string(),
     approved: z.string().optional(),
+    average: z.string().optional(),
 });
 
 export type GetVenueAnalysisByMonthSchema = z.infer<typeof getVenueAnalysisByMonthSchema>;
