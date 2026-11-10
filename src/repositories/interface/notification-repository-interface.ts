@@ -13,17 +13,28 @@ export interface NotificationListDbQuery {
   now?: Date;
 }
 
-export interface NotificationListSummary {
+type NotificationPeriodCounts<T> = {
+  last7Days: T;
+  last30Days: T;
+  newProposals: T;
+};
+
+export interface NotificationListSummaryCounts extends NotificationPeriodCounts<number> {
   unread: number;
-  last7Days: number;
-  last30Days: number;
-  newProposals: number;
+  /** Janela imediatamente anterior, de mesmo tamanho, de cada contagem de periodo. */
+  previous: NotificationPeriodCounts<number>;
+}
+
+export interface NotificationListSummary extends NotificationPeriodCounts<number> {
+  unread: number;
+  /** Percentual inteiro contra a janela anterior; `null` quando a janela anterior e 0. */
+  change: NotificationPeriodCounts<number | null>;
 }
 
 export interface NotificationRepositoryInterface {
   create: (params: CreateNotificationRequestParams) => Promise<Notification | null>
   list: (params: NotificationListDbQuery) => Promise<{ items: Notification[]; total: number }>
-  summarize: (params: NotificationListDbQuery) => Promise<NotificationListSummary>
+  summarize: (params: NotificationListDbQuery) => Promise<NotificationListSummaryCounts>
   markUnreadAsRead: (params: { venueId: string; proposalId?: string }) => Promise<number>
   delete: (params: DeleteNotificationRequestParamSchema) => Promise<Notification | null>
   getById: (params: GetByidNotificationRequestParamSchema) => Promise<Notification | null>

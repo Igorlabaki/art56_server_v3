@@ -54,18 +54,24 @@ function harness(rows: Row[]) {
     }),
     summarize: vi.fn(async (query: NotificationListDbQuery) => {
       summaryCalls.push(query);
-      const now = query.now ?? new Date();
-      const since7 = now.getTime() - 7 * DAY_MS;
-      const since30 = now.getTime() - 30 * DAY_MS;
+      const now = (query.now ?? new Date()).getTime();
       const all = rows.filter((item) => matches(item, query));
-      const inWindow = (item: Row, since: number) => item.createdAt.getTime() >= since;
+      const inWindow = (item: Row, fromDays: number, toDays = 0) =>
+        item.createdAt.getTime() >= now - fromDays * DAY_MS && (toDays === 0 || item.createdAt.getTime() < now - toDays * DAY_MS);
       const unreadBlocked = query.isRead === true;
       const proposalsBlocked = query.type !== undefined && query.type !== NotificationType.PROPOSAL;
+      const proposals = (fromDays: number, toDays = 0) =>
+        proposalsBlocked ? 0 : all.filter((item) => item.type === NotificationType.PROPOSAL && inWindow(item, fromDays, toDays)).length;
       return {
         unread: unreadBlocked ? 0 : all.filter((item) => !item.isRead).length,
-        last7Days: all.filter((item) => inWindow(item, since7)).length,
-        last30Days: all.filter((item) => inWindow(item, since30)).length,
-        newProposals: proposalsBlocked ? 0 : all.filter((item) => item.type === NotificationType.PROPOSAL && inWindow(item, since30)).length,
+        last7Days: all.filter((item) => inWindow(item, 7)).length,
+        last30Days: all.filter((item) => inWindow(item, 30)).length,
+        newProposals: proposals(30),
+        previous: {
+          last7Days: all.filter((item) => inWindow(item, 14, 7)).length,
+          last30Days: all.filter((item) => inWindow(item, 60, 30)).length,
+          newProposals: proposals(60, 30),
+        },
       };
     }),
   } as unknown as NotificationRepositoryInterface;
@@ -135,6 +141,58 @@ describe("listar notificacoes", () => {
     expect(wheres.newProposals).toMatchObject({ type: "PROPOSAL", createdAt: { gte: new Date(now.getTime() - 30 * DAY_MS) } });
     expect(notificationSummaryWheres({ venueId: "venue-1", type: "VISIT" }, now).newProposals).toBeNull();
     expect(notificationSummaryWheres({ venueId: "venue-1", isRead: true }, now).unread).toBeNull();
+  });
+
+  it("janelas anteriores de 7 e 30 dias encostam nas atuais sem sobrepor", () => {
+    const now = new Date("2026-11-05T12:00:00.000Z");
+    const ago = (days: number) => new Date(now.getTime() - days * DAY_MS);
+    const { previous } = notificationSummaryWheres({ venueId: "venue-1" }, now);
+    expect(previous.last7Days.createdAt).toEqual({ gte: ago(14), lt: ago(7) });
+    expect(previous.last30Days.createdAt).toEqual({ gte: ago(60), lt: ago(30) });
+    expect(previous.newProposals).toMatchObject({ type: "PROPOSAL", createdAt: { gte: ago(60), lt: ago(30) } });
+  });
+
+  it("janelas anteriores carregam busca, tipo e leitura; tipo fora de orcamento zera orcamentos anteriores", () => {
+    const now = new Date("2026-11-05T12:00:00.000Z");
+    const filtered = notificationSummaryWheres({ venueId: "venue-1", q: "ana", type: "PROPOSAL", isRead: false }, now).previous;
+    for (const where of [filtered.last7Days, filtered.last30Days, filtered.newProposals]) {
+      expect(where).toMatchObject({ venueId: "venue-1", content: { contains: "ana" }, type: "PROPOSAL", isRead: false });
+    }
+    expect(notificationSummaryWheres({ venueId: "venue-1", type: "VISIT" }, now).previous.newProposals).toBeNull();
+  });
+
+  it("summary.change compara cada periodo com a janela anterior e devolve null sem base", async () => {
+    const now = new Date();
+    const at = (days: number) => new Date(now.getTime() - days * DAY_MS + 60_000);
+    const { useCase } = harness([
+      ...Array.from({ length: 3 }, (_, index) => row(index + 1, { createdAt: at(1) })),
+      ...Array.from({ length: 2 }, (_, index) => row(index + 4, { createdAt: at(8) })),
+      ...Array.from({ length: 5 }, (_, index) => row(index + 6, { type: NotificationType.VISIT, createdAt: at(40) })),
+    ]);
+    const response = await useCase.execute({ venueId: "venue-1", page: 1, summary: true });
+
+    expect(response.data.summary).toMatchObject({ last7Days: 3, last30Days: 5, newProposals: 5 });
+    expect(response.data.summary?.change).toEqual({ last7Days: 50, last30Days: 0, newProposals: null });
+    expect(response.data.summary).not.toHaveProperty("previous");
+  });
+
+  it("summary.change com tipo Orcamento iguala 30 dias e orcamentos novos; outro tipo zera os dois lados", async () => {
+    const now = new Date();
+    const at = (days: number) => new Date(now.getTime() - days * DAY_MS + 60_000);
+    const rows = [
+      ...Array.from({ length: 4 }, (_, index) => row(index + 1, { createdAt: at(2) })),
+      ...Array.from({ length: 2 }, (_, index) => row(index + 5, { createdAt: at(45) })),
+      row(7, { type: NotificationType.VISIT, createdAt: at(2) }),
+    ];
+    const { useCase } = harness(rows);
+    const proposals = await useCase.execute({ venueId: "venue-1", type: "PROPOSAL", page: 1, summary: true });
+    const visits = await useCase.execute({ venueId: "venue-1", type: "VISIT", page: 1, summary: true });
+
+    expect(proposals.data.summary?.last30Days).toBe(proposals.data.summary?.newProposals);
+    expect(proposals.data.summary?.change.last30Days).toBe(100);
+    expect(proposals.data.summary?.change.newProposals).toBe(100);
+    expect(visits.data.summary?.newProposals).toBe(0);
+    expect(visits.data.summary?.change.newProposals).toBeNull();
   });
 
   it("summary sem pagina responde 400 e sem pagina devolve no maximo 25", async () => {

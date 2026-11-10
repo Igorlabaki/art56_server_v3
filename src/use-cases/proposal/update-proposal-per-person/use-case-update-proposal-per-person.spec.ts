@@ -2,6 +2,7 @@ import { SeasonalFee } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { SERVICE_HOURS_MESSAGE, serviceHoursOverEventMessage } from "../../../functions/quote-service-lines";
+import { EVENT_CATEGORY_MESSAGE } from "../../../functions/event-category";
 import { UpdateProposalPerPersonUseCase } from "./use-case-update-proposal-per-person";
 import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
 
@@ -60,6 +61,7 @@ describe("UpdateProposalPerPersonUseCase", () => {
         totalAmountInput: "1",
         serviceIds: [] as string[],
         type: "EVENT" as const,
+        eventCategory: "BIRTHDAY" as const,
         trafficSource: "OTHER" as const,
     };
 
@@ -76,6 +78,41 @@ describe("UpdateProposalPerPersonUseCase", () => {
             data: { ...baseData, ...data },
         });
     }
+
+    it("evento sem categoria nao grava", async () => {
+        await expect(run({ eventCategory: undefined })).rejects.toThrow(EVENT_CATEGORY_MESSAGE);
+        expect(proposalRepository.update).not.toHaveBeenCalled();
+    });
+
+    it("producao grava categoria nula mesmo recebendo uma", async () => {
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_PERSON",
+            pricePerPerson: 100,
+            standardEventDuration: 6,
+            minimumPrice: null,
+            seasonalFee: [],
+        });
+
+        await run({ type: "PRODUCTION" });
+
+        expect(proposalRepository.update.mock.calls[0][0].data).toMatchObject({ eventCategory: null });
+    });
+
+    it("evento grava a categoria escolhida", async () => {
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_PERSON",
+            pricePerPerson: 100,
+            standardEventDuration: 6,
+            minimumPrice: null,
+            seasonalFee: [],
+        });
+
+        await run({ eventCategory: "WEDDING" });
+
+        expect(proposalRepository.update.mock.calls[0][0].data).toMatchObject({ eventCategory: "WEDDING" });
+    });
 
     it("recalcula o total com adicional e desconto quando o valor nao foi digitado", async () => {
         venueRepository.getById.mockResolvedValue({
@@ -110,6 +147,41 @@ describe("UpdateProposalPerPersonUseCase", () => {
         const response = await run();
 
         expect(response.data.totalAmount).toBe(1210);
+    });
+
+    it("aplica temporada que vira o ano (dez a jan) num evento de janeiro", async () => {
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_PERSON",
+            pricePerPerson: 100,
+            standardEventDuration: 6,
+            minimumPrice: null,
+            seasonalFee: [fee({ type: "SURCHARGE", fee: 10, startDay: "15/12", endDay: "15/01" })],
+        });
+
+        const response = await run({ date: "10/01/2026" });
+
+        expect(response.data.totalAmount).toBe(1100);
+    });
+
+    it("por pessoa/hora com total inalterado grava o calculo de tabela", async () => {
+        venueRepository.getById.mockResolvedValue({
+            id: "venue-1",
+            pricingModel: "PER_PERSON_HOUR",
+            pricePerPersonHour: 50,
+            standardEventDuration: 4,
+            minimumPrice: null,
+            seasonalFee: [],
+        });
+
+        await run();
+
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data).toMatchObject({
+            basePrice: 3000,
+            extraHourPrice: 500,
+            extraHoursQty: 0,
+            totalAmount: 3000,
+        });
     });
 
     it("grava o total digitado sem aplicar percentual por cima", async () => {

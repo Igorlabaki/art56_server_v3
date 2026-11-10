@@ -1,19 +1,17 @@
-import { PricingModel, ProposalType, SeasonalFee } from "@prisma/client";
+import { ProposalType } from "@prisma/client";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
-import { calcEventDuration } from "../../../functions/calc-event-duration";
-import { calcExtraHourPrice } from "../../../functions/calc-extra-hour-price";
-import { calcExtraHoursQty } from "../../../functions/calc-extra-hours-qty";
-import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
+import {
+    adjustVenueUnitPrice,
+    calcProposalAmounts,
+    ProposalAmounts,
+    VenueForAmounts,
+} from "../../../functions/proposal-amounts";
 import { quoteServiceLines, sumServiceQuote } from "../../../functions/quote-service-lines";
 import { transformDate } from "../../../functions/transform-date";
 import {
     formatWallClockTime,
-    isWallClockDayInRange,
     wallClockDateIsoFromDate,
-    wallClockMonth,
-    wallClockWeekdayEn,
-    wallClockYear,
 } from "../../../functions/wall-clock-datetime";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
 import { HistoryRepositoryInterface } from "../../../repositories/interface/history-repository-interface";
@@ -34,25 +32,8 @@ type RecalculatePublicProposalParams = {
     hours: number;
 };
 
-type VenueForRecalc = {
-    id: string;
+type VenueForRecalc = VenueForAmounts & {
     maxGuest: number | null;
-    pricingModel: PricingModel;
-    pricePerPerson: number | null;
-    pricePerPersonHour: number | null;
-    pricePerDay: number | null;
-    pricePerPersonDay: number | null;
-    standardEventDuration: number | null;
-    minimumPrice?: number | null;
-    minimumPricePeriods?: { startDay: string; endDay: string; price: number }[] | null;
-    seasonalFee?: SeasonalFee[] | null;
-};
-
-type Amounts = {
-    basePrice: number;
-    extraHoursQty: number;
-    extraHourPrice: number;
-    totalAmount: number;
 };
 
 class RecalculatePublicProposalUseCase {
@@ -174,172 +155,34 @@ class RecalculatePublicProposalUseCase {
         guestNumber: number;
         services: number;
         proposalType: ProposalType;
-    }): Promise<Amounts> {
+    }): Promise<ProposalAmounts> {
         if (input.proposalType === "BARTER" || input.venue.pricingModel === "TIERED") {
             throw new HttpBadRequestError(NO_PRICE_MESSAGE);
         }
 
-        const duration = calcEventDuration(input.startDate, input.endDate);
-        const { unitPrice, hasMonthlyRevenue } = await this.adjustUnitPrice(input.venue, input.startDate);
-
-        if (input.venue.pricingModel === "PER_PERSON" && input.venue.pricePerPerson) {
-            return this.perPersonAmounts(input.guestNumber, unitPrice, duration, input.venue, input.startDate, input.services);
-        }
-
-        if (input.venue.pricingModel === "PER_PERSON_HOUR" && input.venue.pricePerPersonHour) {
-            if (hasMonthlyRevenue) {
-                return this.perPersonAmounts(input.guestNumber, unitPrice, duration, input.venue, input.startDate, input.services);
-            }
-            const basePrice = duration * (input.guestNumber * unitPrice);
-            const withMinimum = applyMinimum({
-                basePrice,
-                extraHoursQty: 0,
-                extraHourPrice: duration ? basePrice / duration : 0,
-                services: input.services,
-                venue: input.venue,
-                startDate: input.startDate,
-            });
-            return withMinimum;
-        }
-
-        if (input.venue.pricingModel === "PER_DAY" && input.venue.pricePerDay) {
-            return applyMinimum({
-                basePrice: unitPrice,
-                extraHoursQty: 0,
-                extraHourPrice: 0,
-                services: input.services,
-                venue: input.venue,
-                startDate: input.startDate,
-            });
-        }
-
-        if (input.venue.pricingModel === "PER_PERSON_DAY" && input.venue.pricePerPersonDay) {
-            return applyMinimum({
-                basePrice: unitPrice * input.guestNumber,
-                extraHoursQty: 0,
-                extraHourPrice: 0,
-                services: input.services,
-                venue: input.venue,
-                startDate: input.startDate,
-            });
-        }
-
-        throw new HttpBadRequestError(NO_PRICE_MESSAGE);
-    }
-
-    private perPersonAmounts(
-        guestNumber: number,
-        unitPrice: number,
-        duration: number,
-        venue: VenueForRecalc,
-        startDate: Date,
-        services: number,
-    ): Amounts {
-        const basePrice = guestNumber * unitPrice;
-        const extraHoursQty = venue.standardEventDuration
-            ? calcExtraHoursQty(duration, venue.standardEventDuration)
-            : 0;
-        return applyMinimum({
-            basePrice,
-            extraHoursQty,
-            extraHourPrice: calcExtraHourPrice(basePrice),
-            services,
-            venue,
-            startDate,
+        const adjusted = await adjustVenueUnitPrice(input.venue, input.startDate, {
+            proposalRepository: this.proposalRepository,
+            goalRepository: this.goalRepository,
         });
-    }
-
-    private async adjustUnitPrice(venue: VenueForRecalc, startDate: Date) {
-        const catalogPrice = catalogUnitPrice(venue);
-        if (catalogPrice == null) {
+        if (!adjusted) {
             throw new HttpBadRequestError(NO_PRICE_MESSAGE);
         }
 
-        let unitPrice = applyWallClockSeason(catalogPrice, venue.seasonalFee, startDate);
-        const monthlyRevenue = await this.proposalRepository.monthlyRevenueAnalysis({
-            venueId: venue.id,
-            year: wallClockYear(startDate),
-            month: wallClockMonth(startDate),
-            approved: true,
+        const amounts = calcProposalAmounts({
+            venue: input.venue,
+            unitPrice: adjusted.unitPrice,
+            hasMonthlyRevenue: adjusted.hasMonthlyRevenue,
+            startDate: input.startDate,
+            endDate: input.endDate,
+            guestNumber: input.guestNumber,
+            services: input.services,
         });
-
-        if (!monthlyRevenue) {
-            return { unitPrice, hasMonthlyRevenue: false };
+        if (!amounts) {
+            throw new HttpBadRequestError(NO_PRICE_MESSAGE);
         }
 
-        const goal = await this.goalRepository.findByVenueAndRevenue({
-            venueId: venue.id,
-            monthlyRevenue,
-            targetMonth: String(wallClockMonth(startDate)),
-        });
-
-        if (goal?.increasePercent) {
-            unitPrice += (unitPrice * goal.increasePercent) / 100;
-        }
-
-        return { unitPrice, hasMonthlyRevenue: true };
+        return amounts;
     }
-}
-
-function catalogUnitPrice(venue: VenueForRecalc): number | null {
-    if (venue.pricingModel === "PER_PERSON") return venue.pricePerPerson;
-    if (venue.pricingModel === "PER_PERSON_HOUR") return venue.pricePerPersonHour;
-    if (venue.pricingModel === "PER_DAY") return venue.pricePerDay;
-    if (venue.pricingModel === "PER_PERSON_DAY") return venue.pricePerPersonDay;
-    return null;
-}
-
-function applyWallClockSeason(
-    unitPrice: number,
-    seasonalFee: SeasonalFee[] | null | undefined,
-    startDate: Date,
-): number {
-    if (!seasonalFee?.length) {
-        return unitPrice;
-    }
-
-    const eventDayOfWeek = wallClockWeekdayEn(startDate);
-    const totalAdjustment = seasonalFee.reduce((adjustment, fee) => {
-        const feeValue = fee.type === "SURCHARGE" ? fee.fee : -fee.fee;
-        const isInSeason = fee.startDay && fee.endDay
-            ? isWallClockDayInRange(startDate, fee.startDay, fee.endDay)
-            : false;
-        const isAffectedDay = fee.affectedDays
-            ? fee.affectedDays.split(",").map((day) => day.trim().toLowerCase()).includes(eventDayOfWeek)
-                || fee.affectedDays.includes("all")
-            : false;
-        return adjustment + (isInSeason || isAffectedDay ? feeValue : 0);
-    }, 0);
-
-    return unitPrice + (unitPrice * totalAdjustment) / 100;
-}
-
-function applyMinimum(input: {
-    basePrice: number;
-    extraHoursQty: number;
-    extraHourPrice: number;
-    services: number;
-    venue: VenueForRecalc;
-    startDate: Date;
-}): Amounts {
-    const total = input.basePrice + input.services + (input.extraHourPrice * input.extraHoursQty);
-    const minimum = resolveVenueMinimumPrice(input.venue, input.startDate);
-
-    if (minimum && total < minimum) {
-        return {
-            basePrice: minimum,
-            extraHoursQty: 0,
-            extraHourPrice: 0,
-            totalAmount: minimum + input.services,
-        };
-    }
-
-    return {
-        basePrice: input.basePrice,
-        extraHoursQty: input.extraHoursQty,
-        extraHourPrice: input.extraHourPrice,
-        totalAmount: total,
-    };
 }
 
 function endHourOnTheSameDay(startHour: string, hours: number): string {

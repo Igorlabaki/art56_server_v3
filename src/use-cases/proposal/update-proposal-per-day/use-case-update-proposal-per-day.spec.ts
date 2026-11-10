@@ -57,6 +57,7 @@ describe("UpdateProposalPerDayUseCase", () => {
         totalAmountInput: "1",
         serviceIds: [] as string[],
         type: "EVENT" as const,
+        eventCategory: "BIRTHDAY" as const,
         trafficSource: "OTHER" as const,
     };
 

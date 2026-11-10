@@ -7,6 +7,7 @@ import {
 } from "../../../functions/wall-clock-datetime";
 import { differenceInCalendarDays } from 'date-fns';
 import { calcEventDuration } from "../../../functions/calc-event-duration";
+import { resolveEventCategory } from "../../../functions/event-category";
 import { transformDate } from "../../../functions/transform-date";
 import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
 import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
@@ -38,7 +39,8 @@ class CreateProposalPerDayUseCase {
     async execute(params: CreateProposalPerDayRequestParamsSchema) {
         let createProposalPerDayInDb: CreateProposalInDbParams;
 
-        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, ...rest } = params
+        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, eventCategory, ...fields } = params
+        const rest = { ...fields, eventCategory: resolveEventCategory(params.type, eventCategory) }
 
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalProposalEmail } from "./proposal-email-schema";
+import { EVENT_CATEGORIES } from "../../functions/event-category";
 
 export const createProposalPerDayRequestParamsSchema = z.object({
     completeClientName: z.string(),
@@ -21,6 +22,7 @@ export const createProposalPerDayRequestParamsSchema = z.object({
     })).max(100).optional(),
     totalAmountInput: z.string().optional(),
     type: z.enum(["PRODUCTION", "BARTER", "OTHER", "EVENT","OVERNIGHT"]), 
+    eventCategory: z.enum(EVENT_CATEGORIES).nullable().optional(),
     trafficSource: z.enum(["AIRBNB", "GOOGLE", "INSTAGRAM", "TIKTOK", "OTHER", "FRIEND", "FACEBOOK"]),
 });
 

@@ -14,6 +14,7 @@ import { ProposalRepositoryInterface } from "../../../repositories/interface/pro
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
 import { UpdateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
 import { calcEventDuration } from "../../../functions/calc-event-duration";
+import { resolveEventCategory } from "../../../functions/event-category";
 import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
 
 class UpdateProposalPerDayUseCase {
@@ -36,7 +37,8 @@ class UpdateProposalPerDayUseCase {
         }
         //
 
-        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, ...rest } = param.data
+        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, eventCategory, ...fields } = param.data
+        const rest = { ...fields, eventCategory: resolveEventCategory(param.data.type, eventCategory) }
         
          const { startDate } = transformDate({ date: startDay, endHour: endHour, startHour: startHour, divisor: "/" })
          const { endDate } = transformDate({ date: endDay, endHour: endHour, startHour: startHour, divisor: "/" })

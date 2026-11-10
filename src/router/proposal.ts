@@ -15,6 +15,8 @@ import { updateProposalPersonalInfoFactory } from "../use-cases/proposal/update-
 import { createProposalPerDayFactory } from "../use-cases/proposal/create-proposal-per-day/factory-create-proposal-per-person";
 import { replaceProposalIndicationsFactory } from "../use-cases/proposal/replace-proposal-indications/factory-replace-proposal-indications";
 import { listProposalIndicationsFactory } from "../use-cases/proposal/list-proposal-indications/factory-list-proposal-indications";
+import { quoteProposalFactory } from "../use-cases/proposal/quote-proposal/factory-quote-proposal";
+import { AuthenticatedRequest } from "../types/authenticated-request";
 
 
 const proposalRoutes = Router()
@@ -31,6 +33,12 @@ proposalRoutes.post("/createPerDay", async (req, res) => {
     const controller = createProposalPerDayFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
+
+// So calcula; nao grava. Autorizacao por espaco fica no use case.
+proposalRoutes.post("/quote", ensureAuthenticate, async (req, res) => {
+    const controller = quoteProposalFactory();
+    await controller.handle(req as unknown as AuthenticatedRequest, res);
+});
 
 proposalRoutes.get("/byId/:proposalId", async (req, res) => {
     const controller = getProposalByidFactory();

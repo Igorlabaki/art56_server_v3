@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { SERVICE_HOURS_MESSAGE } from "../../../functions/quote-service-lines";
+import { EVENT_CATEGORY_MESSAGE } from "../../../functions/event-category";
 import { CreateProposalPerDayUseCase } from "./use-case-create-proposal-per-day";
 import { updateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
 
@@ -41,6 +42,20 @@ const base = {
     type: "BARTER" as const,
     trafficSource: "OTHER" as const,
 };
+
+describe("categoria do evento na criacao por dia", () => {
+    it("permuta grava categoria nula mesmo recebendo uma", async () => {
+        const { useCase, proposalRepository } = build([]);
+        await useCase.execute({ ...base, serviceIds: [], eventCategory: "BIRTHDAY" });
+        expect(proposalRepository.createPerDay).toHaveBeenCalledWith(expect.objectContaining({ eventCategory: null }));
+    });
+
+    it("evento sem categoria nao grava", async () => {
+        const { useCase, proposalRepository } = build([]);
+        await expect(useCase.execute({ ...base, type: "EVENT", serviceIds: [] })).rejects.toThrow(EVENT_CATEGORY_MESSAGE);
+        expect(proposalRepository.createPerDay).not.toHaveBeenCalled();
+    });
+});
 
 describe("horas na criacao por dia", () => {
     it("servico por hora com 3 horas grava quantidade 3", async () => {

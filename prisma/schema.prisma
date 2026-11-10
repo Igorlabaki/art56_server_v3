@@ -137,6 +137,7 @@ model Proposal {
   city                String?
   state               String?
   type                ProposalType
+  eventCategory       EventCategory?
   trafficSource       TrafficSource
   adressComplement    String?
   guestNumber         Int
@@ -803,6 +804,15 @@ enum ProposalType {
   OVERNIGHT
   PRODUCTION
   BARTER
+  OTHER
+}
+
+enum EventCategory {
+  CORPORATE
+  BIRTHDAY
+  BACHELOR_PARTY
+  WEDDING
+  COFFEE_BREAK
   OTHER
 }
 

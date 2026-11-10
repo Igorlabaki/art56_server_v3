@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalProposalEmail } from "./proposal-email-schema";
+import { EVENT_CATEGORIES } from "../../functions/event-category";
 
 export const updateProposalInDbParam = z.object({
     proposalId: z.string(),
@@ -31,6 +32,7 @@ export const updateProposalInDbParam = z.object({
             amount: z.number(),
         })).optional(),
         type: z.enum(["PRODUCTION", "BARTER", "OTHER", "EVENT"]).optional(),
+        eventCategory: z.enum(EVENT_CATEGORIES).nullable().optional(),
         trafficSource: z.enum(["AIRBNB", "GOOGLE", "INSTAGRAM", "TIKTOK", "OTHER", "FRIEND", "FACEBOOK"]).optional(),
     })
 });

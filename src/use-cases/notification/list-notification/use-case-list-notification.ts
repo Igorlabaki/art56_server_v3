@@ -1,5 +1,6 @@
 import { Notification } from "@prisma/client";
-import { NotificationListDbQuery, NotificationListSummary, NotificationRepositoryInterface } from "../../../repositories/interface/notification-repository-interface";
+import { yearlyChange as periodChange } from "../../../functions/yearly-change";
+import { NotificationListDbQuery, NotificationListSummary, NotificationListSummaryCounts, NotificationRepositoryInterface } from "../../../repositories/interface/notification-repository-interface";
 import { ListNotificationRequestQuerySchema } from "../../../zod/notification/list-notification-query-schema";
 
 const PAGE_SIZE = 10;
@@ -22,6 +23,17 @@ type ListNotificationsResponse = {
   };
 };
 
+function withChange({ previous, ...counts }: NotificationListSummaryCounts): NotificationListSummary {
+  return {
+    ...counts,
+    change: {
+      last7Days: periodChange(counts.last7Days, previous.last7Days),
+      last30Days: periodChange(counts.last30Days, previous.last30Days),
+      newProposals: periodChange(counts.newProposals, previous.newProposals),
+    },
+  };
+}
+
 class ListNotificationsUseCase {
   constructor(private notificationRepository: NotificationRepositoryInterface) { }
 
@@ -43,10 +55,11 @@ class ListNotificationsUseCase {
       now: new Date(),
     };
 
-    const [{ items, total }, summary] = await Promise.all([
+    const [{ items, total }, counts] = await Promise.all([
       this.notificationRepository.list(dbQuery),
       query.summary ? this.notificationRepository.summarize(summaryQuery) : Promise.resolve(null),
     ]);
+    const summary = counts ? withChange(counts) : null;
 
     const body: ListNotificationsResponse = {
       success: true,

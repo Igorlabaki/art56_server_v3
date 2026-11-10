@@ -1,5 +1,6 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
+import { EventCategory } from "../../functions/event-category";
 import { MonthlyAverageProposal } from "../../functions/monthly-average-by-years";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
@@ -16,6 +17,7 @@ export interface CreateProposalInDbParams {
   whatsapp: string
   basePrice: number
   type: ProposalType
+  eventCategory?: EventCategory | null
   serviceIds?: string[] | []
   serviceLines?: ServiceQuoteLine[]
   description: string
