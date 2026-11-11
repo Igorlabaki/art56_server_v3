@@ -95,6 +95,8 @@ describe("RecalculatePublicProposalUseCase", () => {
         const written = proposalRepository.update.mock.calls.at(-1)?.[0].data;
         expect(Object.keys(written).sort()).toEqual([
             "basePrice",
+            "discountAmount",
+            "discountPercent",
             "endDate",
             "extraHourPrice",
             "extraHoursQty",
@@ -112,6 +114,7 @@ describe("RecalculatePublicProposalUseCase", () => {
             pricingType: "FIXED",
             unitPrice: 300,
             quantity: 1,
+            courtesyQuantity: 0,
             amount: 300,
         }]);
     });
@@ -245,12 +248,34 @@ describe("RecalculatePublicProposalUseCase", () => {
 
         const written = proposalRepository.update.mock.calls.at(-1)?.[0].data;
         expect(written.serviceLines).toEqual([
-            { serviceId: "svc-hora", pricingType: "PER_HOUR", unitPrice: 50, quantity: 3, amount: 150 },
-            { serviceId: "svc-pessoa", pricingType: "PER_PERSON", unitPrice: 10, quantity: 12, amount: 120 },
-            { serviceId: "svc-sem-qtd", pricingType: "PER_HOUR", unitPrice: 20, quantity: 8, amount: 160 },
+            { serviceId: "svc-hora", pricingType: "PER_HOUR", unitPrice: 50, quantity: 3, courtesyQuantity: 0, amount: 150 },
+            { serviceId: "svc-pessoa", pricingType: "PER_PERSON", unitPrice: 10, quantity: 12, courtesyQuantity: 0, amount: 120 },
+            { serviceId: "svc-sem-qtd", pricingType: "PER_HOUR", unitPrice: 20, quantity: 8, courtesyQuantity: 0, amount: 160 },
         ]);
         expect(written.basePrice).toBe(2160);
         expect(written.extraHoursQty).toBe(2);
+    });
+
+    it("de 100 para 5 convidados a cortesia 10 por pessoa vira 5 e valor 0", async () => {
+        proposalRepository.getById.mockResolvedValue({
+            ...sameDay,
+            proposalServices: [
+                { serviceId: "svc-pessoa", pricingType: "PER_PERSON", quantity: 100, courtesyQuantity: 10 },
+                { serviceId: "svc-hora", pricingType: "PER_HOUR", quantity: 3, courtesyQuantity: 1 },
+            ],
+        });
+        serviceRepository.listForQuote.mockResolvedValue([
+            { id: "svc-pessoa", venueId: "venue-1", price: 10, pricingType: "PER_PERSON" },
+            { id: "svc-hora", venueId: "venue-1", price: 50, pricingType: "PER_HOUR" },
+        ]);
+
+        await run({ guestNumber: 5 });
+
+        const written = proposalRepository.update.mock.calls.at(-1)?.[0].data;
+        expect(written.serviceLines).toEqual([
+            expect.objectContaining({ serviceId: "svc-pessoa", quantity: 5, courtesyQuantity: 5, amount: 0 }),
+            expect.objectContaining({ serviceId: "svc-hora", quantity: 3, courtesyQuantity: 1, amount: 100 }),
+        ]);
     });
 
     it("registra o historico do link sem usuario", async () => {
@@ -259,6 +284,37 @@ describe("RecalculatePublicProposalUseCase", () => {
         expect(historyRepository.create).toHaveBeenCalledWith({
             proposalId: "proposal-1",
             action: HISTORY_ACTION,
+        });
+    });
+
+    describe("desconto", () => {
+        const discounted = { ...sameDay, guestNumber: 29, totalAmount: 4968, discountPercent: 10, discountAmount: 552 };
+
+        beforeEach(() => {
+            proposalRepository.getById.mockResolvedValue(discounted);
+        });
+
+        it("mesma data, convidados e horas aplica 10% sobre o subtotal recalculado", async () => {
+            const response = await run({ guestNumber: 29, hours: 6 });
+            const written = proposalRepository.update.mock.calls.at(-1)?.[0].data;
+            expect(written).toMatchObject({ totalAmount: 4968, discountPercent: 10, discountAmount: 552 });
+            expect(response.data).toMatchObject({ totalAmount: 4968, discountPercent: 10, discountAmount: 552 });
+            expect(historyRepository.create).toHaveBeenCalledWith({ proposalId: "proposal-1", action: HISTORY_ACTION });
+        });
+
+        it.each([
+            ["convidados", { guestNumber: 30, hours: 6 }, 5700],
+            ["horas", { guestNumber: 29, hours: 8 }, 7260],
+            ["data", { guestNumber: 29, hours: 6, date: "2026-11-21" }, 5520],
+        ])("%s novos gravam o subtotal e desconto 0", async (_label, partial, subtotal) => {
+            const response = await run(partial);
+            const written = proposalRepository.update.mock.calls.at(-1)?.[0].data;
+            expect(written).toMatchObject({ totalAmount: subtotal, discountPercent: 0, discountAmount: 0 });
+            expect(response.data).toMatchObject({ totalAmount: subtotal, discountPercent: 0, discountAmount: 0 });
+            expect(historyRepository.create).toHaveBeenCalledWith({
+                proposalId: "proposal-1",
+                action: `${HISTORY_ACTION} (desconto de 10% removido)`,
+            });
         });
     });
 });

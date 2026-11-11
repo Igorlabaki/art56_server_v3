@@ -4,6 +4,9 @@ import { SERVICE_HOURS_MESSAGE } from "../../../functions/quote-service-lines";
 import { EVENT_CATEGORY_MESSAGE } from "../../../functions/event-category";
 import { CreateProposalPerDayUseCase } from "./use-case-create-proposal-per-day";
 import { updateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
+import { HttpForbiddenError } from "../../../errors/errors-type/http-forbidden-error";
+import { HttpTokenError } from "../../../errors/errors-type/http-token-error";
+import { courtesyAuthorizer, OWNER_ID, STRANGER_ID } from "../courtesy-authorizer.test-helper";
 
 const venue = { id: "venue-1", organizationId: "org-1" };
 const saved = {
@@ -180,5 +183,63 @@ describe("horas na criacao por dia", () => {
             },
         });
         expect(parsed.success).toBe(false);
+    });
+});
+
+describe("cortesia na criacao por dia", () => {
+    const led = [{ id: "led", venueId: "venue-1", price: 250, pricingType: "PER_HOUR" as const }];
+    const withLed = { ...base, serviceIds: ["led"], serviceHours: [{ serviceId: "led", hours: 4 }] };
+
+    function buildCourtesy() {
+        const { authorizer, assert } = courtesyAuthorizer(venue);
+        const proposalRepository = { createPerDay: vi.fn(async () => saved) };
+        const useCase = new CreateProposalPerDayUseCase(
+            { getById: vi.fn(async () => ({ id: OWNER_ID, username: "dono" })) } as never,
+            {} as never,
+            { getById: vi.fn(async () => venue) } as never,
+            { getUserVenuePermission: vi.fn(async () => null) } as never,
+            { listForQuote: vi.fn(async () => led) } as never,
+            { create: vi.fn() } as never,
+            proposalRepository as never,
+            { create: vi.fn() } as never,
+            authorizer,
+        );
+        return { useCase, proposalRepository, assert };
+    }
+
+    it("com permissao grava a cortesia na linha", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await useCase.execute({ ...withLed, serviceCourtesy: [{ serviceId: "led", quantity: 2 }] }, OWNER_ID);
+        expect(proposalRepository.createPerDay).toHaveBeenCalledWith(expect.objectContaining({
+            totalAmount: 0,
+            serviceLines: [expect.objectContaining({ quantity: 4, courtesyQuantity: 2, amount: 500 })],
+        }));
+        expect(proposalRepository.createPerDay.mock.calls[0][0]).not.toHaveProperty("serviceCourtesy");
+    });
+
+    it("sem token e com cortesia responde 401 e nao grava", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await expect(useCase.execute({ ...withLed, serviceCourtesy: [{ serviceId: "led", quantity: 2 }] }))
+            .rejects.toBeInstanceOf(HttpTokenError);
+        expect(proposalRepository.createPerDay).not.toHaveBeenCalled();
+    });
+
+    it("userId do corpo com permissao e token sem permissao responde 403", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await expect(useCase.execute({
+            ...withLed,
+            userId: OWNER_ID,
+            serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+        }, STRANGER_ID)).rejects.toBeInstanceOf(HttpForbiddenError);
+        expect(proposalRepository.createPerDay).not.toHaveBeenCalled();
+    });
+
+    it("so zeros cria sem chamar o autorizador", async () => {
+        const { useCase, proposalRepository, assert } = buildCourtesy();
+        await useCase.execute({ ...withLed, serviceCourtesy: [{ serviceId: "led", quantity: 0 }] });
+        expect(assert).not.toHaveBeenCalled();
+        expect(proposalRepository.createPerDay).toHaveBeenCalledWith(expect.objectContaining({
+            serviceLines: [expect.objectContaining({ courtesyQuantity: 0, amount: 1000 })],
+        }));
     });
 });

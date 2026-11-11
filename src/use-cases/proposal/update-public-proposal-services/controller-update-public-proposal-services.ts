@@ -22,6 +22,8 @@ class UpdatePublicProposalServicesController {
                 selected: service.selected,
                 hourly: service.hourly === true,
                 hours: typeof service.hours === "number" ? service.hours : null,
+                courtesyQuantity: service.courtesyQuantity,
+                courtesyAmount: service.courtesyAmount,
             }));
 
             return resp.status(200).json({
@@ -65,6 +67,8 @@ function publicLine(line: {
     id: string;
     serviceId: string;
     amount: number;
+    courtesyQuantity: number;
+    courtesyAmount: number;
     service: { name: string; rpaRequired: boolean; rpaMinPeople: number | null };
 }) {
     const source = line.service as Record<string, unknown>;
@@ -72,6 +76,8 @@ function publicLine(line: {
         id: line.id,
         serviceId: line.serviceId,
         amount: line.amount,
+        courtesyQuantity: line.courtesyQuantity,
+        courtesyAmount: line.courtesyAmount,
         service: Object.fromEntries(SERVICE_KEYS.map((key) => [key, source[key]])),
     };
 }

@@ -15,7 +15,9 @@ import { GoalRepositoryInterface } from "../../../repositories/interface/goal-re
 import { UpdateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
 import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { resolveEventCategory } from "../../../functions/event-category";
-import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
+import { assertChosenServiceHours, quoteServiceLines, serviceCourtesyMap, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
+import { assertCourtesyAllowed, CourtesyAuthorizer } from "../proposal-quote-authorizer";
+import { NO_DISCOUNT } from "../../../functions/proposal-discount";
 
 class UpdateProposalPerDayUseCase {
     constructor(
@@ -25,9 +27,10 @@ class UpdateProposalPerDayUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private goalRepository: GoalRepositoryInterface,
+        private courtesyAuthorizer?: CourtesyAuthorizer,
     ) { }
 
-    async execute(param: UpdateProposalPerDayRequestParams) {
+    async execute(param: UpdateProposalPerDayRequestParams, authUserId: string | null = null) {
 
         // Validate if proposal exists
         const proposal = await this.proposalRepository.getById(param.proposalId)
@@ -37,8 +40,11 @@ class UpdateProposalPerDayUseCase {
         }
         //
 
-        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, eventCategory, ...fields } = param.data
+        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, serviceCourtesy, guestNumber, userId, eventCategory, ...fields } = param.data
         const rest = { ...fields, eventCategory: resolveEventCategory(param.data.type, eventCategory) }
+
+        const courtesyByServiceId = serviceCourtesyMap(serviceCourtesy)
+        await assertCourtesyAllowed(this.courtesyAuthorizer, authUserId, proposal.venueId, courtesyByServiceId)
         
          const { startDate } = transformDate({ date: startDay, endHour: endHour, startHour: startHour, divisor: "/" })
          const { endDate } = transformDate({ date: endDay, endHour: endHour, startHour: startHour, divisor: "/" })
@@ -53,11 +59,12 @@ class UpdateProposalPerDayUseCase {
              startDate,
              endDate,
              hoursByServiceId,
+             courtesyByServiceId,
          })
          const totalAmountService = sumServiceQuote(serviceLines)
          const withLines = (update: UpdateProposalInDbParam): UpdateProposalInDbParam => ({
              ...update,
-             data: { ...update.data, serviceLines },
+             data: { ...update.data, serviceLines, ...NO_DISCOUNT },
          })
  
          const venue = await this.venueRepository.getById({venueId: param.data.venueId})

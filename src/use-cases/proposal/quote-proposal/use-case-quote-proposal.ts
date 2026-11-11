@@ -4,6 +4,7 @@ import { adjustVenueUnitPrice, calcProposalAmounts } from "../../../functions/pr
 import {
     assertChosenServiceHours,
     quoteServiceLines,
+    serviceCourtesyMap,
     serviceHoursMap,
     sumServiceQuote,
 } from "../../../functions/quote-service-lines";
@@ -66,6 +67,7 @@ class QuoteProposalUseCase {
             startDate,
             endDate,
             hoursByServiceId,
+            courtesyByServiceId: serviceCourtesyMap(params.serviceCourtesy),
         }));
 
         if (venue.pricingModel !== "PER_PERSON" && venue.pricingModel !== "PER_PERSON_HOUR") {

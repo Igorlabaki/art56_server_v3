@@ -1,6 +1,6 @@
 import { PrismaClient, DateEvent, User } from "@prisma/client";
 import { CreateDateEventDbSchema } from "../../zod/dataEvent/create-date-event-db-schema";
-import { DateEventRepositoryInterface, ValidateDateParam } from "../interface/data-event-repository-interface";
+import { DateEventRepositoryInterface, OccupancyReportRow, OccupancyRowsQuery, ValidateDateParam } from "../interface/data-event-repository-interface";
 import { ListDateEventRequestQuerySchema } from "../../zod/dataEvent/list-date-event-query-schema";
 import { UpdateDateEventDbSchema } from "../../zod/dataEvent/update-date-event-db-schema";
 
@@ -104,6 +104,18 @@ export class PrismaDateEventRepository implements DateEventRepositoryInterface {
       orderBy:{
         startDate: "asc"
       }
+    })
+  }
+
+  async occupancyRows({ venueId, types, range }: OccupancyRowsQuery): Promise<OccupancyReportRow[]> {
+    return await this.prisma.dateEvent.findMany({
+      where: {
+        venueId,
+        type: { in: types },
+        startDate: { lt: range.lt },
+        endDate: { gt: range.gte },
+      },
+      select: { type: true, startDate: true, endDate: true },
     })
   }
 }

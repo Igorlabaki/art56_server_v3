@@ -13,6 +13,11 @@ import multer from "multer";
 import { getWebDataFactory } from "../use-cases/webData/web/factory-get-web-data";
 import { updateVenuePaymentInfoFactory } from "../use-cases/venue/update-payment-info-venue/factory-update-venue";
 import { updateVenueInfoFactory } from "../use-cases/venue/update-info-venue/factory-update-info-venue";
+import { AuthenticatedRequest } from "../types/authenticated-request";
+import { getOccupancyReportFactory } from "../use-cases/venue/reports/occupancy/factory-get-occupancy-report";
+import { getLeadTimeReportFactory } from "../use-cases/venue/reports/lead-time/factory-get-lead-time-report";
+import { getServiceAdherenceReportFactory } from "../use-cases/venue/reports/service-adherence/factory-get-service-adherence-report";
+import { getEventProfileReportFactory } from "../use-cases/venue/reports/event-profile/factory-get-event-profile-report";
 
 
 const venueRoutes = Router()
@@ -87,6 +92,20 @@ venueRoutes.delete("/delete/:venueId",ensureAuthenticate, async (req, res) => {
 venueRoutes.get("/analytics/:venueId",ensureAuthenticate, async (req, res) => {
     const controller = makeGetVenueAnalyticsController();
     await controller.handle(req, res);
+});
+
+// Relatorios agregados (VIEW_VENUE_ANALYSIS checada no use case)
+venueRoutes.get("/reports/occupancy", ensureAuthenticate, async (req, res) => {
+    await getOccupancyReportFactory().handle(req as unknown as AuthenticatedRequest, res);
+});
+venueRoutes.get("/reports/lead-time", ensureAuthenticate, async (req, res) => {
+    await getLeadTimeReportFactory().handle(req as unknown as AuthenticatedRequest, res);
+});
+venueRoutes.get("/reports/service-adherence", ensureAuthenticate, async (req, res) => {
+    await getServiceAdherenceReportFactory().handle(req as unknown as AuthenticatedRequest, res);
+});
+venueRoutes.get("/reports/event-profile", ensureAuthenticate, async (req, res) => {
+    await getEventProfileReportFactory().handle(req as unknown as AuthenticatedRequest, res);
 });
 
 export { venueRoutes }

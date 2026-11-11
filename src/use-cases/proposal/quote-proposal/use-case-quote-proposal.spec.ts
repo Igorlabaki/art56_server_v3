@@ -113,6 +113,28 @@ describe("QuoteProposalUseCase", () => {
         await expect(run({ serviceIds: ["alheio"] })).rejects.toBeInstanceOf(HttpBadRequestError);
     });
 
+    it("cortesia de 2h reduz totalAmountService e totalAmount", async () => {
+        serviceRepository.listForQuote.mockResolvedValue([
+            { id: "hora", venueId: "venue-1", price: 50, pricingType: "PER_HOUR" },
+        ]);
+        const body = { serviceIds: ["hora"], serviceHours: [{ serviceId: "hora", hours: 4 }] };
+
+        const plain = await run(body);
+        const withCourtesy = await run({ ...body, serviceCourtesy: [{ serviceId: "hora", quantity: 2 }] });
+
+        expect(plain.data.totalAmountService).toBe(200);
+        expect(withCourtesy.data.totalAmountService).toBe(100);
+        expect(plain.data.totalAmount - withCourtesy.data.totalAmount).toBe(100);
+    });
+
+    it("cortesia acima da quantidade e recusada", async () => {
+        serviceRepository.listForQuote.mockResolvedValue([
+            { id: "fixo", venueId: "venue-1", price: 300, pricingType: "FIXED" },
+        ]);
+        await expect(run({ serviceIds: ["fixo"], serviceCourtesy: [{ serviceId: "fixo", quantity: 2 }] }))
+            .rejects.toBeInstanceOf(HttpBadRequestError);
+    });
+
     it("nao recebe repositorio de escrita", () => {
         expect(Object.keys(proposalRepository)).toEqual(["monthlyRevenueAnalysis"]);
         expect(Object.keys(serviceRepository)).toEqual(["listForQuote"]);

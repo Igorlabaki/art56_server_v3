@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { optionalProposalEmail } from "./proposal-email-schema";
 import { EVENT_CATEGORIES } from "../../functions/event-category";
+import { serviceCourtesySchema } from "./service-courtesy-schema";
 
 export const updateProposalPerDayRequestParams = z.object({
     proposalId: z.string(),
@@ -26,6 +27,7 @@ export const updateProposalPerDayRequestParams = z.object({
             serviceId: z.string(),
             hours: z.number().int().min(0).max(8760),
         })).max(100).optional(),
+        serviceCourtesy: serviceCourtesySchema,
         adressComplement: z.string().optional(),
         type: z.enum(["EVENT" , "OTHER" , "BARTER" , "PRODUCTION"]), 
         eventCategory: z.enum(EVENT_CATEGORIES).nullable().optional(),

@@ -14,9 +14,13 @@ import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { resolveEventCategory } from "../../../functions/event-category";
 import { calcBasePrice } from "../../../functions/calc-base-price";
 import { adjustVenueUnitPrice, calcProposalAmounts } from "../../../functions/proposal-amounts";
-import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
+import { assertChosenServiceHours, quoteServiceLines, serviceCourtesyMap, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
 import { Payment, SeasonalFee, Venue } from "@prisma/client";
 import { GoalRepositoryInterface } from "../../../repositories/interface/goal-repository-interface";
+import { assertCourtesyAllowed, assertDiscountAllowed, CourtesyAuthorizer } from "../proposal-quote-authorizer";
+import { applyProposalDiscount, discountPercentValue, NO_DISCOUNT } from "../../../functions/proposal-discount";
+import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
+import { NO_QUOTE_MESSAGE } from "../quote-proposal/use-case-quote-proposal";
 
 class CreateProposalPerPersonUseCase {
     constructor(
@@ -27,13 +31,19 @@ class CreateProposalPerPersonUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
+        private courtesyAuthorizer?: CourtesyAuthorizer,
     ) { }
 
-    async execute(params: CreateProposalPerPersonRequestParamsSchema) {
+    async execute(params: CreateProposalPerPersonRequestParamsSchema, authUserId: string | null = null) {
         let createProposalPerPersonInDb: CreateProposalInDbParams;
         console.log("cheguei no usecase")
-        const { date, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, eventCategory, ...fields } = params
+        const { date, endHour, startHour, totalAmountInput, serviceIds, serviceHours, serviceCourtesy, guestNumber, userId, eventCategory, discountPercent, ...fields } = params
         const rest = { ...fields, eventCategory: resolveEventCategory(params.type, eventCategory) }
+
+        const courtesyByServiceId = serviceCourtesyMap(serviceCourtesy)
+        await assertCourtesyAllowed(this.courtesyAuthorizer, authUserId, params.venueId, courtesyByServiceId)
+        const percent = params.type === "BARTER" ? 0 : discountPercentValue(discountPercent)
+        await assertDiscountAllowed(this.courtesyAuthorizer, authUserId, params.venueId, percent)
 
         const quotedDates = transformDate({ date, endHour, startHour, divisor: "/" })
         const quotedServices = await this.serviceRepository.listForQuote(params.venueId, serviceIds)
@@ -47,6 +57,7 @@ class CreateProposalPerPersonUseCase {
             startDate: quotedDates.startDate,
             endDate: quotedDates.endDate,
             hoursByServiceId,
+            courtesyByServiceId,
         })
         const totalAmountService = sumServiceQuote(serviceLines)
         const totalAmountInputFormated = totalAmountInput ? Number(totalAmountInput) : 0
@@ -67,6 +78,7 @@ class CreateProposalPerPersonUseCase {
                 serviceLines,
                 basePrice: 0,
                 totalAmount: 0,
+                ...NO_DISCOUNT,
                 extraHoursQty: 0,
                 extraHourPrice: 0,
                 guestNumber: Number(guestNumber),
@@ -122,7 +134,9 @@ class CreateProposalPerPersonUseCase {
             (venue.pricingModel === "PER_PERSON" && venue.pricePerPerson) ||
             (venue.pricingModel === "PER_PERSON_HOUR" && venue.pricePerPersonHour);
 
-        if (Number(totalAmountInputFormated) === 0 && hasCatalogPrice) {
+        if (percent > 0 && !hasCatalogPrice) throw new HttpBadRequestError(NO_QUOTE_MESSAGE);
+
+        if ((percent > 0 || Number(totalAmountInputFormated) === 0) && hasCatalogPrice) {
             const { endDate, startDate } = transformDate({ date, endHour, startHour });
             const adjusted = await adjustVenueUnitPrice(venue, startDate, {
                 proposalRepository: this.proposalRepository,
@@ -146,7 +160,7 @@ class CreateProposalPerPersonUseCase {
                 basePrice: amounts.basePrice,
                 serviceIds,
                 serviceLines,
-                totalAmount: amounts.totalAmount,
+                ...applyProposalDiscount(amounts.totalAmount, percent),
                 extraHoursQty: amounts.extraHoursQty,
                 extraHourPrice: amounts.extraHourPrice,
                 guestNumber: Number(guestNumber),
@@ -219,6 +233,7 @@ class CreateProposalPerPersonUseCase {
                 serviceIds,
                 serviceLines,
                 totalAmount,
+                ...NO_DISCOUNT,
                 extraHoursQty,
                 extraHourPrice,
                 guestNumber: Number(guestNumber),

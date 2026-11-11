@@ -1,5 +1,6 @@
 import { ProposalType } from "@prisma/client";
 import { z } from "zod";
+import { serviceCourtesySchema } from "./service-courtesy-schema";
 
 const hourOfDay = z.string().regex(/^\d{2}:\d{2}$/);
 
@@ -14,6 +15,7 @@ export const quoteProposalBodySchema = z.object({
         serviceId: z.string(),
         hours: z.number().int().min(0).max(8760),
     })).max(100).default([]),
+    serviceCourtesy: serviceCourtesySchema,
     type: z.nativeEnum(ProposalType),
 });
 

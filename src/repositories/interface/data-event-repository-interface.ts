@@ -1,4 +1,4 @@
-import { DateEvent } from "@prisma/client";
+import { DateEvent, DateEventType } from "@prisma/client";
 import { CreateDateEventDbSchema } from "../../zod/dataEvent/create-date-event-db-schema";
 import { ListDateEventRequestQuerySchema } from "../../zod/dataEvent/list-date-event-query-schema";
 import { UpdateDateEventDbSchema } from "../../zod/dataEvent/update-date-event-db-schema";
@@ -16,6 +16,18 @@ export interface ValidateDateParam {
   dataeEventId?: string | undefined;
 }
 
+export interface OccupancyRowsQuery {
+  venueId: string;
+  types: DateEventType[];
+  range: { gte: Date; lt: Date };
+}
+
+export interface OccupancyReportRow {
+  type: DateEventType;
+  startDate: Date;
+  endDate: Date;
+}
+
 export interface DateEventRepositoryInterface {
   delete: (params: string) => Promise<DateEvent | null>
   getById: (params: string) => Promise<DateEvent | null>
@@ -23,4 +35,5 @@ export interface DateEventRepositoryInterface {
   create: (params: CreateDateEventDbSchema) => Promise<DateEvent | null>
   checkAvailability: (reference: ValidateDateParam) => Promise<DateEvent | null>;
   list: (query: ListDateEventRequestQuerySchema) => Promise<DateEvent[]  | null>
+  occupancyRows: (query: OccupancyRowsQuery) => Promise<OccupancyReportRow[]>
 }

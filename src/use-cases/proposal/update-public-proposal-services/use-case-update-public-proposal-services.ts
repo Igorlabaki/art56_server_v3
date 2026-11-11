@@ -2,6 +2,7 @@ import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-reque
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { MAX_SERVICE_HOURS, quoteServiceLines, SERVICE_HOURS_MESSAGE, ServiceForQuote, serviceHoursMap, serviceHoursOverEventMessage, ServicePricingType, ServiceQuoteLine } from "../../../functions/quote-service-lines";
+import { discountRemovedSuffix, NO_DISCOUNT } from "../../../functions/proposal-discount";
 import { HistoryRepositoryInterface } from "../../../repositories/interface/history-repository-interface";
 import { ProposalRepositoryInterface } from "../../../repositories/interface/proposal-repository-interface";
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface";
@@ -16,6 +17,7 @@ type StoredLine = {
     amount?: number | null;
     unitPrice?: number | null;
     quantity?: number | null;
+    courtesyQuantity?: number | null;
     pricingType?: ServicePricingType | null;
     service?: {
         name: string;
@@ -33,6 +35,8 @@ type ProposalForServices = {
     startDate: Date;
     endDate: Date;
     totalAmount: number;
+    discountPercent?: number | null;
+    discountAmount?: number | null;
     proposalServices?: StoredLine[];
 };
 
@@ -46,6 +50,8 @@ export type PublicProposalServiceView = {
     id: string;
     serviceId: string;
     amount: number;
+    courtesyQuantity: number;
+    courtesyAmount: number;
     service: {
         name: string;
         rpaRequired: boolean;
@@ -90,6 +96,8 @@ class UpdatePublicProposalServicesUseCase {
                         selected: Boolean(current),
                         hourly,
                         hours: hourly && typeof current?.quantity === "number" ? current.quantity : null,
+                        courtesyQuantity: current ? storedCourtesy(current) : 0,
+                        courtesyAmount: current ? storedCourtesyAmount(current) : 0,
                     };
                 }),
             },
@@ -138,12 +146,14 @@ class UpdatePublicProposalServicesUseCase {
                     eventHours,
                 });
                 const unitPrice = existing && typeof existing.unitPrice === "number" ? existing.unitPrice : quoted.unitPrice;
+                const courtesyQuantity = existing ? Math.min(storedCourtesy(existing), quantity) : 0;
                 return {
                     serviceId,
                     pricingType: existing?.pricingType ?? quoted.pricingType,
                     unitPrice,
                     quantity,
-                    amount: unitPrice * quantity,
+                    courtesyQuantity,
+                    amount: unitPrice * (quantity - courtesyQuantity),
                 };
             }
             if (existing && typeof existing.amount === "number") {
@@ -152,6 +162,7 @@ class UpdatePublicProposalServicesUseCase {
                     pricingType: existing.pricingType ?? quoted.pricingType,
                     unitPrice: typeof existing.unitPrice === "number" ? existing.unitPrice : quoted.unitPrice,
                     quantity: typeof existing.quantity === "number" ? existing.quantity : quoted.quantity,
+                    courtesyQuantity: storedCourtesy(existing),
                     amount: existing.amount,
                 };
             }
@@ -163,12 +174,14 @@ class UpdatePublicProposalServicesUseCase {
             return total + this.quote(proposal, catalog, line.serviceId).amount;
         }, 0);
         const newSum = serviceLines.reduce((total, line) => total + line.amount, 0);
-        const totalAmount = proposal.totalAmount - oldSum + newSum;
+        const subtotal = proposal.totalAmount + (proposal.discountAmount ?? 0);
+        const totalAmount = subtotal - oldSum + newSum;
 
         const updated = await this.proposalRepository.update({
             proposalId: proposal.id,
             data: {
                 totalAmount,
+                ...NO_DISCOUNT,
                 serviceIds: orderedIds,
                 serviceLines,
             },
@@ -180,7 +193,7 @@ class UpdatePublicProposalServicesUseCase {
 
         await this.historyRepository.create({
             proposalId: updated.id,
-            action: HISTORY_ACTION,
+            action: HISTORY_ACTION + discountRemovedSuffix(proposal.discountPercent),
         });
 
         const saved = await this.proposalRepository.getById(updated.id);
@@ -190,6 +203,7 @@ class UpdatePublicProposalServicesUseCase {
             data: {
                 id: updated.id,
                 totalAmount,
+                ...NO_DISCOUNT,
                 proposalServices: saved
                     ? this.visibleLines(saved as ProposalForServices, catalog, serviceLines)
                     : serviceLines.map((line) => this.visibleFromQuote(line, byId)),
@@ -238,6 +252,8 @@ class UpdatePublicProposalServicesUseCase {
             data: {
                 id: proposal.id,
                 totalAmount: proposal.totalAmount,
+                discountPercent: proposal.discountPercent ?? 0,
+                discountAmount: proposal.discountAmount ?? 0,
                 proposalServices: storedLines(proposal).map((line) => {
                     const amount = typeof line.amount === "number"
                         ? line.amount
@@ -273,6 +289,8 @@ class UpdatePublicProposalServicesUseCase {
             id: line.id,
             serviceId: line.serviceId,
             amount,
+            courtesyQuantity: storedCourtesy(line),
+            courtesyAmount: storedCourtesyAmount(line),
             service: {
                 name: line.service?.name ?? catalog?.name ?? "Serviço",
                 rpaRequired: line.service?.rpaRequired ?? catalog?.rpaRequired ?? false,
@@ -287,6 +305,8 @@ class UpdatePublicProposalServicesUseCase {
             id: line.serviceId,
             serviceId: line.serviceId,
             amount: line.amount,
+            courtesyQuantity: line.courtesyQuantity,
+            courtesyAmount: line.unitPrice * line.courtesyQuantity,
             service: {
                 name: catalog?.name ?? "Serviço",
                 rpaRequired: catalog?.rpaRequired ?? false,
@@ -309,6 +329,14 @@ function pricingRank(type: string | null | undefined) {
 
 function storedLines(proposal: ProposalForServices) {
     return proposal.proposalServices ?? [];
+}
+
+function storedCourtesy(line: StoredLine) {
+    return typeof line.courtesyQuantity === "number" && line.courtesyQuantity > 0 ? line.courtesyQuantity : 0;
+}
+
+function storedCourtesyAmount(line: StoredLine) {
+    return typeof line.unitPrice === "number" ? line.unitPrice * storedCourtesy(line) : 0;
 }
 
 function isRequired(service: { rpaRequired: boolean; rpaMinPeople?: number | null }, guestNumber: number) {

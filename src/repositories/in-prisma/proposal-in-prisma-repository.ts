@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient, Proposal } from "@prisma/client"
-import { ListProposalDbQuery, ProposalListDailyBucket, ProposalListRow } from "../interface/proposal-repository-interface";
+import { EventProfileReportRow, LeadTimeReportRow, ListProposalDbQuery, ProposalListDailyBucket, ProposalListRow, ReportProposalWhere, ServiceAdherenceReportRow } from "../interface/proposal-repository-interface";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { CreateProposalInDbParams, ImageChoiceUpdate, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalPresentationRecord, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices, VenueImagesForChoice, VenueImagesForReorder } from "../interface/proposal-repository-interface"
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
@@ -9,6 +9,8 @@ import { sortImagePositionUpdates } from "../../functions/plan-visible-image-pos
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
 import { MonthlyAverageProposal, yearsProposalWhere } from "../../functions/monthly-average-by-years";
 import { revenueEventWhere, revenueYears } from "../../functions/same-month-revenue-by-year";
+import { reportYearRange } from "../../functions/report-year-range";
+import { eventCategoryCounts } from "../../functions/event-category";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -147,22 +149,29 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
   async trafficCount({ year, venueId, approved }: GetTrafficCountVenueDbSchema): Promise<TrafegoCountResponse | null> {
-    const trafegoCounts = await this.prisma.proposal.groupBy({
-      by: ["trafficSource"],
-      _count: {
-        trafficSource: true,
-      },
-      where: {
-        venueId,
-        ...(approved && {
-          approved: true,
-        }),
-        startDate: {
-          gte: new Date(year ? year : new Date().getFullYear(), 0, 1),
-          lt: new Date(year ? year : new Date().getFullYear(), 12, 31),
+    const where = {
+      venueId,
+      ...(approved && {
+        approved: true,
+      }),
+      startDate: reportYearRange(year),
+    };
+    const [trafegoCounts, categoryCounts] = await Promise.all([
+      this.prisma.proposal.groupBy({
+        by: ["trafficSource"],
+        _count: {
+          trafficSource: true,
         },
-      },
-    });
+        where,
+      }),
+      this.prisma.proposal.groupBy({
+        by: ["eventCategory"],
+        _count: {
+          _all: true,
+        },
+        where,
+      }),
+    ]);
 
     const proposalAccount = trafegoCounts.reduce(
       (acc, curr) => acc + curr._count.trafficSource,
@@ -207,7 +216,11 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       (a, b) => b.count - a.count
     );
 
-    return { all: trafficData.all, sortedSources };
+    const categories = eventCategoryCounts(
+      categoryCounts.map((item) => ({ eventCategory: item.eventCategory, count: item._count._all }))
+    );
+
+    return { all: trafficData.all, sortedSources, categories };
   }
 
 
@@ -595,10 +608,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         ...(approved && {
           approved: true,
         }),
-        startDate: {
-          gte: new Date(year ? year : new Date().getFullYear(), 0, 1),
-          lt: new Date(year ? year : new Date().getFullYear(), 12, 31),
-        },
+        startDate: reportYearRange(year),
       },
       select: {
         totalAmount: true,
@@ -659,19 +669,48 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     return totalAmount
 
   }
+
+  async leadTimeRows(where: ReportProposalWhere): Promise<LeadTimeReportRow[]> {
+    return await this.prisma.proposal.findMany({
+      where,
+      select: { createdAt: true, startDate: true, approved: true },
+    });
+  }
+
+  async serviceAdherenceRows(where: ReportProposalWhere): Promise<ServiceAdherenceReportRow[]> {
+    return await this.prisma.proposal.findMany({
+      where,
+      select: {
+        id: true,
+        proposalServices: {
+          select: { serviceId: true, amount: true, service: { select: { name: true } } },
+        },
+      },
+    });
+  }
+
+  async eventProfileRows(where: ReportProposalWhere): Promise<EventProfileReportRow[]> {
+    return await this.prisma.proposal.findMany({
+      where,
+      select: { guestNumber: true, eventCategory: true },
+    });
+  }
 }
 
 function containsLike(value: string): string {
   return `%${value.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
 }
 
-function serviceLineRows(serviceLines: ServiceQuoteLine[] | undefined, serviceIds: string[] | undefined) {
+type StoredServiceLine = Omit<ServiceQuoteLine, "courtesyQuantity"> & { courtesyQuantity?: number };
+
+function serviceLineRows(serviceLines: StoredServiceLine[] | undefined, serviceIds: string[] | undefined) {
   if (serviceLines) {
     return serviceLines.map((line) => ({
       serviceId: line.serviceId,
       pricingType: line.pricingType,
       unitPrice: line.unitPrice,
       quantity: line.quantity,
+      courtesyQuantity: line.courtesyQuantity ?? 0,
       amount: line.amount,
     }))
   }

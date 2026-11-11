@@ -99,6 +99,7 @@ describe("UpdatePublicProposalServicesUseCase", () => {
             pricingType: "FIXED",
             unitPrice: 50,
             quantity: 1,
+            courtesyQuantity: 0,
             amount: 50,
         }]);
         expect(written).not.toHaveProperty("basePrice");
@@ -124,6 +125,7 @@ describe("UpdatePublicProposalServicesUseCase", () => {
                 pricingType: "FIXED",
                 unitPrice: 300,
                 quantity: 1,
+                courtesyQuantity: 0,
                 amount: 300,
             },
             {
@@ -131,6 +133,7 @@ describe("UpdatePublicProposalServicesUseCase", () => {
                 pricingType: "FIXED",
                 unitPrice: 50,
                 quantity: 1,
+                courtesyQuantity: 0,
                 amount: 50,
             },
         ]);
@@ -210,6 +213,7 @@ describe("UpdatePublicProposalServicesUseCase", () => {
             pricingType: "PER_HOUR",
             unitPrice: 40,
             quantity: 3,
+            courtesyQuantity: 0,
             amount: 120,
         });
         expect(written.totalAmount).toBe(1170);
@@ -391,5 +395,180 @@ describe("UpdatePublicProposalServicesUseCase", () => {
         const written = proposalRepository.update.mock.calls[0][0].data;
         expect(written.serviceIds).toEqual([]);
         expect(written.totalAmount).toBe(950);
+    });
+
+    describe("cortesia gravada", () => {
+        const hourLine = {
+            id: "line-hora",
+            serviceId: "svc-hora",
+            amount: 120,
+            unitPrice: 40,
+            quantity: 5,
+            courtesyQuantity: 2,
+            pricingType: "PER_HOUR" as const,
+            service: { name: "Som", rpaRequired: false, rpaMinPeople: null },
+        };
+        const cleanupLine = {
+            id: "line-limpeza",
+            serviceId: "svc-limpeza",
+            amount: 50,
+            unitPrice: 50,
+            quantity: 1,
+            courtesyQuantity: 0,
+            pricingType: "FIXED" as const,
+            service: { name: "Limpeza", rpaRequired: true, rpaMinPeople: 1 },
+        };
+        const withCourtesy = { ...proposal, proposalServices: [cleanupLine, hourLine] };
+
+        beforeEach(() => {
+            proposalRepository.getById.mockResolvedValue(withCourtesy);
+        });
+
+        function writtenLine(serviceId: string) {
+            const lines = proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines as Array<{ serviceId: string }>;
+            return lines.find((line) => line.serviceId === serviceId);
+        }
+
+        it("mantem a cortesia por hora quando so outro servico muda", async () => {
+            await run(["svc-hora", "svc-bar"]);
+            expect(writtenLine("svc-hora")).toMatchObject({ quantity: 5, courtesyQuantity: 2, amount: 120 });
+            expect(writtenLine("svc-bar")).toMatchObject({ courtesyQuantity: 0, amount: 80 });
+        });
+
+        it("reduzir para 1 hora grava cortesia 1 e valor 0", async () => {
+            await run(["svc-hora"], [{ serviceId: "svc-hora", hours: 1 }]);
+            expect(writtenLine("svc-hora")).toMatchObject({ quantity: 1, courtesyQuantity: 1, amount: 0 });
+            expect(proposalRepository.update.mock.calls[0][0].data.totalAmount).toBe(1000 - 120);
+        });
+
+        it("fixo de cortesia removido e readicionado volta com cortesia 0 e valor cheio", async () => {
+            const barCourtesy = {
+                id: "line-bar",
+                serviceId: "svc-bar",
+                amount: 0,
+                unitPrice: 80,
+                quantity: 1,
+                courtesyQuantity: 1,
+                pricingType: "FIXED" as const,
+                service: { name: "Bar", rpaRequired: false, rpaMinPeople: null },
+            };
+            proposalRepository.getById.mockResolvedValue({ ...proposal, proposalServices: [cleanupLine, barCourtesy] });
+            await run([]);
+            expect(writtenLine("svc-bar")).toBeUndefined();
+
+            proposalRepository.getById.mockResolvedValue({ ...proposal, proposalServices: [cleanupLine] });
+            await run(["svc-bar"]);
+            expect(writtenLine("svc-bar")).toMatchObject({ courtesyQuantity: 0, amount: 80 });
+        });
+
+        it("cortesia no corpo nao altera nada", async () => {
+            await useCase.execute({
+                proposalId: "proposal-1",
+                serviceIds: ["svc-hora", "svc-bar"],
+                serviceCourtesy: [{ serviceId: "svc-bar", quantity: 1 }, { serviceId: "svc-hora", quantity: 5 }],
+            } as never);
+            expect(writtenLine("svc-hora")).toMatchObject({ courtesyQuantity: 2, amount: 120 });
+            expect(writtenLine("svc-bar")).toMatchObject({ courtesyQuantity: 0, amount: 80 });
+        });
+
+        it("GET e PUT trazem courtesyQuantity e courtesyAmount sem unitPrice", async () => {
+            const listed = await useCase.list("proposal-1");
+            expect(listed.data.services).toContainEqual(expect.objectContaining({
+                id: "svc-hora",
+                amount: 120,
+                courtesyQuantity: 2,
+                courtesyAmount: 80,
+            }));
+            expect(listed.data.services).toContainEqual(expect.objectContaining({
+                id: "svc-bar",
+                selected: false,
+                courtesyQuantity: 0,
+                courtesyAmount: 0,
+            }));
+            expect(JSON.stringify(listed)).not.toContain("unitPrice");
+
+            proposalRepository.getById
+                .mockResolvedValueOnce(withCourtesy)
+                .mockResolvedValueOnce({ ...withCourtesy, proposalServices: [cleanupLine, { ...hourLine, quantity: 3, courtesyQuantity: 2, amount: 40 }] });
+            const response = await run(["svc-hora"], [{ serviceId: "svc-hora", hours: 3 }]);
+            expect(response.data.proposalServices).toContainEqual(expect.objectContaining({
+                serviceId: "svc-hora",
+                amount: 40,
+                courtesyQuantity: 2,
+                courtesyAmount: 80,
+            }));
+        });
+    });
+
+    describe("desconto", () => {
+        const extra = { ...optional, id: "svc-novo", name: "Decoracao", price: 300 };
+        const cleanupLine = {
+            id: "line-limpeza",
+            serviceId: "svc-limpeza",
+            amount: 50,
+            unitPrice: 50,
+            quantity: 1,
+            pricingType: "FIXED" as const,
+            service: { name: "Limpeza", rpaRequired: true, rpaMinPeople: 1 },
+        };
+        const discounted = {
+            ...proposal,
+            totalAmount: 5220,
+            discountPercent: 10,
+            discountAmount: 580,
+            proposalServices: [proposal.proposalServices[0], cleanupLine],
+        };
+
+        beforeEach(() => {
+            proposalRepository.getById.mockResolvedValue(discounted);
+            serviceRepository.getByVenueId.mockResolvedValue([optional, cleanup, hours, extra]);
+        });
+
+        it("sem mudanca nao grava e devolve o desconto", async () => {
+            const response = await run(["svc-bar", "svc-limpeza"]);
+            expect(proposalRepository.update).not.toHaveBeenCalled();
+            expect(response.data).toMatchObject({ totalAmount: 5220, discountPercent: 10, discountAmount: 580 });
+        });
+
+        it("servico novo de R$ 300 grava 6100 e zera o desconto", async () => {
+            const response = await run(["svc-bar", "svc-limpeza", "svc-novo"]);
+            const written = proposalRepository.update.mock.calls[0][0].data;
+            expect(written).toMatchObject({ totalAmount: 6100, discountPercent: 0, discountAmount: 0 });
+            expect(response.data).toMatchObject({ totalAmount: 6100, discountPercent: 0, discountAmount: 0 });
+            expect(historyRepository.create).toHaveBeenCalledWith({
+                proposalId: "proposal-1",
+                action: `${HISTORY_ACTION} (desconto de 10% removido)`,
+            });
+        });
+
+        it("com 100% reconstroi o subtotal pelo discountAmount", async () => {
+            proposalRepository.getById.mockResolvedValue({ ...discounted, totalAmount: 0, discountPercent: 100, discountAmount: 5800 });
+            await run(["svc-bar", "svc-limpeza", "svc-novo"]);
+            expect(proposalRepository.update.mock.calls[0][0].data).toMatchObject({ totalAmount: 6100, discountPercent: 0, discountAmount: 0 });
+        });
+
+        it("sem desconto gravado mantem o historico de hoje", async () => {
+            proposalRepository.getById.mockResolvedValue({ ...discounted, totalAmount: 5800, discountPercent: 0, discountAmount: 0 });
+            await run(["svc-bar", "svc-limpeza", "svc-novo"]);
+            expect(proposalRepository.update.mock.calls[0][0].data).toMatchObject({ totalAmount: 6100 });
+            expect(historyRepository.create).toHaveBeenCalledWith({ proposalId: "proposal-1", action: HISTORY_ACTION });
+        });
+
+        it("discountPercent no corpo nao altera nada", async () => {
+            const unchanged = await useCase.execute({
+                proposalId: "proposal-1",
+                serviceIds: ["svc-bar", "svc-limpeza"],
+                discountPercent: 50,
+            } as never);
+            expect(proposalRepository.update).not.toHaveBeenCalled();
+            expect(unchanged.data).toMatchObject({ totalAmount: 5220, discountPercent: 10 });
+
+            await useCase.execute({
+                proposalId: "proposal-1",
+                serviceIds: ["svc-bar", "svc-limpeza", "svc-novo"],
+                discountPercent: 50,
+            } as never);
+            expect(proposalRepository.update.mock.calls[0][0].data).toMatchObject({ totalAmount: 6100, discountPercent: 0, discountAmount: 0 });
+        });
     });
 });

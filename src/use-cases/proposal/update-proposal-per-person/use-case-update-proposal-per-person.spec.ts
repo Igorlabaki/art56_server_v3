@@ -5,6 +5,10 @@ import { SERVICE_HOURS_MESSAGE, serviceHoursOverEventMessage } from "../../../fu
 import { EVENT_CATEGORY_MESSAGE } from "../../../functions/event-category";
 import { UpdateProposalPerPersonUseCase } from "./use-case-update-proposal-per-person";
 import { UpdateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
+import { HttpForbiddenError } from "../../../errors/errors-type/http-forbidden-error";
+import { courtesyAuthorizer, OWNER_ID, STRANGER_ID } from "../courtesy-authorizer.test-helper";
+import { DISCOUNT_DENIAL } from "../proposal-quote-authorizer";
+import { NO_QUOTE_MESSAGE } from "../quote-proposal/use-case-quote-proposal";
 
 function fee(partial: Partial<SeasonalFee> & Pick<SeasonalFee, "type" | "fee">): SeasonalFee {
     return {
@@ -242,6 +246,7 @@ describe("UpdateProposalPerPersonUseCase", () => {
             pricingType: "PER_PERSON",
             unitPrice: 40,
             quantity: 10,
+            courtesyQuantity: 0,
             amount: 400,
         }]);
 
@@ -285,6 +290,7 @@ describe("UpdateProposalPerPersonUseCase", () => {
             pricingType: "PER_HOUR",
             unitPrice: 250,
             quantity: 3,
+            courtesyQuantity: 0,
             amount: 750,
         }]);
     });
@@ -375,7 +381,151 @@ describe("UpdateProposalPerPersonUseCase", () => {
             pricingType: "FIXED",
             unitPrice: 300,
             quantity: 1,
+            courtesyQuantity: 0,
             amount: 300,
         }]);
+    });
+
+    describe("cortesia", () => {
+        const venue = { id: "venue-1", organizationId: "org-1" };
+        const led = { id: "led", venueId: "venue-1", price: 250, pricingType: "PER_HOUR" };
+        const courtesyData = {
+            serviceIds: ["led"],
+            serviceHours: [{ serviceId: "led", hours: 6 }],
+            totalAmountInput: "1",
+        };
+
+        function courtesyUseCase() {
+            const { authorizer, assert } = courtesyAuthorizer(venue);
+            const withAuthorizer = new UpdateProposalPerPersonUseCase(
+                { getById: vi.fn() } as never,
+                venueRepository as never,
+                serviceRepository as never,
+                { create: vi.fn() } as never,
+                proposalRepository as never,
+                goalRepository as never,
+                authorizer,
+            );
+            const exec = (data: Partial<UpdateProposalPerPersonRequestParams["data"]>, authUserId: string) =>
+                withAuthorizer.execute({ proposalId: "proposal-1", data: { ...baseData, ...data } }, authUserId);
+            return { exec, assert };
+        }
+
+        beforeEach(() => {
+            hourlyVenue();
+            proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 1, venueId: "venue-1" });
+            serviceRepository.listForQuote.mockResolvedValue([led]);
+        });
+
+        it("com permissao grava a cortesia", async () => {
+            const { exec } = courtesyUseCase();
+            await exec({ ...courtesyData, serviceCourtesy: [{ serviceId: "led", quantity: 2 }] }, OWNER_ID);
+            const data = proposalRepository.update.mock.calls.at(-1)?.[0].data as Record<string, unknown>;
+            expect(data.serviceLines).toEqual([expect.objectContaining({ quantity: 6, courtesyQuantity: 2, amount: 1000 })]);
+            expect(data).not.toHaveProperty("serviceCourtesy");
+        });
+
+        it("sem serviceCourtesy grava 0 nas linhas", async () => {
+            const { exec, assert } = courtesyUseCase();
+            await exec(courtesyData, OWNER_ID);
+            expect(assert).not.toHaveBeenCalled();
+            expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([
+                expect.objectContaining({ courtesyQuantity: 0, amount: 1500 }),
+            ]);
+        });
+
+        it("token sem permissao responde 403 e nao chama update", async () => {
+            const { exec } = courtesyUseCase();
+            await expect(exec({
+                ...courtesyData,
+                userId: OWNER_ID,
+                serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+            }, STRANGER_ID)).rejects.toBeInstanceOf(HttpForbiddenError);
+            expect(proposalRepository.update).not.toHaveBeenCalled();
+            expect(proposalRepository.updateServices).not.toHaveBeenCalled();
+        });
+
+        it("autoriza no espaco do orcamento gravado, nao no venueId do corpo", async () => {
+            const { exec, assert } = courtesyUseCase();
+            await exec({
+                ...courtesyData,
+                venueId: "venue-outro",
+                serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+            }, OWNER_ID).catch(() => undefined);
+            expect(assert).toHaveBeenCalledWith(OWNER_ID, "venue-1", expect.anything());
+        });
+    });
+
+    describe("desconto", () => {
+        const venue = { id: "venue-1", organizationId: "org-1" };
+        const discountData = { guestNumber: "50", serviceIds: ["decor"] };
+
+        function discountUseCase() {
+            const { authorizer, assert } = courtesyAuthorizer(venue);
+            const withAuthorizer = new UpdateProposalPerPersonUseCase(
+                { getById: vi.fn() } as never,
+                venueRepository as never,
+                serviceRepository as never,
+                { create: vi.fn() } as never,
+                proposalRepository as never,
+                goalRepository as never,
+                authorizer,
+            );
+            const exec = (data: Partial<UpdateProposalPerPersonRequestParams["data"]>, authUserId: string) =>
+                withAuthorizer.execute({ proposalId: "proposal-1", data: { ...baseData, ...discountData, ...data } }, authUserId);
+            const stored = () => proposalRepository.update.mock.calls.at(-1)?.[0].data as unknown as Record<string, number>;
+            return { exec, assert, stored };
+        }
+
+        beforeEach(() => {
+            hourlyVenue();
+            proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 5800, venueId: "venue-1" });
+            serviceRepository.listForQuote.mockResolvedValue([{ id: "decor", venueId: "venue-1", price: 800, pricingType: "FIXED" }]);
+        });
+
+        it("com 10% forca o recalculo mesmo com Total diferente do gravado", async () => {
+            const { exec, stored } = discountUseCase();
+            await exec({ discountPercent: 10, totalAmountInput: "4000" }, OWNER_ID);
+            expect(stored()).toMatchObject({ discountPercent: 10, discountAmount: 580, totalAmount: 5220 });
+            expect(stored()).not.toHaveProperty("totalAmountInput");
+        });
+
+        it("sem discountPercent e Total igual ao gravado recalcula e grava desconto 0", async () => {
+            const { exec, assert, stored } = discountUseCase();
+            await exec({ totalAmountInput: "5800" }, OWNER_ID);
+            expect(assert).not.toHaveBeenCalled();
+            expect(stored()).toMatchObject({ discountPercent: 0, discountAmount: 0, totalAmount: 5800 });
+        });
+
+        it("sem discountPercent e Total digitado grava o Total e desconto 0", async () => {
+            const { exec, stored } = discountUseCase();
+            await exec({ totalAmountInput: "2500" }, OWNER_ID);
+            expect(stored()).toMatchObject({ discountPercent: 0, discountAmount: 0, totalAmount: 2500 });
+        });
+
+        it("permuta grava desconto 0", async () => {
+            const { exec, stored } = discountUseCase();
+            await exec({ type: "BARTER", discountPercent: 10 }, STRANGER_ID);
+            expect(stored()).toMatchObject({ discountPercent: 0, discountAmount: 0, totalAmount: 0 });
+        });
+
+        it("token sem permissao responde 403 e nao chama update", async () => {
+            const { exec } = discountUseCase();
+            await expect(exec({ userId: OWNER_ID, discountPercent: 10 }, STRANGER_ID)).rejects.toBeInstanceOf(HttpForbiddenError);
+            expect(proposalRepository.update).not.toHaveBeenCalled();
+        });
+
+        it("autoriza no espaco do orcamento gravado", async () => {
+            const { exec, assert } = discountUseCase();
+            await exec({ venueId: "venue-outro", discountPercent: 10 }, OWNER_ID).catch(() => undefined);
+            expect(assert).toHaveBeenCalledWith(OWNER_ID, "venue-1", DISCOUNT_DENIAL);
+        });
+
+        it("espaco sem preco de catalogo responde 400", async () => {
+            venueRepository.getById.mockResolvedValue({ id: "venue-1", pricingModel: "PER_PERSON", pricePerPerson: null, seasonalFee: [] });
+            const { exec } = discountUseCase();
+            await expect(exec({ discountPercent: 10 }, OWNER_ID)).rejects.toThrow(NO_QUOTE_MESSAGE);
+            expect(proposalRepository.update).not.toHaveBeenCalled();
+        });
     });
 });

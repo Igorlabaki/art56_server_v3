@@ -10,7 +10,8 @@ import { calcEventDuration } from "../../../functions/calc-event-duration";
 import { resolveEventCategory } from "../../../functions/event-category";
 import { transformDate } from "../../../functions/transform-date";
 import { resolveVenueMinimumPrice } from "../../../functions/resolve-minimum-price";
-import { assertChosenServiceHours, quoteServiceLines, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
+import { assertChosenServiceHours, quoteServiceLines, serviceCourtesyMap, serviceHoursMap, sumServiceQuote } from "../../../functions/quote-service-lines";
+import { assertCourtesyAllowed, CourtesyAuthorizer } from "../proposal-quote-authorizer";
 import { UserRepositoryInterface } from "../../../repositories/interface/user-repository-interface";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
@@ -34,13 +35,17 @@ class CreateProposalPerDayUseCase {
         private historyRepository: HistoryRepositoryInterface,
         private proposalRepository: ProposalRepositoryInterface,
         private notificationRepository: NotificationRepositoryInterface,
+        private courtesyAuthorizer?: CourtesyAuthorizer,
     ) { }
 
-    async execute(params: CreateProposalPerDayRequestParamsSchema) {
+    async execute(params: CreateProposalPerDayRequestParamsSchema, authUserId: string | null = null) {
         let createProposalPerDayInDb: CreateProposalInDbParams;
 
-        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, guestNumber, userId, eventCategory, ...fields } = params
+        const { startDay, endDay, endHour, startHour, totalAmountInput, serviceIds, serviceHours, serviceCourtesy, guestNumber, userId, eventCategory, ...fields } = params
         const rest = { ...fields, eventCategory: resolveEventCategory(params.type, eventCategory) }
+
+        const courtesyByServiceId = serviceCourtesyMap(serviceCourtesy)
+        await assertCourtesyAllowed(this.courtesyAuthorizer, authUserId, params.venueId, courtesyByServiceId)
 
         const venue = await this.venueRepository.getById({ venueId: params.venueId }) as Venue & { seasonalFee: SeasonalFee[] };
 
@@ -64,6 +69,7 @@ class CreateProposalPerDayUseCase {
             startDate,
             endDate,
             hoursByServiceId,
+            courtesyByServiceId,
         })
         const totalAmountService = sumServiceQuote(serviceLines)
 

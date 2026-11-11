@@ -7,6 +7,7 @@ import {
     ProposalAmounts,
     VenueForAmounts,
 } from "../../../functions/proposal-amounts";
+import { applyProposalDiscount, discountRemovedSuffix } from "../../../functions/proposal-discount";
 import { quoteServiceLines, sumServiceQuote } from "../../../functions/quote-service-lines";
 import { transformDate } from "../../../functions/transform-date";
 import {
@@ -78,14 +79,16 @@ class RecalculatePublicProposalUseCase {
             endHour,
         });
 
-        const storedServices = proposalServices(proposal as {
-            proposalServices?: { serviceId: string; quantity?: number | null; pricingType?: string | null }[];
-        });
+        const storedServices = proposalServices(proposal as { proposalServices?: StoredService[] });
         const serviceIds = storedServices.map((item) => item.serviceId);
         const hoursByServiceId: Record<string, number> = {};
+        const courtesyByServiceId: Record<string, number> = {};
         for (const item of storedServices) {
             if (item.pricingType === "PER_HOUR" && typeof item.quantity === "number") {
                 hoursByServiceId[item.serviceId] = item.quantity;
+            }
+            if (typeof item.courtesyQuantity === "number" && item.courtesyQuantity > 0) {
+                courtesyByServiceId[item.serviceId] = item.courtesyQuantity;
             }
         }
         const serviceLines = quoteServiceLines({
@@ -96,6 +99,8 @@ class RecalculatePublicProposalUseCase {
             startDate,
             endDate,
             hoursByServiceId,
+            courtesyByServiceId,
+            courtesyMode: "clamp",
         });
         const totalAmountService = sumServiceQuote(serviceLines);
 
@@ -108,6 +113,13 @@ class RecalculatePublicProposalUseCase {
             proposalType: proposal.type,
         });
 
+        const storedPercent = proposal.discountPercent ?? 0;
+        const unchanged =
+            wallClockDateIsoFromDate(startDate) === wallClockDateIsoFromDate(proposal.startDate) &&
+            params.guestNumber === proposal.guestNumber &&
+            endHour === formatWallClockTime(proposal.endDate);
+        const discount = applyProposalDiscount(amounts.totalAmount, unchanged ? storedPercent : 0);
+
         const updated = await this.proposalRepository.update({
             proposalId: proposal.id,
             data: {
@@ -117,7 +129,7 @@ class RecalculatePublicProposalUseCase {
                 basePrice: amounts.basePrice,
                 extraHoursQty: amounts.extraHoursQty,
                 extraHourPrice: amounts.extraHourPrice,
-                totalAmount: amounts.totalAmount,
+                ...discount,
                 serviceIds,
                 serviceLines,
             },
@@ -129,7 +141,7 @@ class RecalculatePublicProposalUseCase {
 
         await this.historyRepository.create({
             proposalId: updated.id,
-            action: HISTORY_ACTION,
+            action: HISTORY_ACTION + (unchanged ? "" : discountRemovedSuffix(storedPercent)),
         });
 
         return {
@@ -143,7 +155,7 @@ class RecalculatePublicProposalUseCase {
                 basePrice: amounts.basePrice,
                 extraHoursQty: amounts.extraHoursQty,
                 extraHourPrice: amounts.extraHourPrice,
-                totalAmount: amounts.totalAmount,
+                ...discount,
             },
         };
     }
@@ -198,9 +210,14 @@ function endHourOnTheSameDay(startHour: string, hours: number): string {
     return `${String(endHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function proposalServices(proposal: {
-    proposalServices?: { serviceId: string; quantity?: number | null; pricingType?: string | null }[];
-}) {
+type StoredService = {
+    serviceId: string;
+    quantity?: number | null;
+    courtesyQuantity?: number | null;
+    pricingType?: string | null;
+};
+
+function proposalServices(proposal: { proposalServices?: StoredService[] }) {
     return proposal.proposalServices ?? [];
 }
 

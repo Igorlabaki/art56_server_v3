@@ -15,11 +15,17 @@ export interface ServiceQuoteLine {
     pricingType: ServicePricingType;
     unitPrice: number;
     quantity: number;
+    courtesyQuantity: number;
     amount: number;
 }
 
+export type CourtesyMode = "strict" | "clamp";
+
 export const SERVICE_HOURS_MESSAGE = "Informe um número inteiro de horas para o serviço.";
 export const MAX_SERVICE_HOURS = 8760;
+export const COURTESY_MESSAGE = "Informe uma cortesia inteira, de 0 até a quantidade do serviço.";
+export const MAX_COURTESY_QUANTITY = 100000;
+export const MAX_COURTESY_ENTRIES = 100;
 
 export function serviceHoursOverEventMessage(eventHours: number): string {
     const unit = eventHours === 1 ? "hora" : "horas";
@@ -34,6 +40,8 @@ export function quoteServiceLines(input: {
     startDate: Date;
     endDate: Date;
     hoursByServiceId?: Record<string, number>;
+    courtesyByServiceId?: Record<string, number>;
+    courtesyMode?: CourtesyMode;
 }): ServiceQuoteLine[] {
     const byId = new Map(input.services.map((service) => [service.id, service]));
     const hours = calcEventDuration(input.startDate, input.endDate);
@@ -53,14 +61,70 @@ export function quoteServiceLines(input: {
         }
 
         const quantity = quantityFor(service, hours, input.guestNumber, input.hoursByServiceId);
+        const courtesyQuantity = courtesyFor(
+            service.id,
+            quantity,
+            input.courtesyByServiceId,
+            input.courtesyMode ?? "strict",
+        );
         return {
             serviceId: service.id,
             pricingType: service.pricingType,
             unitPrice: service.price,
             quantity,
-            amount: service.price * quantity,
+            courtesyQuantity,
+            amount: service.price * (quantity - courtesyQuantity),
         };
     });
+}
+
+export function serviceCourtesyMap(entries?: unknown): Record<string, number> {
+    const map: Record<string, number> = {};
+    if (entries === undefined || entries === null) return map;
+    if (!Array.isArray(entries) || entries.length > MAX_COURTESY_ENTRIES) {
+        throw new HttpBadRequestError(COURTESY_MESSAGE);
+    }
+    for (const entry of entries) {
+        const serviceId = (entry as { serviceId?: unknown } | null)?.serviceId;
+        const quantity = (entry as { quantity?: unknown } | null)?.quantity;
+        if (typeof serviceId !== "string" || serviceId.length === 0 || !isValidCourtesy(quantity)) {
+            throw new HttpBadRequestError(COURTESY_MESSAGE);
+        }
+        if (Object.prototype.hasOwnProperty.call(map, serviceId)) {
+            throw new HttpBadRequestError(COURTESY_MESSAGE);
+        }
+        map[serviceId] = quantity;
+    }
+    return map;
+}
+
+export function hasCourtesy(map?: Record<string, number>): boolean {
+    return Object.values(map ?? {}).some((quantity) => quantity > 0);
+}
+
+function isValidCourtesy(value: unknown): value is number {
+    return typeof value === "number"
+        && Number.isInteger(value)
+        && value >= 0
+        && value <= MAX_COURTESY_QUANTITY;
+}
+
+function courtesyFor(
+    serviceId: string,
+    quantity: number,
+    courtesyByServiceId: Record<string, number> | undefined,
+    mode: CourtesyMode,
+): number {
+    if (!courtesyByServiceId || !Object.prototype.hasOwnProperty.call(courtesyByServiceId, serviceId)) {
+        return 0;
+    }
+    const courtesy = courtesyByServiceId[serviceId];
+    if (!isValidCourtesy(courtesy)) {
+        throw new HttpBadRequestError(COURTESY_MESSAGE);
+    }
+    if (courtesy <= quantity) return courtesy;
+    if (mode === "clamp") return quantity;
+    throw new HttpBadRequestError(COURTESY_MESSAGE);
 }
 
 export function serviceHoursMap(entries?: { serviceId: string; hours: number }[]): Record<string, number> {

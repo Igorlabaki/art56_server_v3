@@ -1,6 +1,6 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
-import { EventCategory } from "../../functions/event-category";
+import { EventCategory, EventCategoryCount } from "../../functions/event-category";
 import { MonthlyAverageProposal } from "../../functions/monthly-average-by-years";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
@@ -22,6 +22,8 @@ export interface CreateProposalInDbParams {
   serviceLines?: ServiceQuoteLine[]
   description: string
   totalAmount: number
+  discountPercent?: number
+  discountAmount?: number
   knowsVenue: boolean
   extraHoursQty: number
   extraHourPrice: number
@@ -100,6 +102,7 @@ export interface TrafficSourceTypes {
 export interface TrafegoCountResponse {
   all: number;
   sortedSources: { name: string; count: number }[];
+  categories: EventCategoryCount[];
 }
 
 export interface MonthProposalDataCount{
@@ -195,6 +198,30 @@ export interface ImageChoiceUpdate {
   isShowOnProposal: boolean;
 }
 
+export interface ReportProposalWhere {
+  venueId: string;
+  approved?: true;
+  createdAt?: { gte: Date; lt: Date };
+  startDate?: { gte: Date; lt: Date };
+  eventCategory?: EventCategory | null;
+}
+
+export interface LeadTimeReportRow {
+  createdAt: Date;
+  startDate: Date;
+  approved: boolean;
+}
+
+export interface ServiceAdherenceReportRow {
+  id: string;
+  proposalServices: { serviceId: string; amount: number | null; service: { name: string } }[];
+}
+
+export interface EventProfileReportRow {
+  guestNumber: number;
+  eventCategory: EventCategory | null;
+}
+
 export interface ProposalRepositoryInterface {
   delete: (params: string) => Promise<Proposal | null>
   getById: (params: string) => Promise<ProposalWithRelations | null>
@@ -215,4 +242,7 @@ export interface ProposalRepositoryInterface {
   list: (params: ListProposalDbQuery) => Promise<{ items: ProposalListRow[]; total: number }>
   summarize: (params: ListProposalDbQuery) => Promise<ProposalListDailyBucket[]>
   summarizeWindow: (params: ProposalWindowQuery) => Promise<ProposalWindowDailyAmount[]>
+  leadTimeRows: (where: ReportProposalWhere) => Promise<LeadTimeReportRow[]>
+  serviceAdherenceRows: (where: ReportProposalWhere) => Promise<ServiceAdherenceReportRow[]>
+  eventProfileRows: (where: ReportProposalWhere) => Promise<EventProfileReportRow[]>
 }

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
+import { AuthenticatedRequest } from "../../../types/authenticated-request";
 import { UpdateProposalPerDayUseCase } from "./use-case-update-proposal-per-day";
 import { updateProposalPerDayRequestParams } from "../../../zod/proposal/update-proposal-per-day--params-schema";
 
@@ -9,7 +10,7 @@ class UpdateProposalPerDayController {
         try {
             const param = updateProposalPerDayRequestParams.parse(req.body);
             
-            const proposalPerDay = await this.updateProposalUseCase.execute(param);
+            const proposalPerDay = await this.updateProposalUseCase.execute(param, (req as AuthenticatedRequest).user.id);
             
             return resp.json(proposalPerDay)
         } catch (error) {

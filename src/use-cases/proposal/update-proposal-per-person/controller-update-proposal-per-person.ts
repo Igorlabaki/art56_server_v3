@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
+import { AuthenticatedRequest } from "../../../types/authenticated-request";
 import { UpdateProposalPerPersonUseCase } from "./use-case-update-proposal-per-person";
 import { updateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
 
@@ -9,7 +10,7 @@ class UpdateProposalPerPersonController {
         try {
             const param = updateProposalPerPersonRequestParams.parse(req.body);
             
-            const proposalById = await this.updateProposalUseCase.execute(param);
+            const proposalById = await this.updateProposalUseCase.execute(param, (req as AuthenticatedRequest).user.id);
             
             return resp.json(proposalById)
         } catch (error) {

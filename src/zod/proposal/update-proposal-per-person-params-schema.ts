@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { optionalProposalEmail } from "./proposal-email-schema";
 import { EVENT_CATEGORIES } from "../../functions/event-category";
+import { serviceCourtesySchema } from "./service-courtesy-schema";
 
 export const updateProposalPerPersonRequestParams = z.object({
     proposalId: z.string(),
@@ -17,12 +18,14 @@ export const updateProposalPerPersonRequestParams = z.object({
         knowsVenue: z.boolean(),
         email: optionalProposalEmail,
         totalAmountInput: z.string(),
+        discountPercent: z.number().optional(),
         userId: z.string().optional(),
         serviceIds: z.array(z.string()),
         serviceHours: z.array(z.object({
             serviceId: z.string(),
             hours: z.number().int().min(0).max(8760),
         })).max(100).optional(),
+        serviceCourtesy: serviceCourtesySchema,
         adressComplement: z.string().optional(),
         type: z.enum(["EVENT" , "OTHER" , "BARTER" , "PRODUCTION"]), 
         eventCategory: z.enum(EVENT_CATEGORIES).nullable().optional(),

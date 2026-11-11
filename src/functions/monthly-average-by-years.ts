@@ -18,7 +18,7 @@ export interface MonthlyAveragePoint {
 }
 
 /** `Date.UTC` joga anos de 0 a 99 para 1900; `setUTCFullYear` preserva o ano digitado. */
-function yearStart(year: number): Date {
+export function yearStart(year: number): Date {
   const date = new Date(0);
   date.setUTCFullYear(year, 0, 1);
   return date;

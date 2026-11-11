@@ -116,6 +116,40 @@ describe("UpdatePublicProposalServicesController", () => {
         expect(execute.mock.calls[0][0]).not.toHaveProperty("unitPrice");
     });
 
+    it("descarta cortesia do corpo e devolve a cortesia gravada sem unitario", async () => {
+        const execute = vi.fn(async () => ({
+            success: true,
+            message: "Serviços atualizados",
+            data: {
+                id: "proposal-1",
+                totalAmount: 750,
+                proposalServices: [{
+                    id: "line-1",
+                    serviceId,
+                    amount: 40,
+                    unitPrice: 40,
+                    courtesyQuantity: 2,
+                    courtesyAmount: 80,
+                    service: { name: "Som", rpaRequired: false, rpaMinPeople: null },
+                }],
+            },
+        }));
+        const subject = controller({ execute });
+        const resp = responseDouble();
+
+        await subject.update({
+            params: { proposalId: "proposal-1" },
+            body: { serviceIds: [serviceId], serviceCourtesy: [{ serviceId, quantity: 3 }] },
+        } as never, resp as never);
+
+        expect(resp.statusCode).toBe(200);
+        expect(execute).toHaveBeenCalledWith({ proposalId: "proposal-1", serviceIds: [serviceId] });
+        expect(JSON.stringify(resp.body)).not.toContain("unitPrice");
+        expect(resp.body?.data).toMatchObject({
+            proposalServices: [{ serviceId, amount: 40, courtesyQuantity: 2, courtesyAmount: 80 }],
+        });
+    });
+
     it("aceita lista vazia", async () => {
         const execute = vi.fn(async () => ({
             success: true,

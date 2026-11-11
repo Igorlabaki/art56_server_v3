@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
+import { readOptionalUserId } from "../../../middleware/ensureAuthenticate";
 import { CreateProposalPerPersonUseCase } from "./use-case-create-proposal-per-person";
 import { createProposalPerPersonRequestParamsSchema, CreateProposalPerPersonRequestParamsSchema,  } from "../../../zod/proposal/create-proposal-per-person-params-schema";
 
@@ -14,7 +15,7 @@ class CreateProposalPerPersonController {
             // Validate the request parms
             createProposalPerPersonRequestParamsSchema.safeParse(body);
             // Esperar a execução do caso de uso
-            const response = await this.createProposalPerPersonUseCase.execute(body);
+            const response = await this.createProposalPerPersonUseCase.execute(body, readOptionalUserId(req));
             // Retornar o token
             console.log(response)
             return resp.status(201).json(response);

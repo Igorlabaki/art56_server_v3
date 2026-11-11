@@ -3,8 +3,12 @@ import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-reque
 import { SERVICE_HOURS_MESSAGE } from "../../../functions/quote-service-lines";
 import { EVENT_CATEGORY_MESSAGE } from "../../../functions/event-category";
 import { CreateProposalPerPersonUseCase } from "./use-case-create-proposal-per-person";
-import { QuoteProposalUseCase } from "../quote-proposal/use-case-quote-proposal";
+import { NO_QUOTE_MESSAGE, QuoteProposalUseCase } from "../quote-proposal/use-case-quote-proposal";
+import { DISCOUNT_MESSAGE } from "../../../functions/proposal-discount";
 import { updateProposalPerPersonRequestParams } from "../../../zod/proposal/update-proposal-per-person-params-schema";
+import { HttpForbiddenError } from "../../../errors/errors-type/http-forbidden-error";
+import { HttpTokenError } from "../../../errors/errors-type/http-token-error";
+import { courtesyAuthorizer, OWNER_ID, STRANGER_ID } from "../courtesy-authorizer.test-helper";
 
 const venue = { id: "venue-1", organizationId: "org-1" };
 const saved = {
@@ -266,5 +270,231 @@ describe("preco de tabela na criacao por pessoa", () => {
     it("abaixo do minimo grava o minimo mais servicos", async () => {
         const stored = await createAndQuote(buildPriced({ ...perPerson, minimumPrice: 5000 }));
         expect(stored).toMatchObject({ basePrice: 5000, extraHoursQty: 0, totalAmount: 5300 });
+    });
+});
+
+describe("cortesia na criacao por pessoa", () => {
+    const pricedVenue = {
+        id: "venue-1",
+        organizationId: "org-1",
+        pricingModel: "PER_PERSON",
+        pricePerPerson: 100,
+        standardEventDuration: 4,
+        minimumPrice: null,
+        minimumPricePeriods: [],
+        seasonalFee: [],
+    };
+    const led = [{ id: "led", venueId: "venue-1", price: 250, pricingType: "PER_HOUR" as const }];
+    const event = {
+        ...base,
+        type: "EVENT" as const,
+        eventCategory: "CORPORATE" as const,
+        serviceIds: ["led"],
+        serviceHours: [{ serviceId: "led", hours: 4 }],
+    };
+
+    function buildCourtesy(services = led) {
+        const { authorizer, assert } = courtesyAuthorizer(pricedVenue);
+        const proposalRepository = {
+            createPerPerson: vi.fn(async (data: { totalAmount: number }) => ({ ...saved, totalAmount: data.totalAmount })),
+            monthlyRevenueAnalysis: vi.fn(async () => null),
+        };
+        const useCase = new CreateProposalPerPersonUseCase(
+            { getById: vi.fn(async () => ({ id: OWNER_ID, username: "dono" })) } as never,
+            { findByVenueAndRevenue: vi.fn(async () => null) } as never,
+            { getById: vi.fn(async () => pricedVenue) } as never,
+            { listForQuote: vi.fn(async () => services) } as never,
+            { create: vi.fn() } as never,
+            proposalRepository as never,
+            { create: vi.fn() } as never,
+            authorizer,
+        );
+        const stored = () => proposalRepository.createPerPerson.mock.calls[0][0] as unknown as {
+            totalAmount: number;
+            serviceLines: Array<{ courtesyQuantity: number; amount: number }>;
+        };
+        return { useCase, proposalRepository, assert, stored };
+    }
+
+    it("com permissao grava a cortesia e o total cai 2 x unitario", async () => {
+        const plain = buildCourtesy();
+        await plain.useCase.execute(event as never, OWNER_ID);
+
+        const withCourtesy = buildCourtesy();
+        await withCourtesy.useCase.execute({
+            ...event,
+            serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+        } as never, OWNER_ID);
+
+        expect(withCourtesy.stored().serviceLines[0]).toMatchObject({ quantity: 4, courtesyQuantity: 2, amount: 500 });
+        expect(plain.stored().totalAmount - withCourtesy.stored().totalAmount).toBe(500);
+        expect(withCourtesy.assert).toHaveBeenCalledTimes(1);
+    });
+
+    it("sem token e com cortesia responde 401 e nao grava", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await expect(useCase.execute({
+            ...event,
+            serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+        } as never)).rejects.toBeInstanceOf(HttpTokenError);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("token sem permissao responde 403 e nao grava", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await expect(useCase.execute({
+            ...event,
+            serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+        } as never, STRANGER_ID)).rejects.toThrow("Você não tem permissão para dar cortesia neste espaço.");
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("userId do corpo com permissao nao vale com token de outro usuario", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await expect(useCase.execute({
+            ...event,
+            userId: OWNER_ID,
+            serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+        } as never, STRANGER_ID)).rejects.toBeInstanceOf(HttpForbiddenError);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, [{ serviceId: "led", quantity: 0 }]])("cortesia %j cria sem chamar o autorizador", async (serviceCourtesy) => {
+        const { useCase, assert, stored } = buildCourtesy();
+        await useCase.execute({ ...event, serviceCourtesy } as never);
+        expect(assert).not.toHaveBeenCalled();
+        expect(stored().serviceLines[0]).toMatchObject({ courtesyQuantity: 0, amount: 1000 });
+    });
+
+    it("permuta com cortesia grava a cortesia e total 0", async () => {
+        const { useCase, stored } = buildCourtesy();
+        await useCase.execute({
+            ...event,
+            type: "BARTER",
+            serviceCourtesy: [{ serviceId: "led", quantity: 1 }],
+        } as never, OWNER_ID);
+        expect(stored().totalAmount).toBe(0);
+        expect(stored().serviceLines[0]).toMatchObject({ courtesyQuantity: 1, amount: 750 });
+    });
+
+    it("total manual com cortesia mantem o total digitado", async () => {
+        const { useCase, stored } = buildCourtesy();
+        await useCase.execute({
+            ...event,
+            totalAmountInput: "5000",
+            serviceCourtesy: [{ serviceId: "led", quantity: 2 }],
+        } as never, OWNER_ID);
+        expect(stored().totalAmount).toBe(5000);
+        expect(stored().serviceLines[0]).toMatchObject({ courtesyQuantity: 2, amount: 500 });
+    });
+
+    it("cortesia acima das horas nao grava", async () => {
+        const { useCase, proposalRepository } = buildCourtesy();
+        await expect(useCase.execute({
+            ...event,
+            serviceCourtesy: [{ serviceId: "led", quantity: 5 }],
+        } as never, OWNER_ID)).rejects.toBeInstanceOf(HttpBadRequestError);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+});
+
+describe("desconto na criacao por pessoa", () => {
+    const pricedVenue = {
+        id: "venue-1",
+        organizationId: "org-1",
+        pricingModel: "PER_PERSON",
+        pricePerPerson: 100,
+        standardEventDuration: 4,
+        minimumPrice: null,
+        minimumPricePeriods: [],
+        seasonalFee: [],
+    };
+    const decor = [{ id: "decor", venueId: "venue-1", price: 800, pricingType: "FIXED" as const }];
+    const event = {
+        ...base,
+        type: "EVENT" as const,
+        eventCategory: "CORPORATE" as const,
+        guestNumber: "50",
+        serviceIds: ["decor"],
+    };
+
+    function buildDiscount(venueForQuote: Record<string, unknown> = pricedVenue) {
+        const { authorizer, assert } = courtesyAuthorizer(pricedVenue);
+        const proposalRepository = {
+            createPerPerson: vi.fn(async (data: { totalAmount: number }) => ({ ...saved, totalAmount: data.totalAmount })),
+            monthlyRevenueAnalysis: vi.fn(async () => null),
+        };
+        const useCase = new CreateProposalPerPersonUseCase(
+            { getById: vi.fn(async () => ({ id: OWNER_ID, username: "dono" })) } as never,
+            { findByVenueAndRevenue: vi.fn(async () => null) } as never,
+            { getById: vi.fn(async () => venueForQuote) } as never,
+            { listForQuote: vi.fn(async () => decor) } as never,
+            { create: vi.fn() } as never,
+            proposalRepository as never,
+            { create: vi.fn() } as never,
+            authorizer,
+        );
+        const stored = () => proposalRepository.createPerPerson.mock.calls[0][0] as unknown as Record<string, number>;
+        return { useCase, proposalRepository, assert, stored };
+    }
+
+    it("com permissao grava 10%, 580 e 5220 mesmo com Total digitado", async () => {
+        const { useCase, stored } = buildDiscount();
+        await useCase.execute({ ...event, discountPercent: 10, totalAmountInput: "4000" } as never, OWNER_ID);
+        expect(stored()).toMatchObject({ discountPercent: 10, discountAmount: 580, totalAmount: 5220 });
+    });
+
+    it("sem desconto grava 0 e o subtotal", async () => {
+        const { useCase, assert, stored } = buildDiscount();
+        await useCase.execute(event as never);
+        expect(assert).not.toHaveBeenCalled();
+        expect(stored()).toMatchObject({ discountPercent: 0, discountAmount: 0, totalAmount: 5800 });
+    });
+
+    it("sem token e com desconto responde 401 e nao grava", async () => {
+        const { useCase, proposalRepository } = buildDiscount();
+        await expect(useCase.execute({ ...event, discountPercent: 10 } as never)).rejects.toBeInstanceOf(HttpTokenError);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("token sem permissao responde 403 e nao grava", async () => {
+        const { useCase, proposalRepository } = buildDiscount();
+        await expect(useCase.execute({ ...event, discountPercent: 10 } as never, STRANGER_ID))
+            .rejects.toThrow("Você não tem permissão para dar desconto neste espaço.");
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("userId do corpo com permissao nao vale com token de outro usuario", async () => {
+        const { useCase, proposalRepository } = buildDiscount();
+        await expect(useCase.execute({ ...event, userId: OWNER_ID, discountPercent: 10 } as never, STRANGER_ID))
+            .rejects.toBeInstanceOf(HttpForbiddenError);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("espaco sem preco de catalogo responde 400", async () => {
+        const { useCase, proposalRepository } = buildDiscount({ ...pricedVenue, pricePerPerson: null });
+        await expect(useCase.execute({ ...event, discountPercent: 10, totalAmountInput: "4000" } as never, OWNER_ID))
+            .rejects.toThrow(NO_QUOTE_MESSAGE);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("% invalida responde 400 e nao grava", async () => {
+        const { useCase, proposalRepository } = buildDiscount();
+        await expect(useCase.execute({ ...event, discountPercent: 100.01 } as never, OWNER_ID))
+            .rejects.toThrow(DISCOUNT_MESSAGE);
+        expect(proposalRepository.createPerPerson).not.toHaveBeenCalled();
+    });
+
+    it("total manual grava desconto 0", async () => {
+        const { useCase, stored } = buildDiscount({ ...pricedVenue, pricePerPerson: null });
+        await useCase.execute({ ...event, totalAmountInput: "5000" } as never, OWNER_ID);
+        expect(stored()).toMatchObject({ discountPercent: 0, discountAmount: 0, totalAmount: 5000 });
+    });
+
+    it("permuta com % no corpo grava desconto 0 sem autorizar", async () => {
+        const { useCase, assert, stored } = buildDiscount();
+        await useCase.execute({ ...event, type: "BARTER", discountPercent: 10 } as never);
+        expect(assert).not.toHaveBeenCalled();
+        expect(stored()).toMatchObject({ discountPercent: 0, discountAmount: 0, totalAmount: 0 });
     });
 });

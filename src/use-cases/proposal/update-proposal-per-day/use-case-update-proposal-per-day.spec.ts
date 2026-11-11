@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { SERVICE_HOURS_MESSAGE, serviceHoursOverEventMessage } from "../../../functions/quote-service-lines";
 import { UpdateProposalPerDayUseCase } from "./use-case-update-proposal-per-day";
+import { HttpForbiddenError } from "../../../errors/errors-type/http-forbidden-error";
+import { courtesyAuthorizer, OWNER_ID, STRANGER_ID } from "../courtesy-authorizer.test-helper";
 
 function fee(partial: Partial<SeasonalFee> & Pick<SeasonalFee, "type" | "fee">): SeasonalFee {
     return {
@@ -105,6 +107,18 @@ describe("UpdateProposalPerDayUseCase", () => {
         expect(response.data.totalAmount).toBe(900);
     });
 
+    it.each([
+        ["recalculo de tabela", "1"],
+        ["total digitado", "900"],
+    ])("%s grava desconto 0", async (_label, totalAmountInput) => {
+        proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 1, discountPercent: 10, discountAmount: 50 });
+        stayVenue();
+
+        await useCase.execute({ proposalId: "proposal-1", data: { ...baseData, totalAmountInput } });
+
+        expect(proposalRepository.update.mock.calls.at(-1)?.[0].data).toMatchObject({ discountPercent: 0, discountAmount: 0 });
+    });
+
     function stayVenue() {
         venueRepository.getById.mockResolvedValue({
             id: "venue-1",
@@ -141,6 +155,7 @@ describe("UpdateProposalPerDayUseCase", () => {
             pricingType: "PER_HOUR",
             unitPrice: 10,
             quantity: 3,
+            courtesyQuantity: 0,
             amount: 30,
         }]);
     });
@@ -249,7 +264,68 @@ describe("UpdateProposalPerDayUseCase", () => {
             pricingType: "FIXED",
             unitPrice: 300,
             quantity: 1,
+            courtesyQuantity: 0,
             amount: 300,
         }]);
+    });
+
+    describe("cortesia", () => {
+        const venue = { id: "venue-1", organizationId: "org-1" };
+        const dj = { id: "dj", venueId: "venue-1", price: 10, pricingType: "PER_HOUR" };
+        const courtesyData = {
+            ...baseData,
+            serviceIds: ["dj"],
+            serviceHours: [{ serviceId: "dj", hours: 3 }],
+            totalAmountInput: "1",
+        };
+
+        function courtesyUseCase() {
+            const { authorizer, assert } = courtesyAuthorizer(venue);
+            const withAuthorizer = new UpdateProposalPerDayUseCase(
+                { getById: vi.fn() } as never,
+                venueRepository as never,
+                serviceRepository as never,
+                { create: vi.fn() } as never,
+                proposalRepository as never,
+                { findByVenueAndRevenue: vi.fn() } as never,
+                authorizer,
+            );
+            return { withAuthorizer, assert };
+        }
+
+        beforeEach(() => {
+            stayVenue();
+            proposalRepository.getById.mockResolvedValue({ id: "proposal-1", totalAmount: 1, venueId: "venue-1" });
+            serviceRepository.listForQuote.mockResolvedValue([dj]);
+        });
+
+        it("com permissao grava a cortesia", async () => {
+            const { withAuthorizer } = courtesyUseCase();
+            await withAuthorizer.execute({
+                proposalId: "proposal-1",
+                data: { ...courtesyData, serviceCourtesy: [{ serviceId: "dj", quantity: 1 }] },
+            }, OWNER_ID);
+            expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([
+                expect.objectContaining({ quantity: 3, courtesyQuantity: 1, amount: 20 }),
+            ]);
+        });
+
+        it("sem serviceCourtesy grava 0 nas linhas", async () => {
+            const { withAuthorizer, assert } = courtesyUseCase();
+            await withAuthorizer.execute({ proposalId: "proposal-1", data: courtesyData }, OWNER_ID);
+            expect(assert).not.toHaveBeenCalled();
+            expect(proposalRepository.update.mock.calls.at(-1)?.[0].data.serviceLines).toEqual([
+                expect.objectContaining({ courtesyQuantity: 0, amount: 30 }),
+            ]);
+        });
+
+        it("token sem permissao responde 403 e nao chama update", async () => {
+            const { withAuthorizer } = courtesyUseCase();
+            await expect(withAuthorizer.execute({
+                proposalId: "proposal-1",
+                data: { ...courtesyData, serviceCourtesy: [{ serviceId: "dj", quantity: 1 }] },
+            }, STRANGER_ID)).rejects.toBeInstanceOf(HttpForbiddenError);
+            expect(proposalRepository.update).not.toHaveBeenCalled();
+        });
     });
 });

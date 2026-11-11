@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { HttpBadRequestError } from "../errors/errors-type/htttp-bad-request-error";
-import { quoteServiceLines, SERVICE_HOURS_MESSAGE, sumServiceQuote } from "./quote-service-lines";
+import {
+    COURTESY_MESSAGE,
+    hasCourtesy,
+    quoteServiceLines,
+    SERVICE_HOURS_MESSAGE,
+    serviceCourtesyMap,
+    sumServiceQuote,
+} from "./quote-service-lines";
 
 const start = new Date("2026-06-01T18:00:00");
 const end = new Date("2026-06-01T22:00:00");
@@ -25,6 +32,7 @@ describe("quoteServiceLines", () => {
             pricingType: "FIXED",
             unitPrice: 100,
             quantity: 1,
+            courtesyQuantity: 0,
             amount: 100,
         }]);
         expect(sumServiceQuote(lines)).toBe(100);
@@ -127,5 +135,100 @@ describe("quoteServiceLines", () => {
             services: [{ id: "svc", venueId: "venue-a", price: 0, pricingType: "PER_PERSON" }],
         });
         expect(lines[0]).toMatchObject({ quantity: 80, amount: 0 });
+    });
+});
+
+describe("cortesia em quoteServiceLines", () => {
+    const hourly = [{ id: "svc", venueId: "venue-a", price: 50, pricingType: "PER_HOUR" as const }];
+
+    it("6h com 2 de cortesia cobra 4h", () => {
+        const lines = quote({
+            services: hourly,
+            hoursByServiceId: { svc: 6 },
+            courtesyByServiceId: { svc: 2 },
+        });
+        expect(lines[0]).toMatchObject({ quantity: 6, courtesyQuantity: 2, unitPrice: 50, amount: 200 });
+    });
+
+    it("100 pessoas com 10 de cortesia cobra 90", () => {
+        const lines = quote({
+            services: [{ id: "svc", venueId: "venue-a", price: 40, pricingType: "PER_PERSON" }],
+            guestNumber: 100,
+            courtesyByServiceId: { svc: 10 },
+        });
+        expect(lines[0]).toMatchObject({ quantity: 100, courtesyQuantity: 10, amount: 3600 });
+    });
+
+    it("fixo com 1 de cortesia vale 0", () => {
+        const lines = quote({ courtesyByServiceId: { svc: 1 } });
+        expect(lines[0]).toMatchObject({ quantity: 1, courtesyQuantity: 1, amount: 0 });
+        expect(sumServiceQuote(lines)).toBe(0);
+    });
+
+    it("strict recusa fixo com 2, negativo, fracao e acima da quantidade", () => {
+        expect(() => quote({ courtesyByServiceId: { svc: 2 } })).toThrow(COURTESY_MESSAGE);
+        for (const courtesy of [-1, 1.5, 7]) {
+            expect(() => quote({
+                services: hourly,
+                hoursByServiceId: { svc: 6 },
+                courtesyByServiceId: { svc: courtesy },
+            })).toThrow(COURTESY_MESSAGE);
+        }
+    });
+
+    it("clamp reduz a cortesia para a quantidade", () => {
+        const lines = quote({
+            services: hourly,
+            hoursByServiceId: { svc: 3 },
+            courtesyByServiceId: { svc: 5 },
+            courtesyMode: "clamp",
+        });
+        expect(lines[0]).toMatchObject({ quantity: 3, courtesyQuantity: 3, amount: 0 });
+    });
+
+    it("servico nao selecionado no mapa e ignorado", () => {
+        const lines = quote({ courtesyByServiceId: { outro: 3 } });
+        expect(lines[0]).toMatchObject({ courtesyQuantity: 0, amount: 100 });
+    });
+
+    it("sem mapa tudo fica igual, com cortesia 0", () => {
+        const lines = quote({ services: hourly, hoursByServiceId: { svc: 6 } });
+        expect(lines[0]).toMatchObject({ quantity: 6, courtesyQuantity: 0, amount: 300 });
+    });
+});
+
+describe("serviceCourtesyMap e hasCourtesy", () => {
+    it("monta o mapa e ignora ausencia", () => {
+        expect(serviceCourtesyMap(undefined)).toEqual({});
+        expect(serviceCourtesyMap([{ serviceId: "a", quantity: 2 }, { serviceId: "b", quantity: 0 }]))
+            .toEqual({ a: 2, b: 0 });
+    });
+
+    it("id repetido lanca erro", () => {
+        expect(() => serviceCourtesyMap([
+            { serviceId: "a", quantity: 1 },
+            { serviceId: "a", quantity: 2 },
+        ])).toThrow(COURTESY_MESSAGE);
+    });
+
+    it("forma invalida lanca erro", () => {
+        for (const entries of [
+            "x",
+            [{ serviceId: "a", quantity: -1 }],
+            [{ serviceId: "a", quantity: 1.5 }],
+            [{ serviceId: "a", quantity: "2" }],
+            [{ serviceId: "a", quantity: 100001 }],
+            [{ quantity: 1 }],
+            [null],
+        ]) {
+            expect(() => serviceCourtesyMap(entries)).toThrow(HttpBadRequestError);
+        }
+    });
+
+    it("hasCourtesy so e verdadeiro com valor acima de 0", () => {
+        expect(hasCourtesy({})).toBe(false);
+        expect(hasCourtesy({ a: 0 })).toBe(false);
+        expect(hasCourtesy({ a: 0, b: 1 })).toBe(true);
+        expect(hasCourtesy(undefined)).toBe(false);
     });
 });

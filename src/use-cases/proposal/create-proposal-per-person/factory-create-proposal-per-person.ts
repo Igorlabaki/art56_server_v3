@@ -8,6 +8,8 @@ import { PrismaHistoryRepository } from "../../../repositories/in-prisma/history
 import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";
 import { PrismaNotificationRepository } from "../../../repositories/in-prisma/notification-in-prisma-repository";
 import { PrismaGoalRepository } from "../../../repositories/in-prisma/goal-in-prisma-repository";
+import { PrismaUserVenuePermissionRepository } from "../../../repositories/in-prisma/user-venue-permission-in-prisma-repository";
+import { ProposalQuoteAuthorizer } from "../proposal-quote-authorizer";
 
 export const createProposalPerPersonFactory = (): CreateProposalPerPersonController => {
     const prismaUserRepository = new PrismaUserRepository(prismaClient);
@@ -26,6 +28,7 @@ export const createProposalPerPersonFactory = (): CreateProposalPerPersonControl
         prismaHistoryRepository,
         prismaProposalRepository,
         prismaNotificationRepository,
+        new ProposalQuoteAuthorizer(prismaVenueRepository, new PrismaUserVenuePermissionRepository(prismaClient)),
     );
     const createProposalPerPersonController = new CreateProposalPerPersonController(createProposalPerPersonUseCase);
 

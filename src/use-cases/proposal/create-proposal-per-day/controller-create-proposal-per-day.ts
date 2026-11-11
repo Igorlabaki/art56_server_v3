@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
+import { readOptionalUserId } from "../../../middleware/ensureAuthenticate";
 import { CreateProposalPerDayUseCase } from "./use-case-create-proposal-per-day";
 import { createProposalPerDayRequestParamsSchema, CreateProposalPerDayRequestParamsSchema } from "../../../zod/proposal/create-proposal-per-day-params-schema";
 
@@ -20,7 +21,7 @@ class CreateProposalPerDayController {
 
             // Esperar a execução do caso de uso
             console.log("[Controller] Executando caso de uso");
-            const response = await this.createProposalPerDayUseCase.execute(body);
+            const response = await this.createProposalPerDayUseCase.execute(body, readOptionalUserId(req));
             console.log("[Controller] Caso de uso executado com sucesso");
 
             // Retornar o token
