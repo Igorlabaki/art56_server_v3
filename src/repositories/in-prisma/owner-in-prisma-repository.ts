@@ -1,7 +1,7 @@
 import { PrismaClient, Owner, User } from "@prisma/client"
 import { UpdateOwnerSchema } from "../../zod/owner/update-owner-params-schema"
 import { ListOwnerQuerySchema } from "../../zod/owner/list-owner-params-schema"
-import { OwnerRepositoryInterface } from "../interface/owner-repository-interface"
+import { FindOwnerDuplicateParams, OwnerRepositoryInterface } from "../interface/owner-repository-interface"
 import { CreateOrganizationOwnerRequestParams } from "../../zod/owner/create-owner-params-schema"
 import { ListOwnerByVenueIdQuerySchema } from "../../zod/owner/list-owners-by-venue-params-schema"
 import { CreateVenueOwnerRequestParams } from "../../zod/owner/create-venue-owner-params-schema"
@@ -51,6 +51,14 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
 
   async update(reference: UpdateOwnerSchema): Promise<Owner | null> {
     const { ownerId, data: { venueIds, ...rest } } = reference;
+
+    // `venueIds` omitido preserva os vinculos; `[]` remove todos.
+    if (venueIds === undefined) {
+      return await this.prisma.owner.update({
+        where: { id: ownerId },
+        data: rest,
+      });
+    }
   
     // Busca os vínculos atuais
     const currentOwnerVenues = await this.prisma.ownerVenue.findMany({
@@ -60,8 +68,8 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
   
     const currentVenueIds = currentOwnerVenues.map((relation) => relation.venueId);
   
-    const venuesToConnect = venueIds?.filter((id) => !currentVenueIds.includes(id)) || [];
-    const venuesToDisconnect = currentVenueIds.filter((id) => !venueIds?.includes(id)) || [];
+    const venuesToConnect = venueIds.filter((id) => !currentVenueIds.includes(id));
+    const venuesToDisconnect = currentVenueIds.filter((id) => !venueIds.includes(id));
   
     return await this.prisma.owner.update({
       where: { id: ownerId },
@@ -90,10 +98,12 @@ export class PrismaOwnerRepository implements OwnerRepositoryInterface {
     })
   }
 
-  async vefiryIfOwnerExists(reference: string): Promise<Owner | null> {
+  async findDuplicate({ organizationId, cnpj, completeName, excludeOwnerId }: FindOwnerDuplicateParams): Promise<Owner | null> {
     return await this.prisma.owner.findFirst({
       where: {
-        completeName: reference
+        organizationId,
+        ...(cnpj !== undefined ? { personType: "PJ", cnpj } : { personType: "PF", completeName }),
+        ...(excludeOwnerId && { id: { not: excludeOwnerId } }),
       }
     })
   }

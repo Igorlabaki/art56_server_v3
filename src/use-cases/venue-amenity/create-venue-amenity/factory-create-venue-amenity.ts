@@ -1,3 +1,4 @@
+import { amenityImageStorage } from "../../../functions/venue-amenity-image-storage";
 import { PrismaUserVenuePermissionRepository } from "../../../repositories/in-prisma/user-venue-permission-in-prisma-repository";
 import { PrismaVenueRepository } from "../../../repositories/in-prisma/venue-in-prisma-repository";
 import { PrismaVenueAmenityRepository } from "../../../repositories/in-prisma/venue-amenity-in-prisma-repository";
@@ -12,5 +13,5 @@ export const createVenueAmenityFactory = () => {
         new PrismaVenueRepository(prismaClient),
         new PrismaUserVenuePermissionRepository(prismaClient),
     );
-    return new CreateVenueAmenityController(new CreateVenueAmenityUseCase(repository, authorizer));
+    return new CreateVenueAmenityController(new CreateVenueAmenityUseCase(repository, authorizer, amenityImageStorage));
 };

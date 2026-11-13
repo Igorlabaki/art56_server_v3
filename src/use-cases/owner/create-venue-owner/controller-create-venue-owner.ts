@@ -1,22 +1,19 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 
 import { handleErrors } from "../../../errors/error-handler";
 import { CreateVenueOwnerUseCase } from "./use-case-create-venue-owner";
-import { CreateVenueOwnerRequestParams, createVenueOwnerSchema } from "../../../zod/owner/create-venue-owner-params-schema";
+import { AuthenticatedRequest } from "../../../types/authenticated-request";
+import { createVenueOwnerSchema } from "../../../zod/owner/create-venue-owner-params-schema";
 
 
 class CreateVenueOwnerController {
     constructor(private createVenueOwnerUseCase: CreateVenueOwnerUseCase) { }
 
-    async handle(req: Request, resp: Response) {
+    async handle(req: AuthenticatedRequest, resp: Response) {
         try {
-            const body: CreateVenueOwnerRequestParams = req.body;
-            // Validate the request parms
-            createVenueOwnerSchema.parse(body);
+            const body = createVenueOwnerSchema.parse(req.body);
 
-            // Esperar a execução do caso de uso
-            const response = await this.createVenueOwnerUseCase.execute(body);
-            // Retornar o token
+            const response = await this.createVenueOwnerUseCase.execute(req.user?.id, body);
             return resp.status(201).json(response);
 
         } catch (error) {

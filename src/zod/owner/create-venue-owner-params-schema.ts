@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { ownerDocumentFieldsSchema } from "./owner-document-fields-schema";
 
 export const createVenueOwnerSchema = z.object({
+    ...ownerDocumentFieldsSchema,
     cep: z.string(),
     pix: z.string(),
     cpf: z.string(),

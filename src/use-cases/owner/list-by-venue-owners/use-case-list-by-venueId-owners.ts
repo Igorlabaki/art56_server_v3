@@ -1,29 +1,16 @@
 import { OwnerRepositoryInterface } from "../../../repositories/interface/owner-repository-interface";
-import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
-import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { ListOwnerByVenueIdQuerySchema } from "../../../zod/owner/list-owners-by-venue-params-schema";
-import { OrganizationRepositoryInterface } from "../../../repositories/interface/organization-repository-interface";
+import { OwnerAuthorizer } from "../owner-authorizer";
 
 class ListOwnerByVenueIdUseCase {
   constructor(
     private ownerRepository: OwnerRepositoryInterface,
-    private venueRepository: VenueRepositoryInterface,
-    private organizationRepository: OrganizationRepositoryInterface,
+    private authorizer: OwnerAuthorizer,
   ) { }
 
-  async execute(params: ListOwnerByVenueIdQuerySchema) {
-
-    const organizationById = await this.organizationRepository.getById({ organizationId: params.organizationId })
-
-    if (!organizationById) {
-      throw new HttpResourceNotFoundError("Organizacao")
-    }
-
-    const venueById = await this.venueRepository.getById({ venueId: params.venueId })
-
-    if (!venueById) {
-      throw new HttpResourceNotFoundError("Locacao")
-    }
+  async execute(userId: string | undefined, params: ListOwnerByVenueIdQuerySchema) {
+    await this.authorizer.assertMember(userId, params.organizationId)
+    await this.authorizer.assertVenuesInOrganization([params.venueId], params.organizationId)
 
     const ownerByVenueList = await this.ownerRepository.listByVenue(params);
 

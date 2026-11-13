@@ -10,6 +10,7 @@ export const listProposalRequestQuerySchema = z.object({
     venueId: z.string().min(1),
     completeClientName: z.preprocess(blankToUndefined, z.string().max(80).optional()),
     email: z.preprocess(blankToUndefined, z.string().optional()),
+    whatsapp: z.preprocess(blankToUndefined, z.string().max(20).optional()),
     month: z.preprocess(blankToUndefined, z.coerce.number().int().min(1).max(12).optional()),
     year: z.preprocess(blankToUndefined, z.coerce.number().int().optional()),
     day: z.preprocess(blankToUndefined, z.coerce.number().int().min(1).max(31).optional()),

@@ -265,12 +265,15 @@ model VenueRule {
 
 model VenueAmenity {
   id        String   @id @default(uuid())
-  name      String   @db.VarChar(120)
-  position  Int      @default(0)
-  venueId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  name        String   @db.VarChar(120)
+  position    Int      @default(0)
+  description String?  @db.VarChar(500)
+  imageUrl    String?  @db.Text
+  videoUrl    String?  @db.VarChar(2048)
+  venueId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@unique([name, venueId])
   @@index([venueId])
@@ -609,11 +612,27 @@ model Owner {
   createdAt         DateTime     @default(now())
   bankAccountNumber String
   organizationId    String
+  personType        OwnerPersonType @default(PF)
+  companyName       String?
+  cnpj              String?
+  companySize       CompanySize?
   ownerVenue        OwnerVenue[]
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@map("owner")
+}
+
+enum OwnerPersonType {
+  PF
+  PJ
+}
+
+enum CompanySize {
+  MEI
+  ME
+  EPP
+  DEMAIS
 }
 
 model Image {

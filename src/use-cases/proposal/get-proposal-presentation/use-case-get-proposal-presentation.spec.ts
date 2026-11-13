@@ -40,7 +40,16 @@ const record: ProposalPresentationRecord = {
     proposalSecondaryColor: null,
     proposalTextColor: "#222222",
     images: [{ id: "img-1", imageUrl: "https://foto", description: null, position: 1 }],
-    amenities: [{ name: "Piscina", position: 0 }],
+    amenities: [
+        {
+            name: "Piscina",
+            position: 0,
+            description: "Aquecida o ano todo",
+            imageUrl: "https://bucket.s3.region.amazonaws.com/piscina.webp",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        },
+        { name: "Telao", position: 1, description: null, imageUrl: null, videoUrl: null },
+    ],
 };
 
 function permission(allowed: boolean): VenueSiteEditPermission {
@@ -73,6 +82,7 @@ describe("pacote publico da proposta", () => {
     it("mantem foto marcada e caracteristica e descarta dado interno", () => {
         const packed = toProposalPresentation({
             ...record,
+            amenities: record.amenities.map((amenity) => ({ ...amenity, id: "a1", venueId: "v1", createdAt: new Date() })),
             cep: "00000-000",
             email: "casa@example.com",
             pricePerPerson: 100,
@@ -86,6 +96,14 @@ describe("pacote publico da proposta", () => {
         expect(packed.canReorder).toBe(false);
         expect(packed.catalog).toEqual([]);
         expect(packed.amenities).toEqual(record.amenities);
+        expect(packed.amenities[0]).toEqual({
+            name: "Piscina",
+            position: 0,
+            description: "Aquecida o ano todo",
+            imageUrl: "https://bucket.s3.region.amazonaws.com/piscina.webp",
+            videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        });
+        expect(packed.amenities[0]).not.toHaveProperty("venueId");
         expect(packed.tourVideoUrl).toBe("https://cdn.example.com/tour.mp4");
         expect(packed.openingHour).toBe("08:00");
         expect(packed.closingHour).toBe("22:00");

@@ -1,18 +1,12 @@
 import { ListOwnerQuerySchema } from "../../../zod/owner/list-owner-params-schema";
-import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { OwnerRepositoryInterface } from "../../../repositories/interface/owner-repository-interface";
-import { OrganizationRepositoryInterface } from "../../../repositories/interface/organization-repository-interface";
+import { OwnerAuthorizer } from "../owner-authorizer";
 
 class ListOwnerUseCase {
-  constructor(private ownerRepository: OwnerRepositoryInterface, private organizationRepository: OrganizationRepositoryInterface) { }
+  constructor(private ownerRepository: OwnerRepositoryInterface, private authorizer: OwnerAuthorizer) { }
 
-  async execute(params: ListOwnerQuerySchema) {
-
-    const userById = await this.organizationRepository.getById({organizationId:params.organizationId})
-
-    if(!userById){
-      throw new HttpResourceNotFoundError("Organizacao")
-    }
+  async execute(userId: string | undefined, params: ListOwnerQuerySchema) {
+    await this.authorizer.assertMember(userId, params.organizationId)
 
     const ownerList = await this.ownerRepository.list(params);
 

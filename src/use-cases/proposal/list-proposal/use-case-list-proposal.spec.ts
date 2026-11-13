@@ -1,7 +1,9 @@
+import { Prisma } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
 import { handleErrors } from "../../../errors/error-handler";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { ensureAuthenticate } from "../../../middleware/ensureAuthenticate";
+import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";
 import { ListProposalDbQuery, ProposalListDailyBucket, ProposalListRow, ProposalRepositoryInterface, ProposalWindowDailyAmount, ProposalWindowQuery } from "../../../repositories/interface/proposal-repository-interface";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { proposalRoutes } from "../../../router/proposal";
@@ -178,6 +180,109 @@ describe("listar orcamentos", () => {
     expect(() => listProposalRequestQuerySchema.parse({ venueId: "venue-1", minAmount: "abc" })).toThrow();
     expect(listProposalRequestQuerySchema.parse({ venueId: "venue-1", approved: "false" }).approved).toBe(false);
     expect(parsed.summary).toBe(false);
+  });
+
+  it("query aceita whatsapp aparado, vazio vira ausente e longo demais e recusado", () => {
+    expect(listProposalRequestQuerySchema.parse({ venueId: "venue-1", whatsapp: "  (11) 9  " }).whatsapp).toBe("(11) 9");
+    expect(listProposalRequestQuerySchema.parse({ venueId: "venue-1", whatsapp: "   " }).whatsapp).toBeUndefined();
+    expect(listProposalRequestQuerySchema.parse({ venueId: "venue-1" }).whatsapp).toBeUndefined();
+    expect(() => listProposalRequestQuerySchema.parse({ venueId: "venue-1", whatsapp: "9".repeat(21) })).toThrow();
+  });
+});
+
+describe("filtro por whatsapp", () => {
+  it("use case repassa whatsapp junto com o nome para a lista e os dois resumos", async () => {
+    const listed: ListProposalDbQuery[] = [];
+    const summarized: ListProposalDbQuery[] = [];
+    const proposalRepository = {
+      list: vi.fn(async (query: ListProposalDbQuery) => {
+        listed.push(query);
+        return { items: [], total: 0 };
+      }),
+      summarize: vi.fn(async (query: ListProposalDbQuery) => {
+        summarized.push(query);
+        return [];
+      }),
+      summarizeWindow: vi.fn(async () => []),
+    } as unknown as ProposalRepositoryInterface;
+    const venueRepository = {
+      getById: vi.fn(async () => ({ id: "venue-1" })),
+    } as unknown as VenueRepositoryInterface;
+    const useCase = new ListProposalUseCase(proposalRepository, venueRepository);
+
+    await useCase.execute({ ...base, page: 1, summary: true, completeClientName: "ana", whatsapp: "(11) 99999" });
+
+    expect(listed[0]).toMatchObject({ completeClientName: "ana", whatsapp: "(11) 99999" });
+    expect(summarized).toHaveLength(2);
+    expect(summarized[0]).toMatchObject({ completeClientName: "ana", whatsapp: "(11) 99999" });
+    expect(summarized[1]).toMatchObject({ completeClientName: "ana", whatsapp: "(11) 99999" });
+  });
+
+  it("repositorio procura o whatsapp com mascara ou so com os digitos, na lista e no resumo", async () => {
+    const findManyArgs: Array<{ where: Record<string, unknown> }> = [];
+    const rawQueries: Prisma.Sql[] = [];
+    const prisma = {
+      proposal: {
+        count: vi.fn(async () => 0),
+        findMany: vi.fn(async (args: { where: Record<string, unknown> }) => {
+          findManyArgs.push(args);
+          return [];
+        }),
+      },
+      $queryRaw: vi.fn(async (sql: Prisma.Sql) => {
+        rawQueries.push(sql);
+        return [];
+      }),
+    };
+    const repository = new PrismaProposalRepository(prisma as never);
+    const query: ListProposalDbQuery = {
+      venueId: "venue-1",
+      completeClientName: "ana",
+      whatsapp: "(11) 99999-",
+      sortBy: "startDate",
+      sortDir: "asc",
+    };
+
+    await repository.list({ ...query, skip: 0, take: 10 });
+    await repository.summarize(query);
+    await repository.list({ ...query, whatsapp: "9_%" });
+    await repository.summarize({ ...query, whatsapp: "9_%" });
+    await repository.list({ venueId: "venue-1", sortBy: "startDate", sortDir: "asc" });
+
+    expect(findManyArgs[0].where).toMatchObject({
+      venueId: "venue-1",
+      completeClientName: { contains: "ana" },
+      OR: [
+        { whatsapp: { contains: "(11) 99999-" } },
+        { whatsapp: { contains: "1199999" } },
+      ],
+    });
+    expect(rawQueries[0].sql).toContain("completeClientName LIKE ?");
+    expect(rawQueries[0].sql).toContain("(whatsapp LIKE ? OR whatsapp LIKE ?)");
+    expect(rawQueries[0].values).toEqual(expect.arrayContaining(["%ana%", "%(11) 99999-%", "%1199999%"]));
+
+    expect(findManyArgs[1].where.OR).toEqual([
+      { whatsapp: { contains: "9_%" } },
+      { whatsapp: { contains: "9" } },
+    ]);
+    expect(rawQueries[1].values).toEqual(expect.arrayContaining(["%9\\_\\%%", "%9%"]));
+
+    expect(findManyArgs[2].where).not.toHaveProperty("OR");
+  });
+
+  it("repositorio nao repete o termo quando ele ja e so digitos", async () => {
+    const findManyArgs: Array<{ where: Record<string, unknown> }> = [];
+    const prisma = {
+      proposal: {
+        findMany: vi.fn(async (args: { where: Record<string, unknown> }) => {
+          findManyArgs.push(args);
+          return [];
+        }),
+      },
+    };
+    const repository = new PrismaProposalRepository(prisma as never);
+    await repository.list({ venueId: "venue-1", whatsapp: "8888", sortBy: "startDate", sortDir: "asc" });
+    expect(findManyArgs[0].where.OR).toEqual([{ whatsapp: { contains: "8888" } }]);
   });
 });
 

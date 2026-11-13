@@ -1,17 +1,22 @@
 import { PrismaClient, VenueAmenity } from "@prisma/client";
-import { VenueAmenityRepositoryInterface } from "../interface/venue-amenity-repository-interface";
-import { CreateVenueAmenityParams } from "../../zod/venue-amenity/create-venue-amenity-schema";
-import { UpdateVenueAmenityParams } from "../../zod/venue-amenity/update-venue-amenity-schema";
+import {
+    CreateVenueAmenityData,
+    UpdateVenueAmenityData,
+    VenueAmenityRepositoryInterface,
+} from "../interface/venue-amenity-repository-interface";
 
 export class PrismaVenueAmenityRepository implements VenueAmenityRepositoryInterface {
     constructor(private readonly prisma: PrismaClient) {}
 
-    async create(params: CreateVenueAmenityParams & { position: number }): Promise<VenueAmenity> {
+    async create(params: CreateVenueAmenityData): Promise<VenueAmenity> {
         return this.prisma.venueAmenity.create({
             data: {
                 venueId: params.venueId,
                 name: params.name,
                 position: params.position,
+                description: params.description,
+                imageUrl: params.imageUrl,
+                videoUrl: params.videoUrl,
             },
         });
     }
@@ -42,12 +47,15 @@ export class PrismaVenueAmenityRepository implements VenueAmenityRepositoryInter
         return result._max.position + 1;
     }
 
-    async update(params: UpdateVenueAmenityParams & { position: number }): Promise<VenueAmenity> {
+    async update(params: UpdateVenueAmenityData): Promise<VenueAmenity> {
         return this.prisma.venueAmenity.update({
             where: { id: params.amenityId },
             data: {
                 name: params.name,
                 position: params.position,
+                description: params.description,
+                imageUrl: params.imageUrl,
+                videoUrl: params.videoUrl,
             },
         });
     }

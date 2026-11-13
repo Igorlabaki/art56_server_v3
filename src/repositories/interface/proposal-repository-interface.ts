@@ -73,6 +73,7 @@ export interface ListProposalDbQuery {
   venueId: string;
   completeClientName?: string;
   email?: string;
+  whatsapp?: string;
   approved?: boolean;
   minAmount?: number;
   range?: { gte: Date; lt: Date };
@@ -137,6 +138,9 @@ export interface ProposalImageCatalogItem {
 export interface ProposalPresentationAmenity {
   name: string;
   position: number;
+  description: string | null;
+  imageUrl: string | null;
+  videoUrl: string | null;
 }
 
 export interface ProposalPresentation {

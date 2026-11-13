@@ -1,19 +1,15 @@
 import { DeleteOwnerSchema } from "../../../zod/owner/delete-owner-params-schema"
-import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { OwnerRepositoryInterface } from "../../../repositories/interface/owner-repository-interface"
+import { OwnerAuthorizer } from "../owner-authorizer"
 
 class DeleteOwnerUseCase {
-    constructor(private ownerRepository: OwnerRepositoryInterface) { }
+    constructor(
+        private ownerRepository: OwnerRepositoryInterface,
+        private authorizer: OwnerAuthorizer,
+    ) { }
 
-    async execute(param: DeleteOwnerSchema) {
-
-        // Validate if owner exists
-        const owner = await this.ownerRepository.getById(param.ownerId)
-
-        if (!owner) {
-            throw new HttpResourceNotFoundError("Proprietario")
-        }
-        //
+    async execute(userId: string | undefined, param: DeleteOwnerSchema) {
+        const owner = await this.authorizer.loadOwner(userId, param.ownerId)
 
         const deletedOwner = await this.ownerRepository.delete(param.ownerId)
 

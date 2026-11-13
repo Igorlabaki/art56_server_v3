@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 import { handleErrors } from '../../../errors/error-handler';
+import { AuthenticatedRequest } from '../../../types/authenticated-request';
 
 import { listOwnerQuerySchema, ListOwnerQuerySchema } from '../../../zod/owner/list-owner-params-schema';
 import { ListOwnerUseCase } from './use-case-list-owners';
@@ -8,13 +9,11 @@ import { ListOwnerUseCase } from './use-case-list-owners';
 class ListOwnerController {
   constructor(private listOwnerUseCase: ListOwnerUseCase) { }
 
-  async handle(req: Request, resp: Response) {
+  async handle(req: AuthenticatedRequest, resp: Response) {
     try {
       const query: ListOwnerQuerySchema = listOwnerQuerySchema.parse(req.query);
-      // Esperar a execução do caso de uso
-      const response = await this.listOwnerUseCase.execute(query);
-    
-      // Retornar o token
+
+      const response = await this.listOwnerUseCase.execute(req.user?.id, query);
       return resp.status(200).json(response);
 
     } catch (error) {

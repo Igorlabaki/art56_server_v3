@@ -6,11 +6,19 @@ import { ListOwnerByVenueIdQuerySchema } from "../../zod/owner/list-owners-by-ve
 import { CreateVenueOwnerRequestParams } from "../../zod/owner/create-venue-owner-params-schema";
 
 
+/** PJ busca por `cnpj` normalizado; PF busca por `completeName` exato entre os PF. Sempre dentro da organizacao. */
+export interface FindOwnerDuplicateParams {
+  organizationId: string
+  cnpj?: string
+  completeName?: string
+  excludeOwnerId?: string
+}
+
 export interface OwnerRepositoryInterface {
   delete: (params: string) => Promise<Owner | null>
   getById: (params: string) => Promise<Owner | null>
   update: (params: UpdateOwnerSchema) => Promise<Owner | null> 
-  vefiryIfOwnerExists: (params: string) => Promise<Owner | null>
+  findDuplicate: (params: FindOwnerDuplicateParams) => Promise<Owner | null>
   list: (params: ListOwnerQuerySchema) => Promise<Owner[]  | null>
   listByVenue: (params: ListOwnerByVenueIdQuerySchema) => Promise<Owner[]  | null>
   createVenueOwner: (params: CreateVenueOwnerRequestParams) => Promise<Owner | null>

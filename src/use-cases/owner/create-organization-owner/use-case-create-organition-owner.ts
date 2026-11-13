@@ -1,23 +1,28 @@
-import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
 import { CreateOrganizationOwnerRequestParams } from "../../../zod/owner/create-owner-params-schema"
 import { OwnerRepositoryInterface } from "../../../repositories/interface/owner-repository-interface"
+import { resolveOwnerData } from "../../../functions/owner-document"
+import { OwnerAuthorizer } from "../owner-authorizer"
+import { assertOwnerNotDuplicated } from "../owner-duplicate"
 
 class CreateOrganizationOwnerUseCase {
     constructor(
         private ownerRepository: OwnerRepositoryInterface,
+        private authorizer: OwnerAuthorizer,
     ) { }
 
-    async execute(params: CreateOrganizationOwnerRequestParams) {
+    async execute(userId: string | undefined, params: CreateOrganizationOwnerRequestParams) {
+        await this.authorizer.assertMember(userId, params.organizationId)
+        await this.authorizer.assertVenuesInOrganization(params.venueIds, params.organizationId)
 
-        // Validate if user exists
-        const ownerAlreadyExists = await this.ownerRepository.vefiryIfOwnerExists(params.completeName)
+        const resolved = resolveOwnerData(null, params)
 
-        if (ownerAlreadyExists) {
-            throw new HttpConflictError("Owner")
-        }
-        //
+        await assertOwnerNotDuplicated(this.ownerRepository, {
+            organizationId: params.organizationId,
+            resolved,
+            completeName: params.completeName,
+        })
 
-        const createdOwner = await this.ownerRepository.createOrganizationOwner(params)
+        const createdOwner = await this.ownerRepository.createOrganizationOwner({ ...params, ...resolved })
 
         const formatedResponse = {
             success: true,

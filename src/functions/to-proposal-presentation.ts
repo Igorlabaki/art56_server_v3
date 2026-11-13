@@ -41,6 +41,9 @@ export function toProposalPresentation(
         amenities: row.amenities.map((amenity) => ({
             name: amenity.name,
             position: amenity.position,
+            description: amenity.description,
+            imageUrl: amenity.imageUrl,
+            videoUrl: amenity.videoUrl,
         })),
     };
 }

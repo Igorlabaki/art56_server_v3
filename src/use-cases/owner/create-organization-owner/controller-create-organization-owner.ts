@@ -1,21 +1,18 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 
 import { CreateOrganizationOwnerUseCase } from "./use-case-create-organition-owner";
 import { handleErrors } from "../../../errors/error-handler";
-import { CreateOrganizationOwnerRequestParams, createOrganizationOwnerSchema } from "../../../zod/owner/create-owner-params-schema";
+import { AuthenticatedRequest } from "../../../types/authenticated-request";
+import { createOrganizationOwnerSchema } from "../../../zod/owner/create-owner-params-schema";
 
 class CreateOrganizationOwnerController {
     constructor(private createOrganizationOwnerUseCase: CreateOrganizationOwnerUseCase) { }
 
-    async handle(req: Request, resp: Response) {
+    async handle(req: AuthenticatedRequest, resp: Response) {
         try {
-            const body: CreateOrganizationOwnerRequestParams = req.body;
-            // Validate the request parms
-            createOrganizationOwnerSchema.parse(body);
+            const body = createOrganizationOwnerSchema.parse(req.body);
 
-            // Esperar a execução do caso de uso
-            const response = await this.createOrganizationOwnerUseCase.execute(body);
-            // Retornar o token
+            const response = await this.createOrganizationOwnerUseCase.execute(req.user?.id, body);
             return resp.status(201).json(response);
 
         } catch (error) {

@@ -31,15 +31,29 @@ function youtubeId(url: URL): string | null {
     return null;
 }
 
-export function isTourVideoUrl(value: string): boolean {
+function httpsUrl(value: string): URL | null {
     let url: URL;
     try {
         url = new URL(value);
     } catch {
-        return false;
+        return null;
     }
 
     if (url.protocol !== "https:" || url.username || url.password) {
+        return null;
+    }
+
+    return url;
+}
+
+export function isYoutubeUrl(value: string): boolean {
+    const url = httpsUrl(value);
+    return Boolean(url && youtubeId(url));
+}
+
+export function isTourVideoUrl(value: string): boolean {
+    const url = httpsUrl(value);
+    if (!url) {
         return false;
     }
 

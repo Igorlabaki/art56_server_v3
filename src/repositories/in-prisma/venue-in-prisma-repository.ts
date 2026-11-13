@@ -240,9 +240,11 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             permissions: true,
           }
         },
+        // Rota publica: o proprietario (CPF, PIX, banco) nunca sai daqui.
         ownerVenue: {
-          include: {
-            owner: true
+          select: {
+            ownerId: true,
+            venueId: true,
           }
         },
         contracts: true,

@@ -1,26 +1,36 @@
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { UpdateOwnerSchema } from "../../../zod/owner/update-owner-params-schema"
 import { OwnerRepositoryInterface } from "../../../repositories/interface/owner-repository-interface"
-import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
-import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error"
+import { resolveOwnerData } from "../../../functions/owner-document"
+import { OwnerAuthorizer } from "../owner-authorizer"
+import { assertOwnerNotDuplicated } from "../owner-duplicate"
 
 class UpdateOwnerUseCase {
-    constructor(private ownerRepository: OwnerRepositoryInterface) { }
+    constructor(
+        private ownerRepository: OwnerRepositoryInterface,
+        private authorizer: OwnerAuthorizer,
+    ) { }
 
-    async execute(param: UpdateOwnerSchema) {
+    async execute(userId: string | undefined, param: UpdateOwnerSchema) {
+        const owner = await this.authorizer.loadOwner(userId, param.ownerId)
 
-        // Validate if owner exists
-        const owner = await this.ownerRepository.getById(param.ownerId)
+        await this.authorizer.assertVenuesInOrganization(param.data.venueIds, owner.organizationId)
 
-        if (!owner) {
-            throw new HttpResourceNotFoundError("Proprietario")
-        }
-        //
+        const resolved = resolveOwnerData(owner, param.data)
 
-        const updatedOwner = await this.ownerRepository.update(param)
+        await assertOwnerNotDuplicated(this.ownerRepository, {
+            organizationId: owner.organizationId,
+            resolved,
+            excludeOwnerId: owner.id,
+        })
+
+        const updatedOwner = await this.ownerRepository.update({
+            ownerId: param.ownerId,
+            data: { ...param.data, ...resolved },
+        })
 
         if (!updatedOwner) {
-            throw new HttpConflictError("Organizacao")
+            throw new HttpResourceNotFoundError("Proprietario")
         }
 
         const formatedResponse = {

@@ -299,6 +299,9 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
               select: {
                 name: true,
                 position: true,
+                description: true,
+                imageUrl: true,
+                videoUrl: true,
               },
               orderBy: [{ position: "asc" }, { createdAt: "asc" }],
             },
@@ -347,6 +350,9 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       amenities: venue.amenities.map((amenity) => ({
         name: amenity.name,
         position: amenity.position,
+        description: amenity.description,
+        imageUrl: amenity.imageUrl,
+        videoUrl: amenity.videoUrl,
       })),
     };
   }
@@ -503,6 +509,9 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       ...(query.completeClientName && {
         completeClientName: { contains: query.completeClientName },
       }),
+      ...(query.whatsapp && {
+        OR: whatsappTerms(query.whatsapp).map((term) => ({ whatsapp: { contains: term } })),
+      }),
       ...(query.approved !== undefined && { approved: query.approved }),
       ...(query.minAmount !== undefined && { totalAmount: { gte: query.minAmount } }),
       ...(query.range && {
@@ -558,6 +567,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     }
     if (query.email) {
       filters.push(Prisma.sql`email LIKE ${containsLike(query.email)}`);
+    }
+    if (query.whatsapp) {
+      const likes = whatsappTerms(query.whatsapp).map((term) => Prisma.sql`whatsapp LIKE ${containsLike(term)}`);
+      filters.push(Prisma.sql`(${Prisma.join(likes, " OR ")})`);
     }
 
     const rows = await this.prisma.$queryRaw<Array<{ day: string; count: bigint; amount: number | null; approved: bigint | number | null }>>(Prisma.sql`
@@ -699,6 +712,12 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
 function containsLike(value: string): string {
   return `%${value.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+}
+
+// O whatsapp da proposta e gravado ora com mascara "(11) 99999-8888", ora so com digitos.
+function whatsappTerms(value: string): string[] {
+  const digits = value.replace(/\D/g, "");
+  return digits && digits !== value ? [value, digits] : [value];
 }
 
 type StoredServiceLine = Omit<ServiceQuoteLine, "courtesyQuantity"> & { courtesyQuantity?: number };
