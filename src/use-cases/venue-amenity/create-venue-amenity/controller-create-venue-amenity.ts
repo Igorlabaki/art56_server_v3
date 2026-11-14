@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { handleErrors } from "../../../errors/error-handler";
 import { readMultipartPayload } from "../../../functions/read-multipart-payload";
+import { amenityRequestFiles } from "../../../functions/venue-amenity-upload";
 import { AuthenticatedRequest } from "../../../types/authenticated-request";
 import { createVenueAmenitySchema } from "../../../zod/venue-amenity/create-venue-amenity-schema";
 import { CreateVenueAmenityUseCase } from "./use-case-create-venue-amenity";
@@ -11,7 +12,7 @@ class CreateVenueAmenityController {
     async handle(req: AuthenticatedRequest, resp: Response) {
         try {
             const body = createVenueAmenitySchema.parse(readMultipartPayload(req.body));
-            const response = await this.useCase.execute(req.user?.id, body, req.file);
+            const response = await this.useCase.execute(req.user?.id, body, amenityRequestFiles(req));
             return resp.status(201).json(response);
         } catch (error) {
             const errorResponse = handleErrors(error);

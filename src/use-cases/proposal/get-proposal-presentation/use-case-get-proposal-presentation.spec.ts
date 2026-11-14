@@ -45,10 +45,15 @@ const record: ProposalPresentationRecord = {
             name: "Piscina",
             position: 0,
             description: "Aquecida o ano todo",
+            images: [
+                "https://bucket.s3.region.amazonaws.com/piscina.webp",
+                "https://bucket.s3.region.amazonaws.com/deck.webp",
+                "https://bucket.s3.region.amazonaws.com/borda.webp",
+            ],
             imageUrl: "https://bucket.s3.region.amazonaws.com/piscina.webp",
             videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         },
-        { name: "Telao", position: 1, description: null, imageUrl: null, videoUrl: null },
+        { name: "Telao", position: 1, description: null, images: [], imageUrl: null, videoUrl: null },
     ],
 };
 
@@ -100,10 +105,17 @@ describe("pacote publico da proposta", () => {
             name: "Piscina",
             position: 0,
             description: "Aquecida o ano todo",
+            images: [
+                "https://bucket.s3.region.amazonaws.com/piscina.webp",
+                "https://bucket.s3.region.amazonaws.com/deck.webp",
+                "https://bucket.s3.region.amazonaws.com/borda.webp",
+            ],
             imageUrl: "https://bucket.s3.region.amazonaws.com/piscina.webp",
             videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         });
+        expect(packed.amenities[1]).toMatchObject({ images: [], imageUrl: null });
         expect(packed.amenities[0]).not.toHaveProperty("venueId");
+        expect(packed.amenities[0]).not.toHaveProperty("id");
         expect(packed.tourVideoUrl).toBe("https://cdn.example.com/tour.mp4");
         expect(packed.openingHour).toBe("08:00");
         expect(packed.closingHour).toBe("22:00");
@@ -232,5 +244,40 @@ describe("pacote publico da proposta", () => {
 
         expect(captured?.select?.venue?.select?.images?.where).toEqual({ isShowOnProposal: true });
         expect(captured?.select?.venue?.select?.images?.select?.id).toBe(true);
+    });
+
+    it("a leitura pede so a url e a ordem das fotos da caracteristica", async () => {
+        let captured: { select?: { venue?: { select?: { amenities?: { select?: Record<string, unknown> } } } } } | undefined;
+        const prisma = {
+            proposal: {
+                findUnique: async (args: typeof captured) => {
+                    captured = args;
+                    return {
+                        venue: {
+                            ...record,
+                            id: "venue-1",
+                            images: [],
+                            amenities: [{
+                                name: "Piscina",
+                                position: 0,
+                                description: null,
+                                videoUrl: null,
+                                images: [{ imageUrl: "https://a" }, { imageUrl: "https://b" }],
+                            }],
+                        },
+                    };
+                },
+            },
+        };
+        const repository = new PrismaProposalRepository(prisma as never);
+
+        const read = await repository.getPresentation("p1");
+
+        expect(captured?.select?.venue?.select?.amenities?.select?.images).toEqual({
+            select: { imageUrl: true },
+            orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        });
+        expect(captured?.select?.venue?.select?.amenities?.select).not.toHaveProperty("imageUrl");
+        expect(read?.amenities[0]).toMatchObject({ images: ["https://a", "https://b"], imageUrl: "https://a" });
     });
 });

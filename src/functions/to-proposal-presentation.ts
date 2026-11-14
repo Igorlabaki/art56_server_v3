@@ -42,7 +42,8 @@ export function toProposalPresentation(
             name: amenity.name,
             position: amenity.position,
             description: amenity.description,
-            imageUrl: amenity.imageUrl,
+            images: [...amenity.images],
+            imageUrl: amenity.images[0] ?? null,
             videoUrl: amenity.videoUrl,
         })),
     };

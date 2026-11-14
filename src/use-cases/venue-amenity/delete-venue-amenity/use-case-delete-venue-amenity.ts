@@ -1,5 +1,5 @@
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
-import { AmenityImageStorage } from "../../../functions/venue-amenity-image";
+import { AmenityImageStorage, removeAmenityImages } from "../../../functions/venue-amenity-image";
 import { VenueAmenityRepositoryInterface } from "../../../repositories/interface/venue-amenity-repository-interface";
 import { VenueAmenityAuthorizer } from "../venue-amenity-authorizer";
 
@@ -18,9 +18,7 @@ class DeleteVenueAmenityUseCase {
 
         await this.authorizer.assert(userId, current.venueId, "EDIT_VENUE_AMENITIES");
         const deleted = await this.repository.delete(amenityId);
-        if (current.imageUrl) {
-            await this.imageStorage.remove(current.imageUrl);
-        }
+        await removeAmenityImages(this.imageStorage, current.images.map((image) => image.imageUrl));
 
         return {
             success: true,

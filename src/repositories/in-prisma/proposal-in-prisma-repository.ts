@@ -300,8 +300,11 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
                 name: true,
                 position: true,
                 description: true,
-                imageUrl: true,
                 videoUrl: true,
+                images: {
+                  select: { imageUrl: true },
+                  orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+                },
               },
               orderBy: [{ position: "asc" }, { createdAt: "asc" }],
             },
@@ -347,13 +350,17 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
         description: image.description,
         position: image.position,
       })),
-      amenities: venue.amenities.map((amenity) => ({
-        name: amenity.name,
-        position: amenity.position,
-        description: amenity.description,
-        imageUrl: amenity.imageUrl,
-        videoUrl: amenity.videoUrl,
-      })),
+      amenities: venue.amenities.map((amenity) => {
+        const images = amenity.images.map((image) => image.imageUrl);
+        return {
+          name: amenity.name,
+          position: amenity.position,
+          description: amenity.description,
+          images,
+          imageUrl: images[0] ?? null,
+          videoUrl: amenity.videoUrl,
+        };
+      }),
     };
   }
 

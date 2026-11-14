@@ -139,6 +139,7 @@ export interface ProposalPresentationAmenity {
   name: string;
   position: number;
   description: string | null;
+  images: string[];
   imageUrl: string | null;
   videoUrl: string | null;
 }

@@ -1,8 +1,9 @@
-import { VenueAmenity } from "@prisma/client";
+import { VenueAmenity, VenueAmenityImage } from "@prisma/client";
+
+export type VenueAmenityWithImages = VenueAmenity & { images: VenueAmenityImage[] };
 
 export type VenueAmenityContent = {
     description: string | null;
-    imageUrl: string | null;
     videoUrl: string | null;
 };
 
@@ -18,12 +19,14 @@ export type UpdateVenueAmenityData = VenueAmenityContent & {
     position: number;
 };
 
+export type VenueAmenityImageInput = { id?: string; imageUrl: string };
+
 export interface VenueAmenityRepositoryInterface {
-    create: (params: CreateVenueAmenityData) => Promise<VenueAmenity>;
-    listByVenue: (venueId: string) => Promise<VenueAmenity[]>;
-    getById: (id: string) => Promise<VenueAmenity | null>;
+    create: (params: CreateVenueAmenityData, imageUrls: string[]) => Promise<VenueAmenityWithImages>;
+    listByVenue: (venueId: string) => Promise<VenueAmenityWithImages[]>;
+    getById: (id: string) => Promise<VenueAmenityWithImages | null>;
     findByName: (venueId: string, name: string) => Promise<VenueAmenity | null>;
     nextPosition: (venueId: string) => Promise<number>;
-    update: (params: UpdateVenueAmenityData) => Promise<VenueAmenity>;
+    update: (params: UpdateVenueAmenityData, images?: VenueAmenityImageInput[]) => Promise<VenueAmenityWithImages>;
     delete: (id: string) => Promise<VenueAmenity>;
 }
