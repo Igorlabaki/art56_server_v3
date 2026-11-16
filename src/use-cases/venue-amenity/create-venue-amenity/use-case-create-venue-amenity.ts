@@ -1,4 +1,5 @@
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
+import { assertPhotoBelongsToVenue, VenuePhotoRef } from "../../../functions/venue-photo-ref";
 import {
     AmenityImageFile,
     AmenityImageStorage,
@@ -6,7 +7,7 @@ import {
     removeAmenityImages,
     uploadAmenityImages,
 } from "../../../functions/venue-amenity-image";
-import { VenueAmenityRepositoryInterface } from "../../../repositories/interface/venue-amenity-repository-interface";
+import { VenueAmenityImageInput, VenueAmenityRepositoryInterface } from "../../../repositories/interface/venue-amenity-repository-interface";
 import { CreateVenueAmenityParams } from "../../../zod/venue-amenity/create-venue-amenity-schema";
 import { VenueAmenityAuthorizer } from "../venue-amenity-authorizer";
 
@@ -15,6 +16,7 @@ class CreateVenueAmenityUseCase {
         private repository: VenueAmenityRepositoryInterface,
         private authorizer: VenueAmenityAuthorizer,
         private imageStorage: AmenityImageStorage,
+        private photos?: { getById: (id: string) => Promise<VenuePhotoRef | null> },
     ) {}
 
     async execute(userId: string | undefined, params: CreateVenueAmenityParams, files: AmenityImageFile[] = []) {
@@ -25,7 +27,7 @@ class CreateVenueAmenityUseCase {
             throw new HttpConflictError("Caracteristica");
         }
         const position = await this.repository.nextPosition(params.venueId);
-        const imageUrls = await uploadAmenityImages(this.imageStorage, files);
+        const images = await this.imagesFor(params.venueId, params.photoIds, files);
         let created;
         try {
             created = await this.repository.create({
@@ -34,9 +36,9 @@ class CreateVenueAmenityUseCase {
                 position,
                 description: params.description ?? null,
                 videoUrl: params.videoUrl ?? null,
-            }, imageUrls);
+            }, images);
         } catch (error) {
-            await removeAmenityImages(this.imageStorage, imageUrls);
+            await removeAmenityImages(this.imageStorage, images.filter((image) => !image.photoId).map((image) => image.imageUrl));
             throw error;
         }
 
@@ -47,6 +49,19 @@ class CreateVenueAmenityUseCase {
             count: 1,
             type: "VenueAmenity",
         };
+    }
+
+    private async imagesFor(venueId: string, photoIds: string[] | undefined, files: AmenityImageFile[]): Promise<VenueAmenityImageInput[]> {
+        if (photoIds?.length) {
+            const images: VenueAmenityImageInput[] = [];
+            for (const photoId of photoIds) {
+                const photo = assertPhotoBelongsToVenue(await this.photos?.getById(photoId), venueId);
+                images.push({ imageUrl: photo.url, photoId: photo.id });
+            }
+            return images;
+        }
+        const uploaded = await uploadAmenityImages(this.imageStorage, files);
+        return uploaded.map((imageUrl) => ({ imageUrl, photoId: null }));
     }
 }
 

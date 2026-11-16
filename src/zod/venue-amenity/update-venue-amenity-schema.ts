@@ -4,6 +4,7 @@ import { descriptionSchema, nameSchema, videoUrlSchema } from "./create-venue-am
 const imageRefSchema = z.union([
     z.object({ id: z.string().min(1) }).strict(),
     z.object({ newIndex: z.number().int().min(0) }).strict(),
+    z.object({ photoId: z.string().min(1) }).strict(),
 ]);
 
 export const updateVenueAmenitySchema = z.object({

@@ -19,10 +19,10 @@ export type UpdateVenueAmenityData = VenueAmenityContent & {
     position: number;
 };
 
-export type VenueAmenityImageInput = { id?: string; imageUrl: string };
+export type VenueAmenityImageInput = { id?: string; imageUrl: string; photoId?: string | null };
 
 export interface VenueAmenityRepositoryInterface {
-    create: (params: CreateVenueAmenityData, imageUrls: string[]) => Promise<VenueAmenityWithImages>;
+    create: (params: CreateVenueAmenityData, images: VenueAmenityImageInput[]) => Promise<VenueAmenityWithImages>;
     listByVenue: (venueId: string) => Promise<VenueAmenityWithImages[]>;
     getById: (id: string) => Promise<VenueAmenityWithImages | null>;
     findByName: (venueId: string, name: string) => Promise<VenueAmenity | null>;

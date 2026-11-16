@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ADS_CHANNELS } from '../../functions/expense-recurrence';
 
 export const createExpenseRequestParams = z.object({
     venueId: z.string(),
@@ -14,6 +15,7 @@ export const createExpenseRequestParams = z.object({
     paymentDate: z.string().optional(),
     type: z.enum(["ANNUAL", "MONTHLY","WEEKLY","BIWEEKLY","SPORADIC"]),
     category:  z.enum(["TAX", "ADVERTISING","MAINTENANCE","INVESTMENT"]),
+    trafficSource: z.enum(ADS_CHANNELS).nullable().optional(),
     recurring: z.boolean(),
 }).refine(
     (data) => data.recurring || (!!data.paymentDate && data.paymentDate !== ''),

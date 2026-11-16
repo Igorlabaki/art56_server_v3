@@ -1,4 +1,5 @@
 import { Expense } from "@prisma/client";
+import { AdsExpenseRow } from "../../functions/report-ads";
 import { UpdateExpenseRequestParams } from "../../zod/expense/update-expense-params-schema";
 import { CreateExpenseRequestParams } from "../../zod/expense/create-expense-params-schema";
 import { ListExpenseRequestQuerySchema } from "../../zod/expense/list-expense-query-schema";
@@ -13,4 +14,5 @@ export interface ExpenseRepositoryInterface {
   list: (query: ListExpenseRequestQuerySchema) => Promise<Expense[]  | null>
   getByName: (params: {venueId:string, name: string}) => Promise<Expense | null>
   analyze :(params: AnalysisExpenseRequestParamSchema) => Promise<Expense[]  | null>
+  advertisingRows: (venueId: string) => Promise<AdsExpenseRow[]>
 }

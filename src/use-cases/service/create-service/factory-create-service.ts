@@ -1,5 +1,6 @@
 import { PrismaServiceRepository } from "../../../repositories/in-prisma/service-in-prisma-repository";
 import { PrismaUserVenuePermissionRepository } from "../../../repositories/in-prisma/user-venue-permission-in-prisma-repository";
+import { PrismaVenuePhotoRepository } from "../../../repositories/in-prisma/venue-photo-in-prisma-repository";
 import { PrismaVenueRepository } from "../../../repositories/in-prisma/venue-in-prisma-repository";
 import prismaClient from "../../../services/prisma-client";
 import { ServiceAuthorizer } from "../service-authorizer";
@@ -12,6 +13,10 @@ export const createServiceFactory = (): CreateServiceController => {
         new PrismaVenueRepository(prismaClient),
         new PrismaUserVenuePermissionRepository(prismaClient),
     );
-    const createServiceUseCase = new CreateServiceUseCase(prismaServiceRepository, authorizer);
+    const createServiceUseCase = new CreateServiceUseCase(
+        prismaServiceRepository,
+        authorizer,
+        new PrismaVenuePhotoRepository(prismaClient),
+    );
     return new CreateServiceController(createServiceUseCase);
 };

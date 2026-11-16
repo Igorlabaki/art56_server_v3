@@ -3,6 +3,7 @@ import { AnalysisExpenseRequestParamSchema } from "../../../zod/expense/analysis
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { ExpenseRepositoryInterface } from "../../../repositories/interface/expense-repository-interface";
 import { Expense } from "@prisma/client";
+import { recurringAmounts } from "../../../functions/expense-recurrence";
 
 class AnalysisExpenseUseCase {
     constructor(private expenseRepository: ExpenseRepositoryInterface) { }
@@ -44,9 +45,6 @@ class AnalysisExpenseUseCase {
           const esporadicMap: { [name: string]: ExpenseEsporadic } = {};
       
           analysisdExpense?.forEach((item: Expense) => {
-            let mensalValue = 0;
-            let anualValue = 0;
-      
             if (item.recurring) {
               if (!recorringMap[item.name]) {
                 recorringMap[item.name] = {
@@ -56,16 +54,7 @@ class AnalysisExpenseUseCase {
                 };
               }
       
-              if (item.type === "MONTHLY") {
-                mensalValue = item.amount;
-                anualValue = item.amount * 12;
-              } else if (item.type === "BIWEEKLY") {
-                mensalValue = item.amount * 2;
-                anualValue = item.amount * 24;
-              }else if (item.type === "ANNUAL") {
-                mensalValue = item.amount / 12;
-                anualValue = item.amount;
-              }
+              const { monthly: mensalValue, annual: anualValue } = recurringAmounts(item.type, item.amount);
       
               recorringMap[item.name].monthly += mensalValue;
               recorringMap[item.name].annual += anualValue;

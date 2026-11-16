@@ -1,4 +1,5 @@
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
+import { assertPhotoBelongsToVenue, VenuePhotoRef } from "../../../functions/venue-photo-ref"
 import { UpdateServiceRequestParams } from "../../../zod/services/update-service-params-schema"
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { ServiceRepositoryInterface } from "../../../repositories/interface/service-repository-interface"
@@ -9,6 +10,7 @@ class UpdateServiceUseCase {
         private serviceRepository: ServiceRepositoryInterface,
         private authorizer: ServiceAuthorizer,
         private deleteImage: (imageUrl: string | null | undefined) => Promise<void> = async () => undefined,
+        private photos?: { getById: (id: string) => Promise<VenuePhotoRef | null> },
     ) { }
 
     async execute(userId: string | undefined, param: UpdateServiceRequestParams) {
@@ -27,11 +29,19 @@ class UpdateServiceUseCase {
             }
         }
 
-        const { removeImage, imageUrl, ...rest } = param.data
+        const { removeImage, imageUrl, photoId, ...rest } = param.data
+        let nextImageUrl = imageUrl
+        let nextPhotoId = photoId
+        if (photoId) {
+            const photo = assertPhotoBelongsToVenue(await this.photos?.getById(photoId), service.venueId)
+            nextImageUrl = photo.url
+            nextPhotoId = photo.id
+        }
         const data = {
             ...rest,
-            ...(removeImage ? { imageUrl: null } : {}),
-            ...(imageUrl ? { imageUrl } : {}),
+            ...(nextPhotoId ? { photoId: nextPhotoId } : {}),
+            ...(removeImage ? { imageUrl: null, photoId: null } : {}),
+            ...(nextImageUrl ? { imageUrl: nextImageUrl } : {}),
         }
 
         const updatedService = await this.serviceRepository.update({
@@ -43,7 +53,7 @@ class UpdateServiceUseCase {
             throw new HttpConflictError("Servico")
         }
 
-        if ((removeImage || imageUrl) && service.imageUrl && service.imageUrl !== imageUrl) {
+        if (!photoId && (removeImage || imageUrl) && service.imageUrl && service.imageUrl !== imageUrl) {
             await this.deleteImage(service.imageUrl)
         }
 

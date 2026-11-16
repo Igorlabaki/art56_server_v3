@@ -4,6 +4,7 @@ import { UpdateExpenseRequestParams } from "../../../zod/expense/update-expense-
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { ExpenseRepositoryInterface } from "../../../repositories/interface/expense-repository-interface"
 import { parseDateOnlyWallClock } from "../../../functions/wall-clock-datetime"
+import { AdsChannel, resolveExpenseTrafficSource } from "../../../functions/expense-recurrence"
 
 class UpdateExpenseUseCase {
     constructor(private expenseRepository: ExpenseRepositoryInterface) { }
@@ -19,6 +20,12 @@ class UpdateExpenseUseCase {
         if (param.data.paymentDate) {
             param.data.paymentDate = parseDateOnlyWallClock(param.data.paymentDate).toISOString();
         }
+
+        const category = param.data.category ?? expense.category
+        const trafficSource = param.data.trafficSource !== undefined
+            ? param.data.trafficSource
+            : (expense.trafficSource as AdsChannel | null)
+        param.data.trafficSource = resolveExpenseTrafficSource(category, trafficSource)
 
 
         const updatedExpense = await this.expenseRepository.update(param)

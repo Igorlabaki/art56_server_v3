@@ -8,14 +8,24 @@ import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-er
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
 import { UpdateImageRequestParams, updateImageRequestParams } from "../../../zod/image/upload-image-params-schema copy";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { assertPhotoBelongsToVenue, VenuePhotoRef } from "../../../functions/venue-photo-ref";
 
 class UpdateImageController {
-    constructor(private updateImageUseCase: UpdateImageUseCase, private imageRepository: ImageRepositoryInterface) { }
+    constructor(
+        private updateImageUseCase: UpdateImageUseCase,
+        private imageRepository: ImageRepositoryInterface,
+        private photos?: { getById: (id: string) => Promise<VenuePhotoRef | null> },
+    ) { }
     async handle(req: Request, res: Response) {
         try {
             if (!req.file) {
                 try {
                     const param = updateImageRequestParams.parse(req.body);
+                    if (param.photoId) {
+                        const photo = assertPhotoBelongsToVenue(await this.photos?.getById(param.photoId), param.venueId);
+                        param.imageUrl = photo.url;
+                        param.photoId = photo.id;
+                    }
 
                     const { position, tag, imageId,venueId } = param;
 

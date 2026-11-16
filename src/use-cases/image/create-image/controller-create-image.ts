@@ -9,28 +9,21 @@ import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-er
 import { createImageRequestParams } from "../../../zod/image/create-image-params-schema";
 import { ImageRepositoryInterface } from "../../../repositories/interface/image-repository-interface";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
+import { assertPhotoBelongsToVenue, VenuePhotoRef } from "../../../functions/venue-photo-ref";
 
 class CreateImageController {
   constructor(
     private createImageUseCase: CreateImageUseCase,
-    private imageRepository: ImageRepositoryInterface
+    private imageRepository: ImageRepositoryInterface,
+    private photos?: { getById: (id: string) => Promise<VenuePhotoRef | null> },
   ) {}
 
   async handle(req: Request, res: Response) {
     console.log("req.body", req.body);
     try {
-      if (!req.file) {
-        throw new HttpResourceNotFoundError("Arquivo");
-      }
+      const parsed = createImageRequestParams.parse(req.body);
+      const { position, tag, venueId } = parsed;
 
-      console.log("✅ Arquivo recebido:", req.file.originalname);
-
-      // Valida os dados recebidos
-      createImageRequestParams.parse(req.body);
-
-      const { position, tag, venueId } = req.body;
-
-      // Verifica se já existe uma imagem na posição/tag
       if (tag) {
         const verifyImage = await this.imageRepository.verifyImage({
           tag,
@@ -44,6 +37,20 @@ class CreateImageController {
             "Já existe uma imagem nessa posição desta tag."
           );
         }
+      }
+
+      if (parsed.photoId) {
+        const photo = assertPhotoBelongsToVenue(await this.photos?.getById(parsed.photoId), venueId);
+        const response = await this.createImageUseCase.execute({
+          ...parsed,
+          imageUrl: photo.url,
+          photoId: photo.id,
+        });
+        return res.status(201).json(response);
+      }
+
+      if (!req.file) {
+        throw new HttpResourceNotFoundError("Arquivo");
       }
 
       // Gera um nome único para o arquivo no formato WebP

@@ -24,6 +24,7 @@ export const updateServiceSchema = z.object({
             z.coerce.number().optional(),
         ),
         imageUrl: z.string().optional().nullable(),
+        photoId: z.string().trim().min(1).optional().nullable(),
         removeImage: z.preprocess((value) => value === true || value === "true", z.boolean()).optional(),
     }),
 });

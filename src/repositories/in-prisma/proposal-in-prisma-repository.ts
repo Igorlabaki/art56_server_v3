@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient, Proposal } from "@prisma/client"
-import { EventProfileReportRow, LeadTimeReportRow, ListProposalDbQuery, ProposalListDailyBucket, ProposalListRow, ReportProposalWhere, ServiceAdherenceReportRow } from "../interface/proposal-repository-interface";
+import { AdsReportProposalRow, EventProfileReportRow, LeadTimeReportRow, ListProposalDbQuery, ProposalListDailyBucket, ProposalListRow, ReportProposalWhere, ServiceAdherenceReportRow } from "../interface/proposal-repository-interface";
 import { UpdateProposalInDbParam } from "../../zod/proposal/update-proposal-in-db-params-schema";
 import { CreateProposalInDbParams, ImageChoiceUpdate, MonthlyRevenueAnalysisParams, MonthProposalDataCount, ProposalPresentationRecord, ProposalRepositoryInterface, ProposalWithRelations, TrafegoCountResponse, TrafficSourceTypes, UpdateProposalServices, VenueImagesForChoice, VenueImagesForReorder } from "../interface/proposal-repository-interface"
 import { GetTrafficCountVenueDbSchema } from "../../zod/venue/get-venue-traffic-count-db-schema";
@@ -713,6 +713,13 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     return await this.prisma.proposal.findMany({
       where,
       select: { guestNumber: true, eventCategory: true },
+    });
+  }
+
+  async adsReportRows(where: ReportProposalWhere): Promise<AdsReportProposalRow[]> {
+    return await this.prisma.proposal.findMany({
+      where,
+      select: { createdAt: true, trafficSource: true, approved: true, totalAmount: true },
     });
   }
 }

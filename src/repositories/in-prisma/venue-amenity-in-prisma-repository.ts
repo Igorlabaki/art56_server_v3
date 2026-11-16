@@ -14,7 +14,7 @@ const withImages = {
 export class PrismaVenueAmenityRepository implements VenueAmenityRepositoryInterface {
     constructor(private readonly prisma: PrismaClient) {}
 
-    async create(params: CreateVenueAmenityData, imageUrls: string[]): Promise<VenueAmenityWithImages> {
+    async create(params: CreateVenueAmenityData, images: VenueAmenityImageInput[]): Promise<VenueAmenityWithImages> {
         return this.prisma.venueAmenity.create({
             data: {
                 venueId: params.venueId,
@@ -23,7 +23,11 @@ export class PrismaVenueAmenityRepository implements VenueAmenityRepositoryInter
                 description: params.description,
                 videoUrl: params.videoUrl,
                 images: {
-                    create: imageUrls.map((imageUrl, position) => ({ imageUrl, position })),
+                    create: images.map((image, position) => ({
+                        imageUrl: image.imageUrl,
+                        photoId: image.photoId ?? null,
+                        position,
+                    })),
                 },
             },
             include: withImages,
@@ -78,7 +82,12 @@ export class PrismaVenueAmenityRepository implements VenueAmenityRepositoryInter
                         await tx.venueAmenityImage.update({ where: { id: image.id }, data: { position } });
                     } else {
                         await tx.venueAmenityImage.create({
-                            data: { amenityId: params.amenityId, imageUrl: image.imageUrl, position },
+                            data: {
+                                amenityId: params.amenityId,
+                                imageUrl: image.imageUrl,
+                                photoId: image.photoId ?? null,
+                                position,
+                            },
                         });
                     }
                 }

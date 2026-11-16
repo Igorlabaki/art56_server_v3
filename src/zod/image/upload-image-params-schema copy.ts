@@ -6,6 +6,7 @@ export const updateImageRequestParams = z.object({
   description: z.string(),
   tag: z.string().nullable(), // Opcional inicialmente
   imageUrl: z.string().optional(),
+  photoId: z.string().optional(),
   position: z.string().optional(),  // Opcional inicialmente
   responsiveMode: z.string().optional(), // Opcional inicialmente
   group: z.string().optional(),

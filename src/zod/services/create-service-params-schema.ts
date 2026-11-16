@@ -13,6 +13,7 @@ export const createServiceSchema = z.object({
     pricingType: z.enum(["FIXED", "PER_HOUR", "PER_PERSON"]).optional().default("FIXED"),
     description,
     imageUrl: z.string().optional().nullable(),
+    photoId: z.string().trim().min(1).optional().nullable(),
     venueId: z.string(),
     rpaRequired: z.preprocess((value) => value === true || value === "true", z.boolean()).optional().default(false),
     rpaMinPeople: z.preprocess(

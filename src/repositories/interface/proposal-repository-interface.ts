@@ -227,6 +227,13 @@ export interface EventProfileReportRow {
   eventCategory: EventCategory | null;
 }
 
+export interface AdsReportProposalRow {
+  createdAt: Date;
+  trafficSource: TrafficSource;
+  approved: boolean;
+  totalAmount: number;
+}
+
 export interface ProposalRepositoryInterface {
   delete: (params: string) => Promise<Proposal | null>
   getById: (params: string) => Promise<ProposalWithRelations | null>
@@ -250,4 +257,5 @@ export interface ProposalRepositoryInterface {
   leadTimeRows: (where: ReportProposalWhere) => Promise<LeadTimeReportRow[]>
   serviceAdherenceRows: (where: ReportProposalWhere) => Promise<ServiceAdherenceReportRow[]>
   eventProfileRows: (where: ReportProposalWhere) => Promise<EventProfileReportRow[]>
+  adsReportRows: (where: ReportProposalWhere) => Promise<AdsReportProposalRow[]>
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ADS_CHANNELS } from "../../functions/expense-recurrence";
 
 export const updateExpenseSchema = z.object({
     expenseId: z.string(),
@@ -10,6 +11,7 @@ export const updateExpenseSchema = z.object({
         description: z.string().optional(),
         type: z.enum(["ANNUAL", "MONTHLY","WEEKLY","BIWEEKLY","SPORADIC"]).optional(),
         category:  z.enum(["TAX", "ADVERTISING","MAINTENANCE","INVESTMENT"]).optional(),
+        trafficSource: z.enum(ADS_CHANNELS).nullable().optional(),
     }),
 });
 

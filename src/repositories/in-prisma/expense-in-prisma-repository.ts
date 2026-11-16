@@ -4,6 +4,8 @@ import { ExpenseRepositoryInterface } from "../interface/expense-repository-inte
 import { UpdateExpenseRequestParams } from "../../zod/expense/update-expense-params-schema"
 import { ListExpenseRequestQuerySchema } from "../../zod/expense/list-expense-query-schema"
 import { AnalysisExpenseRequestParamSchema } from "../../zod/expense/analysis-expense-param-schema"
+import { reportYearRange } from "../../functions/report-year-range"
+import { AdsExpenseRow } from "../../functions/report-ads"
 
 
 
@@ -95,13 +97,17 @@ export class PrismaExpenseRepository implements ExpenseRepositoryInterface {
             },
             {
               recurring: false, // Somente os não recorrentes do ano escolhido
-              paymentDate: {
-                gte: new Date(year ? Number(year) : new Date().getFullYear(),0,1),
-                lt: new Date(year ? Number(year) : new Date().getFullYear(), 12, 31),
-              },
+              paymentDate: reportYearRange(Number(year)),
             },
           ],
         },
       });
+    }
+
+    async advertisingRows(venueId: string): Promise<AdsExpenseRow[]> {
+      return await this.prisma.expense.findMany({
+        where: { venueId, category: "ADVERTISING" },
+        select: { amount: true, type: true, recurring: true, paymentDate: true, createdAt: true, trafficSource: true },
+      })
     }
   }

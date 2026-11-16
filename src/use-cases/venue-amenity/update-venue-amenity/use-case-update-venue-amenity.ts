@@ -1,6 +1,7 @@
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
+import { assertPhotoBelongsToVenue, VenuePhotoRef } from "../../../functions/venue-photo-ref";
 import {
     AMENITY_IMAGE_INVALID_MESSAGE,
     AmenityImageFile,
@@ -22,6 +23,7 @@ class UpdateVenueAmenityUseCase {
         private repository: VenueAmenityRepositoryInterface,
         private authorizer: VenueAmenityAuthorizer,
         private imageStorage: AmenityImageStorage,
+        private photos?: { getById: (id: string) => Promise<VenuePhotoRef | null> },
     ) {}
 
     async execute(userId: string | undefined, params: UpdateVenueAmenityParams, files: AmenityImageFile[] = []) {
@@ -45,11 +47,19 @@ class UpdateVenueAmenityUseCase {
 
         const uploaded = await uploadAmenityImages(this.imageStorage, files);
         const currentUrls = new Map(current.images.map((image) => [image.id, image.imageUrl]));
-        const images: VenueAmenityImageInput[] | undefined = params.images?.map((ref) =>
-            "id" in ref
-                ? { id: ref.id, imageUrl: currentUrls.get(ref.id) as string }
-                : { imageUrl: uploaded[ref.newIndex] },
-        );
+        const currentPhotoIds = new Map(current.images.map((image) => [image.id, image.photoId]));
+        const images: VenueAmenityImageInput[] | undefined = params.images
+            ? await Promise.all(params.images.map(async (ref) => {
+                if ("id" in ref) {
+                    return { id: ref.id, imageUrl: currentUrls.get(ref.id) as string, photoId: currentPhotoIds.get(ref.id) ?? null };
+                }
+                if ("photoId" in ref) {
+                    const photo = assertPhotoBelongsToVenue(await this.photos?.getById(ref.photoId), current.venueId);
+                    return { imageUrl: photo.url, photoId: photo.id };
+                }
+                return { imageUrl: uploaded[ref.newIndex], photoId: null };
+            }))
+            : undefined;
         const keptIds = new Set(images?.flatMap((image) => (image.id ? [image.id] : [])) ?? []);
         const removedUrls = images
             ? current.images.filter((image) => !keptIds.has(image.id)).map((image) => image.imageUrl)

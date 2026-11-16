@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createImageDbParams = z.object({
   venueId: z.string(),
   imageUrl: z.string(),
+  photoId: z.string().optional(),
   group: z.string().optional(),
   description: z.string(),
   tag: z.string().nullable(), // Opcional inicialmente

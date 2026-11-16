@@ -75,9 +75,9 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           "EDIT_PROPOSAL_SCHEDULE","EDIT_PROPOSAL_PAYMENTS","EDIT_PROPOSAL_DOCUMENTS","EDIT_PROPOSAL_ATTENDANCE_LIST",
           "CONFIRM_PROPOSAL_ATTENDANCE_LIST","VIEW_VENUE_INFO","VIEW_VENUE_SITES","VIEW_VENUE_PRICES","VIEW_VENUE_EVENTS",
           "VIEW_VENUE_ANALYSIS","VIEW_VENUE_CALENDAR","VIEW_VENUE_CONTACTS","VIEW_VENUE_SERVICES","VIEW_VENUE_RULES","VIEW_VENUE_AMENITIES","VIEW_VENUE_EXPENSES",
-          "VIEW_VENUE_PROPOSALS","VIEW_VENUE_PERMISSIONS","VIEW_VENUE_NOTIFICATIONS","EDIT_VENUE_INFO","EDIT_VENUE_SITE",
+          "VIEW_VENUE_PROPOSALS","VIEW_VENUE_PERMISSIONS","VIEW_VENUE_NOTIFICATIONS","VIEW_VENUE_PHOTOS","EDIT_VENUE_INFO","EDIT_VENUE_SITE",
           "EDIT_VENUE_EVENTS","EDIT_VENUE_PRICES","EDIT_VENUE_CALENDAR","EDIT_VENUE_EXPENSES","EDIT_VENUE_SERVICES","EDIT_VENUE_RULES","EDIT_VENUE_AMENITIES",
-          "EDIT_VENUE_CONTACTS","EDIT_VENUE_PROPOSALS"
+          "EDIT_VENUE_CONTACTS","EDIT_VENUE_PROPOSALS","EDIT_VENUE_PHOTOS"
         ];
 
         // Concatenando as permissões em uma única string
@@ -337,6 +337,10 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         id: true,
         name: true,
         description: true,
+        logoUrl: true,
+        proposalPrimaryColor: true,
+        proposalSecondaryColor: true,
+        proposalTextColor: true,
         images: {
           select: {
             imageUrl: true
@@ -400,6 +404,10 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         id: true,
         name: true,
         description: true,
+        logoUrl: true,
+        proposalPrimaryColor: true,
+        proposalSecondaryColor: true,
+        proposalTextColor: true,
         images: {
           select: {
             imageUrl: true,

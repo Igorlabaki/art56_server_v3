@@ -56,12 +56,12 @@ class FakeVenueAmenityRepository implements VenueAmenityRepositoryInterface {
     failUpdate = false;
     private imageSeq = 0;
 
-    private image(amenityId: string, imageUrl: string, position: number, id?: string): VenueAmenityImage {
+    private image(amenityId: string, imageUrl: string, position: number, id?: string, photoId?: string | null): VenueAmenityImage {
         this.imageSeq += 1;
-        return { id: id ?? `new-image-${this.imageSeq}`, amenityId, imageUrl, position, createdAt: new Date() };
+        return { id: id ?? `new-image-${this.imageSeq}`, amenityId, imageUrl, photoId: photoId ?? null, position, createdAt: new Date() };
     }
 
-    async create(params: CreateVenueAmenityData, imageUrls: string[]): Promise<VenueAmenityWithImages> {
+    async create(params: CreateVenueAmenityData, images: VenueAmenityImageInput[]): Promise<VenueAmenityWithImages> {
         const id = `amenity-${this.items.length + 1}`;
         const created: VenueAmenityWithImages = {
             id,
@@ -73,7 +73,7 @@ class FakeVenueAmenityRepository implements VenueAmenityRepositoryInterface {
             venueId: params.venueId,
             createdAt: new Date(2026, 0, this.items.length + 1),
             updatedAt: new Date(),
-            images: imageUrls.map((imageUrl, position) => this.image(id, imageUrl, position)),
+            images: images.map((image, position) => this.image(id, image.imageUrl, position, image.id, image.photoId)),
         };
         this.items.push(created);
         return created;
@@ -110,7 +110,7 @@ class FakeVenueAmenityRepository implements VenueAmenityRepositoryInterface {
         current.description = params.description;
         current.videoUrl = params.videoUrl;
         if (images) {
-            current.images = images.map((input, position) => this.image(current.id, input.imageUrl, position, input.id));
+            current.images = images.map((input, position) => this.image(current.id, input.imageUrl, position, input.id, input.photoId));
         }
         return current;
     }
@@ -151,7 +151,7 @@ function url(name: string) {
 }
 
 function savedImage(id: string, position: number): VenueAmenityImage {
-    return { id, amenityId: "amenity-1", imageUrl: url(id), position, createdAt: new Date() };
+    return { id, amenityId: "amenity-1", imageUrl: url(id), photoId: null, position, createdAt: new Date() };
 }
 
 function row(overrides: Partial<VenueAmenityWithImages> = {}): VenueAmenityWithImages {

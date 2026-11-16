@@ -36,6 +36,7 @@ export const createVenueAmenitySchema = z.object({
     name: nameSchema,
     description: descriptionSchema,
     videoUrl: videoUrlSchema,
+    photoIds: z.array(z.string().min(1)).max(3).optional(),
 });
 
 export type CreateVenueAmenityParams = z.infer<typeof createVenueAmenitySchema>;

@@ -10,6 +10,7 @@ import { createImageOrganizationFactory } from "../use-cases/image-organization/
 import { updateImageOrganizationFactory } from "../use-cases/image-organization/update-image-organization/factory-update-image-organization";
 import { listImageOrganizationFactory } from "../use-cases/image-organization/list-image-organization/factory-list-image-organization";
 import { getbytagImageOrganizationFactory } from "../use-cases/image-organization/get-by-tag-image-organization/factory-get-by-tag-image-organization";
+import { ensureAuthenticate } from "../middleware/ensureAuthenticate";
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();
@@ -27,7 +28,7 @@ const s3Client = new S3Client({
 const imageRoutes = Router();
 
 // Create
-imageRoutes.post("/upload", upload.single("file"), (req, res) => {
+imageRoutes.post("/upload", ensureAuthenticate, upload.single("file"), (req, res) => {
   const controller = createImageFactory();
   controller.handle(req, res);
 });
@@ -51,7 +52,7 @@ imageRoutes.post("/upload/image-organization", upload.single("file"), (req, res)
   })
 
 // Delete
-imageRoutes.delete("/delete/:imageId", async (req, res) => {
+imageRoutes.delete("/delete/:imageId", ensureAuthenticate, async (req, res) => {
     const controller = deleteImageFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -66,7 +67,7 @@ imageRoutes.get("/getByTag/image-organization?:organizationId?/:tag?/:responsive
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
 // update
-imageRoutes.put("/update", upload.single("file"), (req, res) => {
+imageRoutes.put("/update", ensureAuthenticate, upload.single("file"), (req, res) => {
   const controller = updateImageFactory();
   controller.handle(req, res);
 });

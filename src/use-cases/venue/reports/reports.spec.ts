@@ -9,6 +9,8 @@ import { GetLeadTimeReportUseCase } from "./lead-time/use-case-get-lead-time-rep
 import { GetOccupancyReportUseCase } from "./occupancy/use-case-get-occupancy-report";
 import { ReportAuthorizer } from "./report-authorizer";
 import { GetServiceAdherenceReportUseCase } from "./service-adherence/use-case-get-service-adherence-report";
+import { GetAdsReportUseCase } from "./ads/use-case-get-ads-report";
+import { leadTimeWhere } from "./report-query";
 
 const venue = { id: "venue-a", organizationId: "org-1", maxGuest: 100, openingHour: "08:00", closingHour: "22:00" };
 
@@ -55,6 +57,28 @@ function fakeDateEvents() {
         occupancyRows: async (query: OccupancyRowsQuery) => {
             calls.push(query);
             return [{ type: "EVENT" as const, startDate: new Date("2026-03-31T23:00:00Z"), endDate: new Date("2026-04-01T01:00:00Z") }];
+        },
+    };
+}
+
+function fakeAds() {
+    const calls: { method: string; arg: unknown }[] = [];
+    return {
+        calls,
+        advertisingRows: async (venueId: string) => {
+            calls.push({ method: "advertisingRows", arg: venueId });
+            return [{
+                amount: 1000,
+                type: "SPORADIC" as const,
+                recurring: false,
+                paymentDate: new Date("2026-03-01T00:00:00Z"),
+                createdAt: new Date("2026-03-01T12:00:00Z"),
+                trafficSource: "INSTAGRAM" as const,
+            }];
+        },
+        adsReportRows: async (where: ReportProposalWhere) => {
+            calls.push({ method: "adsReportRows", arg: where });
+            return [{ createdAt: new Date("2026-04-01T12:00:00Z"), trafficSource: "INSTAGRAM" as const, approved: true, totalAmount: 5000 }];
         },
     };
 }
@@ -144,11 +168,31 @@ describe("relatorios agregados do espaco", () => {
         expect(body).not.toMatch(/completeClientName|email|whatsapp|organizationId|"id"/);
     });
 
+    it("anuncios nao le despesas nem propostas sem permissao", async () => {
+        const ads = fakeAds();
+        await expect(new GetAdsReportUseCase(ads, ads, authorizer(false)).execute("user-1", { venueId: "venue-a", year: 2026 }))
+            .rejects.toBeInstanceOf(HttpForbiddenError);
+        expect(ads.calls).toEqual([]);
+    });
+
+    it("anuncios busca propostas por createdAt sem categoria e despesas de Publicidade do espaco", async () => {
+        const ads = fakeAds();
+        const response = await new GetAdsReportUseCase(ads, ads, authorizer(true), () => new Date("2026-12-10T15:00:00Z"))
+            .execute("user-1", { venueId: "venue-a", year: 2026, eventCategory: "WEDDING" });
+
+        expect(ads.calls).toContainEqual({ method: "advertisingRows", arg: "venue-a" });
+        expect(ads.calls).toContainEqual({ method: "adsReportRows", arg: leadTimeWhere("venue-a", 2026) });
+        expect(response).toMatchObject({ success: true, message: "Sucesso", count: 1, type: "AdsReport" });
+        expect(response.data.year).toBe(2026);
+        expect(response.data.rows).toHaveLength(5);
+        expect(response.data.rows[0]).toMatchObject({ channel: "INSTAGRAM", spent: 1000, proposals: 1, events: 1, revenue: 5000, roas: 5 });
+    });
+
     it("rotas literais de /reports sao as primeiras a casar e exigem autenticacao", () => {
         const stack = (venueRoutes as unknown as {
             stack: { match: (path: string) => boolean; route?: { path: string; methods: Record<string, boolean>; stack: { name: string }[] } }[];
         }).stack;
-        for (const name of ["occupancy", "lead-time", "service-adherence", "event-profile"]) {
+        for (const name of ["occupancy", "lead-time", "service-adherence", "event-profile", "ads"]) {
             const path = `/reports/${name}`;
             const first = stack.find((layer) => layer.route?.methods.get && layer.match(path));
             expect(first?.route?.path).toBe(path);

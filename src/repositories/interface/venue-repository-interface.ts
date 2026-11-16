@@ -16,6 +16,10 @@ import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-param
 export type ItemListVenueResponse = {
   id: string;
   name: string;
+  logoUrl: string | null;
+  proposalPrimaryColor: string | null;
+  proposalSecondaryColor: string | null;
+  proposalTextColor: string | null;
   images: {
     imageUrl: string;
   }[];

@@ -30,7 +30,7 @@ export function assertAmenityImageFiles(files: { size: number; mimetype: string 
     files.forEach(assertAmenityImageFile);
 }
 
-export type AmenityImageRef = { id: string } | { newIndex: number };
+export type AmenityImageRef = { id: string } | { newIndex: number } | { photoId: string };
 
 export function assertAmenityImageRefs(refs: AmenityImageRef[], currentIds: string[], fileCount: number) {
     if (refs.length > AMENITY_MAX_IMAGES) {
@@ -44,11 +44,13 @@ export function assertAmenityImageRefs(refs: AmenityImageRef[], currentIds: stri
                 throw new HttpBadRequestError(AMENITY_IMAGE_INVALID_MESSAGE);
             }
             ids.add(ref.id);
-        } else {
+        } else if ("newIndex" in ref) {
             if (ref.newIndex >= fileCount || indexes.has(ref.newIndex)) {
                 throw new HttpBadRequestError(AMENITY_IMAGE_INVALID_MESSAGE);
             }
             indexes.add(ref.newIndex);
+        } else if (!ref.photoId) {
+            throw new HttpBadRequestError(AMENITY_IMAGE_INVALID_MESSAGE);
         }
     }
     if (indexes.size !== fileCount) {

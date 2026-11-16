@@ -11,7 +11,9 @@ class CreateServiceController {
     async handle(req: AuthenticatedRequest, resp: Response) {
         try {
             const body = createServiceSchema.parse(readServiceBody(req.body));
-            body.imageUrl = req.file ? await uploadServiceImage(req.file) : null;
+            if (!body.photoId) {
+                body.imageUrl = req.file ? await uploadServiceImage(req.file) : null;
+            }
             const response = await this.createServiceUseCase.execute(req.user?.id, body);
             return resp.status(201).json(response);
         } catch (error) {

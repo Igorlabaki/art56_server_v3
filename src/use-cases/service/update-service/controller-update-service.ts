@@ -11,7 +11,7 @@ class UpdateServiceController {
     async handle(req: AuthenticatedRequest, resp: Response) {
         try {
             const param = updateServiceSchema.parse(readServiceBody(req.body));
-            if (req.file) {
+            if (!param.data.photoId && req.file) {
                 param.data.imageUrl = await uploadServiceImage(req.file);
                 param.data.removeImage = false;
             }

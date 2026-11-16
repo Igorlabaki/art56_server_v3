@@ -238,6 +238,7 @@ model Service {
   pricingType      ServicePricingType @default(FIXED)
   description      String?            @db.VarChar(500)
   imageUrl         String?            @db.Text
+  photoId          String?
   venueId          String
   rpaRequired      Boolean            @default(false)
   rpaMinPeople     Int?
@@ -246,6 +247,7 @@ model Service {
 
   @@unique([name, venueId])
   @@index([venueId])
+  @@index([photoId])
   @@map("service")
 }
 
@@ -285,11 +287,13 @@ model VenueAmenityImage {
   id        String       @id @default(uuid())
   amenityId String
   imageUrl  String       @db.Text
+  photoId   String?
   position  Int          @default(0)
   createdAt DateTime     @default(now())
   amenity   VenueAmenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
 
   @@index([amenityId])
+  @@index([photoId])
   @@map("venue_amenity_image")
 }
 
@@ -325,20 +329,22 @@ model ProposalCost {
 }
 
 model Expense {
-  id          String          @id @default(cuid())
-  name        String
-  description String?
-  amount      Float
-  paymentDate DateTime?
-  type        ExpenseType
-  category    ExpenseCategory
-  recurring   Boolean
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  venueId     String
-  venue       Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  name          String
+  description   String?
+  amount        Float
+  paymentDate   DateTime?
+  type          ExpenseType
+  category      ExpenseCategory
+  trafficSource TrafficSource?
+  recurring     Boolean
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  venueId       String
+  venue         Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+  @@index([venueId, category])
   @@map("expense")
 }
 
@@ -444,6 +450,7 @@ model Venue {
   texts                  Text[]
   contacts               Contact[]
   images                 Image[]
+  photos                 VenuePhoto[]
   expenses               Expense[]
   services               Service[]
   rules                  VenueRule[]
@@ -648,6 +655,24 @@ enum CompanySize {
   DEMAIS
 }
 
+model VenuePhoto {
+  id          String   @id @default(cuid())
+  venueId     String
+  url         String   @db.VarChar(1024)
+  storageKey  String   @db.VarChar(512)
+  width       Int?
+  height      Int?
+  sizeBytes   Int?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+  @@index([venueId, url(length: 191)])
+  @@map("venue_photo")
+}
+
 model Image {
   id                   String        @id @default(cuid())
   imageUrl             String        @db.LongText
@@ -662,11 +687,13 @@ model Image {
   isShowOnProposal     Boolean?      @default(false)
   venueId              String? // Tornando opcional
   organizationId       String? // Novo campo opcional
+  photoId              String?
   venue                Venue?        @relation(fields: [venueId], references: [id], onDelete: Cascade)
   organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
   @@index([organizationId])
+  @@index([photoId])
   @@map("image")
 }
 
@@ -766,6 +793,7 @@ model Attachment {
 model EmailConfig {
   id                 String  @id @default(cuid())
   backgroundImageUrl String?
+  backgroundPhotoId  String?
   title              String?
   type               String
   message            String? @db.LongText
@@ -773,6 +801,7 @@ model EmailConfig {
   venue              Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+  @@index([backgroundPhotoId])
   @@map("emailConfig")
 }
 
