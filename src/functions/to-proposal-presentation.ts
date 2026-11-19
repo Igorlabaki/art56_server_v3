@@ -8,6 +8,7 @@ export function toProposalPresentation(
     return {
         name: row.name,
         description: row.description,
+        slogan: row.slogan,
         logoUrl: row.logoUrl,
         city: row.city,
         state: row.state,

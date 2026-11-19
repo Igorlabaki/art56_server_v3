@@ -17,6 +17,7 @@ const record: ProposalPresentationRecord = {
     venueId: "venue-1",
     name: "AR756",
     description: "Casa",
+    slogan: "O OASIS URBANO",
     logoUrl: "https://logo",
     city: "Campinas",
     state: "SP",
@@ -116,6 +117,39 @@ describe("pacote publico da proposta", () => {
         expect(packed.amenities[1]).toMatchObject({ images: [], imageUrl: null });
         expect(packed.amenities[0]).not.toHaveProperty("venueId");
         expect(packed.amenities[0]).not.toHaveProperty("id");
+        expect(packed.slogan).toBe("O OASIS URBANO");
+        expect(toProposalPresentation({ ...record, slogan: null }).slogan).toBeNull();
+        expect(Object.keys(packed).sort()).toEqual([
+            "amenities",
+            "canReorder",
+            "catalog",
+            "checkIn",
+            "checkOut",
+            "city",
+            "closingHour",
+            "description",
+            "facebookUrl",
+            "hasOvernightStay",
+            "images",
+            "instagramUrl",
+            "logoUrl",
+            "maxGuest",
+            "minimumNights",
+            "name",
+            "neighborhood",
+            "openingHour",
+            "proposalPrimaryColor",
+            "proposalSecondaryColor",
+            "proposalTextColor",
+            "slogan",
+            "state",
+            "street",
+            "streetNumber",
+            "tiktokUrl",
+            "tourVideoUrl",
+            "url",
+            "whatsappNumber",
+        ]);
         expect(packed.tourVideoUrl).toBe("https://cdn.example.com/tour.mp4");
         expect(packed.openingHour).toBe("08:00");
         expect(packed.closingHour).toBe("22:00");
