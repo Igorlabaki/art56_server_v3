@@ -19,9 +19,15 @@ import { getLeadTimeReportFactory } from "../use-cases/venue/reports/lead-time/f
 import { getServiceAdherenceReportFactory } from "../use-cases/venue/reports/service-adherence/factory-get-service-adherence-report";
 import { getEventProfileReportFactory } from "../use-cases/venue/reports/event-profile/factory-get-event-profile-report";
 import { getAdsReportFactory } from "../use-cases/venue/reports/ads/factory-get-ads-report";
+import { getVenuePresentationFactory } from "../use-cases/venue/get-venue-presentation/factory-get-venue-presentation";
 
 
 const venueRoutes = Router()
+
+venueRoutes.get("/presentation/:venueId", async (req, res) => {
+    const controller = getVenuePresentationFactory();
+    await controller.handle(req, res);
+})
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();

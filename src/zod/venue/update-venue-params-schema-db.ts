@@ -13,6 +13,7 @@ export const updateVenueSchemaRequest = z.object({
     venueId: z.string(),
     userId: z.string(),
     description:z.string().optional(),
+    slogan: z.string().optional(),
     cep: z.string().optional(),
     email: z.string().optional(),
     name: z.string().optional(),

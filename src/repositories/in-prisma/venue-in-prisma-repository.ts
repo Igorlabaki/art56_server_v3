@@ -16,6 +16,8 @@ import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-param
 import { uniqueProposalYears } from "../../functions/proposal-years"
 import { revenueEventWhere, revenueYears, sameMonthEventWhere, sameMonthNumber, sameMonthRevenueByYear } from "../../functions/same-month-revenue-by-year"
 import { previousYearWindow, yearlyChange } from "../../functions/yearly-change"
+import { VenuePublicPresentationSource } from "../../functions/to-venue-presentation"
+import { isVenueIdKey, venuePublicKeyWhere } from "../../functions/venue-public-key"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -200,6 +202,95 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
+  async getPublicPresentation(venueId: string): Promise<VenuePublicPresentationSource | null> {
+    const venue = await this.prisma.venue.findUnique({
+      where: venuePublicKeyWhere(venueId),
+      select: {
+        name: true,
+        description: true,
+        slogan: true,
+        logoUrl: true,
+        proposalPrimaryColor: true,
+        proposalSecondaryColor: true,
+        proposalTextColor: true,
+        url: true,
+        instagramUrl: true,
+        facebookUrl: true,
+        tiktokUrl: true,
+        tourVideoUrl: true,
+        whatsappNumber: true,
+        neighborhood: true,
+        city: true,
+        state: true,
+        street: true,
+        streetNumber: true,
+        maxGuest: true,
+        hasOvernightStay: true,
+        checkIn: true,
+        checkOut: true,
+        minimumNights: true,
+        openingHour: true,
+        closingHour: true,
+        pricingModel: true,
+        pricePerPerson: true,
+        pricePerDay: true,
+        pricePerPersonDay: true,
+        pricePerPersonHour: true,
+        minimumPrice: true,
+        images: {
+          where: { isShowOnProposal: true },
+          select: {
+            id: true,
+            imageUrl: true,
+            description: true,
+            position: true,
+            isShowOnProposal: true,
+          },
+          orderBy: [{ position: "asc" }, { id: "asc" }],
+        },
+        amenities: {
+          select: {
+            name: true,
+            position: true,
+            description: true,
+            videoUrl: true,
+            images: {
+              select: { imageUrl: true },
+              orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+            },
+          },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        },
+        services: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            imageUrl: true,
+          },
+          orderBy: { name: "asc" },
+        },
+      },
+    });
+
+    if (!venue) return null;
+
+    return {
+      ...venue,
+      amenities: venue.amenities.map((amenity) => {
+        const images = amenity.images.map((image) => image.imageUrl);
+        return {
+          name: amenity.name,
+          position: amenity.position,
+          description: amenity.description,
+          images,
+          imageUrl: images[0] ?? null,
+          videoUrl: amenity.videoUrl,
+        };
+      }),
+    };
+  }
+
   async getById({ venueId }: GetVenueByIdRequestParamSchema): Promise<Venue | null> {
     return await this.prisma.venue.findFirst({
       where: {
@@ -225,10 +316,21 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     });
   }
 
+  private async venueIdByName(name: string): Promise<string | null> {
+    const venue = await this.prisma.venue.findUnique({
+      where: { name },
+      select: { id: true },
+    });
+    return venue?.id ?? null;
+  }
+
   async getSelectedVenue({ venueId, userId }: GetSelectedVenueRequestParamSchema): Promise<Venue | null> {
+    const id = userId || isVenueIdKey(venueId) ? venueId : await this.venueIdByName(venueId);
+    if (!id) return null;
+
     return await this.prisma.venue.findFirst({
       where: {
-        id: venueId,
+        id,
         userVenuePermissions: {
           some: { userOrganization: { userId: userId } } // 🔥 Filtra permissões apenas do usuário
         }

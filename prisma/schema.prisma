@@ -410,6 +410,7 @@ model Venue {
   id                     String                @id @default(uuid())
   name                   String                @unique
   description            String?               @db.LongText
+  slogan                 String?               @db.Text
   email                  String?               @unique
   url                    String?
   facebookUrl            String?
