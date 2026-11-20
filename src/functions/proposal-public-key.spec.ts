@@ -86,7 +86,7 @@ describe("proposal public code", () => {
         expect(saved).toBe("bbbbbbbb");
     });
 
-    it("keeps photo reorder and image choice on the proposal id", () => {
+    it("resolves the public code before reading photos for reorder and choice", () => {
         const source = readFileSync("src/repositories/in-prisma/proposal-in-prisma-repository.ts", "utf8");
         const reorder = source.slice(
             source.indexOf("async listVenueImagesForReorder"),
@@ -94,11 +94,11 @@ describe("proposal public code", () => {
         );
         const choice = source.slice(
             source.indexOf("async listVenueImageCatalog"),
-            source.indexOf("async updatePersonalInfo")
+            source.indexOf("async applyImageChoice")
         );
+        expect(reorder).toContain("proposalIdFromKey");
         expect(reorder).toContain("where: { id: proposalId }");
-        expect(reorder).not.toContain("publicCode");
+        expect(choice).toContain("proposalIdFromKey");
         expect(choice).toContain("where: { id: proposalId }");
-        expect(choice).not.toContain("proposalPublicLookup");
     });
 });

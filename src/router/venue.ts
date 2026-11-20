@@ -20,6 +20,8 @@ import { getServiceAdherenceReportFactory } from "../use-cases/venue/reports/ser
 import { getEventProfileReportFactory } from "../use-cases/venue/reports/event-profile/factory-get-event-profile-report";
 import { getAdsReportFactory } from "../use-cases/venue/reports/ads/factory-get-ads-report";
 import { getVenuePresentationFactory } from "../use-cases/venue/get-venue-presentation/factory-get-venue-presentation";
+import { reorderVenueImagesFactory } from "../use-cases/venue/reorder-venue-images/factory-reorder-venue-images";
+import { chooseVenueImageFactory } from "../use-cases/venue/choose-venue-image/factory-choose-venue-image";
 
 
 const venueRoutes = Router()
@@ -28,6 +30,16 @@ venueRoutes.get("/presentation/:venueId", async (req, res) => {
     const controller = getVenuePresentationFactory();
     await controller.handle(req, res);
 })
+
+venueRoutes.put("/presentation/:venueId/image-order", ensureAuthenticate, async (req, res) => {
+    const controller = reorderVenueImagesFactory();
+    await controller.handle(req, res);
+});
+
+venueRoutes.put("/presentation/:venueId/image-choice", ensureAuthenticate, async (req, res) => {
+    const controller = chooseVenueImageFactory();
+    await controller.handle(req, res);
+});
 
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();

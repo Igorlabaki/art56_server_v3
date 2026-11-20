@@ -17,6 +17,7 @@ import { uniqueProposalYears } from "../../functions/proposal-years"
 import { revenueEventWhere, revenueYears, sameMonthEventWhere, sameMonthNumber, sameMonthRevenueByYear } from "../../functions/same-month-revenue-by-year"
 import { previousYearWindow, yearlyChange } from "../../functions/yearly-change"
 import { VenuePublicPresentationSource } from "../../functions/to-venue-presentation"
+import { VenueImagesForChoice } from "../interface/proposal-repository-interface"
 import { isVenueIdKey, venuePublicKeyWhere } from "../../functions/venue-public-key"
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
@@ -206,6 +207,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const venue = await this.prisma.venue.findUnique({
       where: venuePublicKeyWhere(venueId),
       select: {
+        id: true,
         name: true,
         description: true,
         slogan: true,
@@ -288,6 +290,37 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           videoUrl: amenity.videoUrl,
         };
       }),
+    };
+  }
+
+  async listImageCatalog(venueKey: string): Promise<VenueImagesForChoice | null> {
+    const venue = await this.prisma.venue.findUnique({
+      where: venuePublicKeyWhere(venueKey),
+      select: {
+        id: true,
+        images: {
+          select: {
+            id: true,
+            imageUrl: true,
+            description: true,
+            position: true,
+            isShowOnProposal: true,
+          },
+        },
+      },
+    });
+    if (!venue) return null;
+    return {
+      venueId: venue.id,
+      images: venue.images
+        .map((image) => ({
+          id: image.id,
+          imageUrl: image.imageUrl,
+          description: image.description,
+          position: image.position,
+          isShowOnProposal: image.isShowOnProposal === true,
+        }))
+        .sort((left, right) => left.position - right.position || left.id.localeCompare(right.id)),
     };
   }
 

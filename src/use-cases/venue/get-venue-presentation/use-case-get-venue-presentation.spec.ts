@@ -1,3 +1,4 @@
+import { sign } from "jsonwebtoken";
 import { describe, expect, it } from "vitest";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { toVenuePresentation, VenuePublicPresentationSource } from "../../../functions/to-venue-presentation";
@@ -46,6 +47,7 @@ function keysDeep(value: unknown): string[] {
 
 function source(overrides: Partial<VenuePublicPresentationSource> = {}): VenuePublicPresentationSource {
     return {
+        id: "venue-1",
         name: "Casa Aurora",
         description: "Jardim",
         slogan: "O OASIS URBANO",
@@ -188,11 +190,13 @@ describe("apresentacao publica do espaco", () => {
     it("responde 404 quando o espaco nao existe e 200 com o recorte quando existe", async () => {
         const missing = new GetVenuePresentationUseCase({
             getPublicPresentation: async () => null,
+            listImageCatalog: async () => null,
         });
         await expect(missing.execute("venue-x")).rejects.toBeInstanceOf(HttpResourceNotFoundError);
 
         const found = new GetVenuePresentationUseCase({
             getPublicPresentation: async () => source(),
+            listImageCatalog: async () => null,
         });
         const listed = await found.execute("venue-a");
         expect(listed.data.services.map((service) => service.name)).toEqual(["Bar", "Som"]);
@@ -211,10 +215,64 @@ describe("apresentacao publica do espaco", () => {
             },
         };
         await new GetVenuePresentationController(missing).handle(
-            { params: { venueId: "venue-x" } } as never,
+            { params: { venueId: "venue-x" }, headers: {} } as never,
             response as never,
         );
         expect(response.statusCode).toBe(404);
+    });
+
+    it("com Site devolve a foto de fora e sem Site nao consulta o catalogo", async () => {
+        let catalogCalls = 0;
+        const reader = {
+            getPublicPresentation: async () => source(),
+            listImageCatalog: async () => {
+                catalogCalls += 1;
+                return {
+                    venueId: "venue-1",
+                    images: source().images.map((image) => ({
+                        ...image,
+                        isShowOnProposal: image.isShowOnProposal === true,
+                    })),
+                };
+            },
+        };
+        const editor = new GetVenuePresentationUseCase(reader, { canEditVenueSite: async () => true });
+        const edited = await editor.execute("Casa Aurora", "owner-1");
+        expect(edited.data.canReorder).toBe(true);
+        expect(JSON.stringify(edited.data.catalog)).toContain("hidden.png");
+        expect(edited.data.images.map((image) => image.id)).not.toContain("photo-hidden");
+
+        catalogCalls = 0;
+        const stranger = new GetVenuePresentationUseCase(reader, { canEditVenueSite: async () => false });
+        const denied = await stranger.execute("Casa Aurora", "other-1");
+        const guest = await new GetVenuePresentationUseCase(reader, { canEditVenueSite: async () => true }).execute("Casa Aurora", null);
+        expect(catalogCalls).toBe(0);
+        expect(denied.data.canReorder).toBe(false);
+        expect(denied.data.catalog).toEqual([]);
+        expect(guest.data.catalog).toEqual([]);
+        expect(JSON.stringify(denied.data)).not.toContain("hidden.png");
+        expect(JSON.stringify(guest.data)).not.toContain("hidden.png");
+
+        const token = sign({ id: "owner-1" }, "venue-presentation-secret");
+        process.env.JWT_SECRET_KEY = "venue-presentation-secret";
+        const response = {
+            statusCode: 0,
+            body: null as { data?: { canReorder?: boolean } } | null,
+            status(code: number) {
+                this.statusCode = code;
+                return this;
+            },
+            json(body: { data?: { canReorder?: boolean } }) {
+                this.body = body;
+                return this;
+            },
+        };
+        await new GetVenuePresentationController(editor).handle(
+            { params: { venueId: "Casa Aurora" }, headers: { authorization: `Bearer ${token}` } } as never,
+            response as never,
+        );
+        expect(response.statusCode).toBe(200);
+        expect(response.body?.data?.canReorder).toBe(true);
     });
 
     it("publica a apresentacao sem autenticacao e mantem a gravacao fechada", () => {
@@ -227,6 +285,8 @@ describe("apresentacao publica do espaco", () => {
 
         expect(handlers("/presentation/:venueId").length).toBeGreaterThan(0);
         expect(handlers("/presentation/:venueId")).not.toContain("ensureAuthenticate");
+        expect(handlers("/presentation/:venueId/image-order")).toContain("ensureAuthenticate");
+        expect(handlers("/presentation/:venueId/image-choice")).toContain("ensureAuthenticate");
         expect(handlers("/update")).toContain("ensureAuthenticate");
         expect(handlers("/delete/:venueId")).toContain("ensureAuthenticate");
     });
@@ -265,7 +325,10 @@ describe("apresentacao publica pelo nome do espaco", () => {
         expect(calls[0].select).not.toHaveProperty("contracts");
         expect(calls[0].select).not.toHaveProperty("Payment");
         expect(calls[0].select).not.toHaveProperty("attachments");
-        expect(Object.keys(listed.data).sort()).toEqual([...ALLOWED_KEYS].sort());
+        expect(Object.keys(listed.data).sort()).toEqual([...ALLOWED_KEYS, "canReorder", "catalog"].sort());
+        expect(listed.data.canReorder).toBe(false);
+        expect(listed.data.catalog).toEqual([]);
+        expect(JSON.stringify(listed.data)).not.toContain("hidden.png");
         const body = JSON.stringify(listed);
         for (const field of ["owner\"", "cpf", "pix", "contract", "payment"]) {
             expect(body).not.toContain(field);

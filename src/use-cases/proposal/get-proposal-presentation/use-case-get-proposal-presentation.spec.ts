@@ -62,6 +62,56 @@ function permission(allowed: boolean): VenueSiteEditPermission {
     return { canEditVenueSite: async () => allowed };
 }
 
+const oldProposalId = "7a6974ae-d08f-4b9b-97a4-ccf3998aa7e7";
+
+function publicCodeGallery() {
+    const images = [
+        { id: "a", imageUrl: "https://a", description: null, position: 1, isShowOnProposal: true },
+        { id: "hidden", imageUrl: "https://oculta", description: null, position: 2, isShowOnProposal: false },
+    ];
+    const venue = (onlyVisible: boolean) => ({
+        id: "venue-1",
+        name: "AR756",
+        description: null,
+        slogan: null,
+        logoUrl: null,
+        city: "Campinas",
+        state: "SP",
+        neighborhood: "Centro",
+        street: "Rua",
+        streetNumber: "1",
+        maxGuest: 10,
+        hasOvernightStay: false,
+        checkIn: null,
+        checkOut: null,
+        minimumNights: null,
+        openingHour: null,
+        closingHour: null,
+        url: null,
+        instagramUrl: null,
+        facebookUrl: null,
+        tiktokUrl: null,
+        tourVideoUrl: null,
+        whatsappNumber: null,
+        proposalPrimaryColor: null,
+        proposalSecondaryColor: null,
+        proposalTextColor: null,
+        images: onlyVisible ? images.filter((image) => image.isShowOnProposal) : images,
+        amenities: [],
+    });
+    return {
+        proposal: {
+            findUnique: async (args: { where: { id?: string; publicCode?: string }; select?: { venue?: { select?: { images?: { where?: { isShowOnProposal?: boolean } } } } } }) => {
+                const known = args.where.publicCode === "k7m2abcd" || args.where.id === "real-id" || args.where.id === oldProposalId;
+                if (!known) return null;
+                if (args.where.publicCode === "k7m2abcd" && !args.select?.venue) return { id: "real-id" };
+                const onlyVisible = args.select?.venue?.select?.images?.where?.isShowOnProposal === true;
+                return { venue: venue(onlyVisible) };
+            },
+        },
+    };
+}
+
 function useCase(repository: Partial<ProposalRepositoryInterface>, allowed = false) {
     return new GetProposalPresentationUseCase({
         listVenueImageCatalog: async () => ({ venueId: "venue-1", images: [] }),
@@ -274,7 +324,7 @@ describe("pacote publico da proposta", () => {
         };
         const repository = new PrismaProposalRepository(prisma as never);
 
-        await repository.getPresentation("p1");
+        await repository.getPresentation(oldProposalId);
 
         expect(captured?.select?.venue?.select?.images?.where).toEqual({ isShowOnProposal: true });
         expect(captured?.select?.venue?.select?.images?.select?.id).toBe(true);
@@ -305,7 +355,7 @@ describe("pacote publico da proposta", () => {
         };
         const repository = new PrismaProposalRepository(prisma as never);
 
-        const read = await repository.getPresentation("p1");
+        const read = await repository.getPresentation(oldProposalId);
 
         expect(captured?.select?.venue?.select?.amenities?.select?.images).toEqual({
             select: { imageUrl: true },
@@ -313,5 +363,44 @@ describe("pacote publico da proposta", () => {
         });
         expect(captured?.select?.venue?.select?.amenities?.select).not.toHaveProperty("imageUrl");
         expect(read?.amenities[0]).toMatchObject({ images: ["https://a", "https://b"], imageUrl: "https://a" });
+    });
+
+    it("codigo publico com Site devolve o catalogo e a foto de fora", async () => {
+        const subject = new GetProposalPresentationUseCase(new PrismaProposalRepository(publicCodeGallery() as never), permission(true));
+
+        const result = await subject.execute({ proposalId: "natal-k7m2abcd", userId: "owner-1" });
+
+        expect(result.data.canReorder).toBe(true);
+        expect(result.data.catalog.map((image) => image.imageUrl)).toContain("https://oculta");
+        expect(result.data.images.map((image) => image.imageUrl)).not.toContain("https://oculta");
+    });
+
+    it("codigo publico sem Site ou sem usuario devolve catalogo vazio e esconde a url oculta", async () => {
+        const withoutPermission = new GetProposalPresentationUseCase(new PrismaProposalRepository(publicCodeGallery() as never), permission(false));
+        const anonymous = new GetProposalPresentationUseCase(new PrismaProposalRepository(publicCodeGallery() as never), permission(true));
+
+        const denied = await withoutPermission.execute({ proposalId: "natal-k7m2abcd", userId: "other-1" });
+        const guest = await anonymous.execute({ proposalId: "natal-k7m2abcd", userId: null });
+
+        expect(denied.data.canReorder).toBe(false);
+        expect(denied.data.catalog).toEqual([]);
+        expect(JSON.stringify(denied.data)).not.toContain("https://oculta");
+        expect(guest.data.catalog).toEqual([]);
+        expect(JSON.stringify(guest.data)).not.toContain("https://oculta");
+    });
+
+    it("id antigo continua devolvendo o catalogo para quem tem Site", async () => {
+        const subject = new GetProposalPresentationUseCase(new PrismaProposalRepository(publicCodeGallery() as never), permission(true));
+
+        const result = await subject.execute({ proposalId: oldProposalId, userId: "owner-1" });
+
+        expect(result.data.canReorder).toBe(true);
+        expect(result.data.catalog.map((image) => image.id)).toEqual(["a", "hidden"]);
+    });
+
+    it("codigo inexistente responde 404", async () => {
+        const subject = new GetProposalPresentationUseCase(new PrismaProposalRepository(publicCodeGallery() as never), permission(true));
+
+        await expect(subject.execute({ proposalId: "natal-zzzzzzzz", userId: "owner-1" })).rejects.toBeInstanceOf(HttpResourceNotFoundError);
     });
 });

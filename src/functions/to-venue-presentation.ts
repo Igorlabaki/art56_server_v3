@@ -6,6 +6,7 @@ export type VenuePresentationPricingModel =
     | "TIERED";
 
 export type VenuePublicPresentationSource = {
+    id: string;
     name: string;
     description: string | null;
     slogan: string | null;

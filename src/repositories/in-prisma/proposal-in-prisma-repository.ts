@@ -380,7 +380,9 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     };
   }
 
-  async listVenueImagesForReorder(proposalId: string): Promise<VenueImagesForReorder | null> {
+  async listVenueImagesForReorder(proposalKey: string): Promise<VenueImagesForReorder | null> {
+    const proposalId = await this.proposalIdFromKey(proposalKey);
+    if (!proposalId) return null;
     const proposal = await this.prisma.proposal.findUnique({
       where: { id: proposalId },
       select: {
@@ -437,7 +439,9 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     );
   }
 
-  async listVenueImageCatalog(proposalId: string): Promise<VenueImagesForChoice | null> {
+  async listVenueImageCatalog(proposalKey: string): Promise<VenueImagesForChoice | null> {
+    const proposalId = await this.proposalIdFromKey(proposalKey);
+    if (!proposalId) return null;
     const proposal = await this.prisma.proposal.findUnique({
       where: { id: proposalId },
       select: {

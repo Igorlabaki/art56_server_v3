@@ -129,4 +129,72 @@ describe("trocar a foto do link", () => {
         expect(calls[0].data).toEqual({ position: 2, isShowOnProposal: false });
         expect(calls[0].data).not.toHaveProperty("isShowOnOrganization");
     });
+
+    it("codigo publico com Site grava a troca e sem Site ou sem token nao grava", async () => {
+        const images = [
+            { id: "a", imageUrl: "https://a", description: null, position: 1, isShowOnProposal: true },
+            { id: "hidden", imageUrl: "https://oculta", description: null, position: 2, isShowOnProposal: false },
+        ];
+        const writes: string[] = [];
+        const prisma = {
+            proposal: {
+                findUnique: async (args: { where: { id?: string; publicCode?: string }; select?: { venue?: unknown } }) => {
+                    if (args.where.publicCode === "k7m2abcd" && !args.select?.venue) return { id: "real-id" };
+                    if (args.where.publicCode === "zzzzzzzz") return null;
+                    if (args.where.id === "real-id" || args.where.id === "7a6974ae-d08f-4b9b-97a4-ccf3998aa7e7") {
+                        return { venue: { id: "venue-1", images } };
+                    }
+                    return null;
+                },
+            },
+            $transaction: async (ops: Promise<unknown>[]) => Promise.all(ops),
+            image: {
+                update: (args: { where: { id: string } }) => {
+                    writes.push(args.where.id);
+                    return Promise.resolve({});
+                },
+            },
+        };
+        const repository = () => new PrismaProposalRepository(prisma as never);
+        const allowed: VenueSiteEditPermission = { canEditVenueSite: async () => true };
+        const denied: VenueSiteEditPermission = { canEditVenueSite: async () => false };
+
+        const saved = await new ChooseProposalImageUseCase(repository(), allowed).execute({
+            proposalId: "natal-k7m2abcd",
+            slotId: "a",
+            replacementId: "hidden",
+            userId: "user-1",
+        });
+        expect(saved.data.images.map((image) => image.id)).toEqual(["hidden"]);
+        expect(writes).toEqual(["a", "hidden"]);
+
+        const oldId = await new ChooseProposalImageUseCase(repository(), allowed).execute({
+            proposalId: "7a6974ae-d08f-4b9b-97a4-ccf3998aa7e7",
+            slotId: "a",
+            replacementId: "hidden",
+            userId: "user-1",
+        });
+        expect(oldId.data.images.map((image) => image.id)).toEqual(["hidden"]);
+
+        writes.length = 0;
+        await expect(new ChooseProposalImageUseCase(repository(), denied).execute({
+            proposalId: "natal-k7m2abcd",
+            slotId: "a",
+            replacementId: "hidden",
+            userId: "user-2",
+        })).rejects.toBeInstanceOf(HttpForbiddenError);
+        await expect(new ChooseProposalImageUseCase(repository(), allowed).execute({
+            proposalId: "natal-k7m2abcd",
+            slotId: "a",
+            replacementId: "hidden",
+            userId: null,
+        })).rejects.toBeInstanceOf(HttpTokenError);
+        await expect(new ChooseProposalImageUseCase(repository(), allowed).execute({
+            proposalId: "natal-zzzzzzzz",
+            slotId: "a",
+            replacementId: "hidden",
+            userId: "user-1",
+        })).rejects.toBeInstanceOf(HttpResourceNotFoundError);
+        expect(writes).toHaveLength(0);
+    });
 });
