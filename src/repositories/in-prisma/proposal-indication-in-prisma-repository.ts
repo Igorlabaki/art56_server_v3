@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { proposalPublicLookup } from "../../functions/proposal-public-key";
 import {
     IndicationContactRecord,
     ProposalIndicationContext,
@@ -25,8 +26,10 @@ export class PrismaProposalIndicationRepository implements ProposalIndicationRep
     constructor(private prisma: PrismaClient) {}
 
     async findProposal(proposalId: string): Promise<ProposalIndicationContext | null> {
+        const lookup = proposalPublicLookup(proposalId);
+        if (!lookup) return null;
         const proposal = await this.prisma.proposal.findUnique({
-            where: { id: proposalId },
+            where: lookup.kind === "id" ? { id: lookup.id } : { publicCode: lookup.code },
             select: {
                 id: true,
                 venueId: true,

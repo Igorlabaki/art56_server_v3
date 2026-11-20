@@ -125,6 +125,7 @@ model UserOrganizationPermission {
 
 model Proposal {
   id                  String               @id @default(uuid())
+  publicCode          String?              @unique @db.Char(8)
   completeCompanyName String?
   completeClientName  String
   cpf                 String?

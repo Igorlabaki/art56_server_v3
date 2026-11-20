@@ -11,6 +11,7 @@ import { MonthlyAverageProposal, yearsProposalWhere } from "../../functions/mont
 import { revenueEventWhere, revenueYears } from "../../functions/same-month-revenue-by-year";
 import { reportYearRange } from "../../functions/report-year-range";
 import { eventCategoryCounts } from "../../functions/event-category";
+import { createWithUniquePublicCode, proposalPublicLookup, resolveProposalId } from "../../functions/proposal-public-key";
 export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
   constructor(private readonly prisma: PrismaClient) { }
@@ -19,9 +20,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
     const { serviceIds, serviceLines, venueId, ...rest } = params
 
-    const x = await this.prisma.proposal.create({
+    return createWithUniquePublicCode((publicCode) => this.prisma.proposal.create({
       data: {
         ...rest,
+        publicCode,
         venue: {
           connect: {
             id: venueId
@@ -33,26 +35,24 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
           },
         },
       },
-    });
-
-
-    return x
+    }));
   }
 
   async createPerDay(params: CreateProposalInDbParams): Promise<Proposal | null> {
 
     const { serviceIds, serviceLines, ...rest } = params
 
-    return await this.prisma.proposal.create({
+    return createWithUniquePublicCode((publicCode) => this.prisma.proposal.create({
       data: {
         ...rest,
+        publicCode,
         proposalServices: {
           createMany: {
             data: serviceLineRows(serviceLines, serviceIds),
           },
         },
       },
-    });
+    }));
   }
 
   async update(reference: UpdateProposalInDbParam): Promise<Proposal | null> {
@@ -103,10 +103,22 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
     })
   }
 
+  private proposalIdFromKey(key: string): Promise<string | null> {
+    return resolveProposalId(key, async (code) => {
+      const proposal = await this.prisma.proposal.findUnique({
+        where: { publicCode: code },
+        select: { id: true },
+      });
+      return proposal?.id ?? null;
+    });
+  }
+
   async updateServices({ serviceIds, serviceLines, proposalId }: UpdateProposalServices): Promise<Proposal | null> {
+    const id = await this.proposalIdFromKey(proposalId);
+    if (!id) return null;
     if (serviceLines) {
       return await this.prisma.proposal.update({
-        where: { id: proposalId },
+        where: { id },
         data: {
           proposalServices: {
             deleteMany: {},
@@ -116,7 +128,7 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
       })
     }
     const currentServices = await this.prisma.proposal.findUnique({
-      where: { id: proposalId },
+      where: { id },
       include: {
         proposalServices: {
           select: { serviceId: true },
@@ -132,16 +144,16 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
     return await this.prisma.proposal.update({
       where: {
-        id: proposalId
+        id
       },
       data: {
         proposalServices: {
           create: ownersToConnect.map((serviceId) => ({
-            service: { connect: { id: serviceId } }, // Relaciona o owner
+            service: { connect: { id: serviceId } },
           })),
           deleteMany: ownersToDisconnect.map((serviceId) => ({
             serviceId,
-            proposalId: proposalId
+            proposalId: id
           })),
         },
       }
@@ -225,10 +237,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
 
 
   async getById(reference: string): Promise<ProposalWithRelations | null> {
+    const lookup = proposalPublicLookup(reference);
+    if (!lookup) return null;
     return await this.prisma.proposal.findUnique({
-      where: {
-        id: reference
-      },
+      where: lookup.kind === "id" ? { id: lookup.id } : { publicCode: lookup.code },
       include: {
         proposalServices: {
           include: {
@@ -255,8 +267,10 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
   async getPresentation(proposalId: string): Promise<ProposalPresentationRecord | null> {
+    const lookup = proposalPublicLookup(proposalId);
+    if (!lookup) return null;
     const proposal = await this.prisma.proposal.findUnique({
-      where: { id: proposalId },
+      where: lookup.kind === "id" ? { id: lookup.id } : { publicCode: lookup.code },
       select: {
         venue: {
           select: {
@@ -486,10 +500,12 @@ export class PrismaProposalRepository implements ProposalRepositoryInterface {
   }
 
   async updatePersonalInfo({ proposalId, data }: UpdatePersonalInfoProposalSchema): Promise<Proposal | null> {
+    const id = await this.proposalIdFromKey(proposalId);
+    if (!id) return null;
     const { cep, cpf, city, completeClientName, completeCompanyName, neighborhood, state, street, streetNumber, rg, cnpj, adressComplement, email } = data
     return await this.prisma.proposal.update({
       where: {
-        id: proposalId
+        id
       },
       data: {
         cpf,
