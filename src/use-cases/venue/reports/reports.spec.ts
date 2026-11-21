@@ -1,10 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { HttpForbiddenError } from "../../../errors/errors-type/http-forbidden-error";
 import { reportYearRange } from "../../../functions/report-year-range";
 import { ReportProposalWhere } from "../../../repositories/interface/proposal-repository-interface";
 import { OccupancyRowsQuery } from "../../../repositories/interface/data-event-repository-interface";
 import { venueRoutes } from "../../../router/venue";
 import { GetEventProfileReportUseCase } from "./event-profile/use-case-get-event-profile-report";
+import { GetEventOriginReportUseCase } from "./event-origin/use-case-get-event-origin-report";
+import { getEventOriginReportFactory } from "./event-origin/factory-get-event-origin-report";
+import { ReportController } from "./report-controller";
+import { PrismaProposalRepository } from "../../../repositories/in-prisma/proposal-in-prisma-repository";
 import { GetLeadTimeReportUseCase } from "./lead-time/use-case-get-lead-time-report";
 import { GetOccupancyReportUseCase } from "./occupancy/use-case-get-occupancy-report";
 import { ReportAuthorizer } from "./report-authorizer";
@@ -45,6 +49,14 @@ function fakeProposals() {
             return [
                 { guestNumber: 90, eventCategory: "WEDDING" as const },
                 { guestNumber: 120, eventCategory: null },
+            ];
+        },
+        eventOriginRows: async (where: ReportProposalWhere) => {
+            calls.push({ method: "eventOriginRows", where });
+            return [
+                { city: "  Sao Paulo  ", state: "SP", neighborhood: "Centro" },
+                { city: "sao paulo", state: "sp", neighborhood: "centro" },
+                { city: "  ", state: "SP", neighborhood: "Centro" },
             ];
         },
     };
@@ -94,6 +106,7 @@ describe("relatorios agregados do espaco", () => {
         await expect(new GetLeadTimeReportUseCase(proposals, denied).execute("user-1", params)).rejects.toBeInstanceOf(HttpForbiddenError);
         await expect(new GetServiceAdherenceReportUseCase(proposals, denied).execute("user-1", params)).rejects.toBeInstanceOf(HttpForbiddenError);
         await expect(new GetEventProfileReportUseCase(proposals, denied).execute("user-1", params)).rejects.toBeInstanceOf(HttpForbiddenError);
+        await expect(new GetEventOriginReportUseCase(proposals, denied).execute("user-1", params)).rejects.toBeInstanceOf(HttpForbiddenError);
         expect(proposals.calls).toEqual([]);
         expect(dateEvents.calls).toEqual([]);
     });
@@ -161,6 +174,7 @@ describe("relatorios agregados do espaco", () => {
             new GetLeadTimeReportUseCase(proposals, granted).execute("user-1", params),
             new GetServiceAdherenceReportUseCase(proposals, granted).execute("user-1", params),
             new GetEventProfileReportUseCase(proposals, granted).execute("user-1", params),
+            new GetEventOriginReportUseCase(proposals, granted).execute("user-1", params),
             new GetOccupancyReportUseCase(fakeDateEvents(), granted).execute("user-1", params),
         ]);
         const body = JSON.stringify(responses);
@@ -192,11 +206,45 @@ describe("relatorios agregados do espaco", () => {
         const stack = (venueRoutes as unknown as {
             stack: { match: (path: string) => boolean; route?: { path: string; methods: Record<string, boolean>; stack: { name: string }[] } }[];
         }).stack;
-        for (const name of ["occupancy", "lead-time", "service-adherence", "event-profile", "ads"]) {
+        for (const name of ["occupancy", "lead-time", "service-adherence", "event-profile", "event-origin", "ads"]) {
             const path = `/reports/${name}`;
             const first = stack.find((layer) => layer.route?.methods.get && layer.match(path));
             expect(first?.route?.path).toBe(path);
             expect(first?.route?.stack.map((layer) => layer.name)).toContain("ensureAuthenticate");
         }
+    });
+
+    it("origem agrupa sem categoria e a rota fica no ReportController", async () => {
+        const proposals = fakeProposals();
+        const response = await new GetEventOriginReportUseCase(proposals, authorizer(true))
+            .execute("user-1", { venueId: "venue-a", year: 2026, eventCategory: "WEDDING" });
+
+        expect(proposals.calls[0]).toEqual({
+            method: "eventOriginRows",
+            where: { venueId: "venue-a", approved: true, startDate: reportYearRange(2026) },
+        });
+        expect(response).toMatchObject({ success: true, message: "Sucesso", count: 1, type: "EventOriginReport" });
+        expect(response.data).toEqual({
+            year: 2026,
+            events: 2,
+            cities: [{ label: "Sao Paulo", count: 2 }],
+            states: [{ label: "SP", count: 2 }],
+            neighborhoods: [{ label: "Centro", count: 2 }],
+        });
+        expect(Object.keys(response.data).sort()).toEqual(["cities", "events", "neighborhoods", "states", "year"]);
+        expect(getEventOriginReportFactory()).toBeInstanceOf(ReportController);
+    });
+
+    it("eventOriginRows seleciona so cidade, estado e bairro", async () => {
+        const where = { venueId: "venue-a", approved: true, startDate: reportYearRange(2026) };
+        const findMany = vi.fn(async () => []);
+        const repository = new PrismaProposalRepository({ proposal: { findMany } } as never);
+
+        await repository.eventOriginRows(where);
+
+        expect(findMany).toHaveBeenCalledWith({
+            where,
+            select: { city: true, state: true, neighborhood: true },
+        });
     });
 });

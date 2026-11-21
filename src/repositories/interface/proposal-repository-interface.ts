@@ -228,6 +228,12 @@ export interface EventProfileReportRow {
   eventCategory: EventCategory | null;
 }
 
+export interface EventOriginReportRow {
+  city: string | null;
+  state: string | null;
+  neighborhood: string | null;
+}
+
 export interface AdsReportProposalRow {
   createdAt: Date;
   trafficSource: TrafficSource;
@@ -258,5 +264,6 @@ export interface ProposalRepositoryInterface {
   leadTimeRows: (where: ReportProposalWhere) => Promise<LeadTimeReportRow[]>
   serviceAdherenceRows: (where: ReportProposalWhere) => Promise<ServiceAdherenceReportRow[]>
   eventProfileRows: (where: ReportProposalWhere) => Promise<EventProfileReportRow[]>
+  eventOriginRows: (where: ReportProposalWhere) => Promise<EventOriginReportRow[]>
   adsReportRows: (where: ReportProposalWhere) => Promise<AdsReportProposalRow[]>
 }

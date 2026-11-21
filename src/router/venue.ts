@@ -18,6 +18,7 @@ import { getOccupancyReportFactory } from "../use-cases/venue/reports/occupancy/
 import { getLeadTimeReportFactory } from "../use-cases/venue/reports/lead-time/factory-get-lead-time-report";
 import { getServiceAdherenceReportFactory } from "../use-cases/venue/reports/service-adherence/factory-get-service-adherence-report";
 import { getEventProfileReportFactory } from "../use-cases/venue/reports/event-profile/factory-get-event-profile-report";
+import { getEventOriginReportFactory } from "../use-cases/venue/reports/event-origin/factory-get-event-origin-report";
 import { getAdsReportFactory } from "../use-cases/venue/reports/ads/factory-get-ads-report";
 import { getVenuePresentationFactory } from "../use-cases/venue/get-venue-presentation/factory-get-venue-presentation";
 import { reorderVenueImagesFactory } from "../use-cases/venue/reorder-venue-images/factory-reorder-venue-images";
@@ -125,6 +126,9 @@ venueRoutes.get("/reports/service-adherence", ensureAuthenticate, async (req, re
 });
 venueRoutes.get("/reports/event-profile", ensureAuthenticate, async (req, res) => {
     await getEventProfileReportFactory().handle(req as unknown as AuthenticatedRequest, res);
+});
+venueRoutes.get("/reports/event-origin", ensureAuthenticate, async (req, res) => {
+    await getEventOriginReportFactory().handle(req as unknown as AuthenticatedRequest, res);
 });
 venueRoutes.get("/reports/ads", ensureAuthenticate, async (req, res) => {
     await getAdsReportFactory().handle(req as unknown as AuthenticatedRequest, res);
