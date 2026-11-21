@@ -1,7 +1,7 @@
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error"
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface"
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error"
-import { UpdateVenueSchemaDb } from "../../../zod/venue/update-venue-params-schema"
+import { omitLegacyVenueLinkColumns } from "../../../functions/venue-link"
 import { UpdateVenueInfoSchemaDb } from "../../../zod/venue/update-info-venue-params-schema"
 
 
@@ -17,7 +17,7 @@ class UpdateInfoVenueUseCase {
         }
         //
 
-        const updatedVenue = await this.venueRepository.updateInfo(param)
+        const updatedVenue = await this.venueRepository.updateInfo(omitLegacyVenueLinkColumns(param))
         if (!updatedVenue) {
             throw new HttpConflictError("Locacao")
         }

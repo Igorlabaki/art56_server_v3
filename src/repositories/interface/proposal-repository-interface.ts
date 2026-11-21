@@ -1,4 +1,5 @@
 import { Person, Payment, Proposal, Service } from "@prisma/client";
+import { ResolvedVenueLink, VenueLinkRow } from "../../functions/venue-link";
 import { ServiceQuoteLine } from "../../functions/quote-service-lines";
 import { EventCategory, EventCategoryCount } from "../../functions/event-category";
 import { MonthlyAverageProposal } from "../../functions/monthly-average-by-years";
@@ -149,6 +150,7 @@ export interface ProposalPresentation {
   description: string | null;
   slogan: string | null;
   logoUrl: string | null;
+  faviconUrl: string | null;
   city: string;
   state: string;
   neighborhood: string;
@@ -167,6 +169,7 @@ export interface ProposalPresentation {
   tiktokUrl: string | null;
   tourVideoUrl: string | null;
   whatsappNumber: string | null;
+  links: ResolvedVenueLink[];
   proposalPrimaryColor: string | null;
   proposalSecondaryColor: string | null;
   proposalTextColor: string | null;
@@ -176,8 +179,11 @@ export interface ProposalPresentation {
   amenities: ProposalPresentationAmenity[];
 }
 
-export interface ProposalPresentationRecord extends Omit<ProposalPresentation, "canReorder" | "catalog"> {
+export interface ProposalPresentationRecord extends Omit<ProposalPresentation, "canReorder" | "catalog" | "links"> {
   venueId: string;
+  linkRows?: VenueLinkRow[];
+  email?: string | null;
+  organizationUrl?: string | null;
 }
 
 export interface VenueImageForReorder {

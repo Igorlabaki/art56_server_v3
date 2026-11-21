@@ -16,9 +16,39 @@ import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-param
 import { uniqueProposalYears } from "../../functions/proposal-years"
 import { revenueEventWhere, revenueYears, sameMonthEventWhere, sameMonthNumber, sameMonthRevenueByYear } from "../../functions/same-month-revenue-by-year"
 import { previousYearWindow, yearlyChange } from "../../functions/yearly-change"
+import { omitLegacyVenueLinkColumns, resolvedPublicVenueLinks, VenueLinkRow, VenueLinkSource } from "../../functions/venue-link"
 import { VenuePublicPresentationSource } from "../../functions/to-venue-presentation"
 import { VenueImagesForChoice } from "../interface/proposal-repository-interface"
 import { isVenueIdKey, venuePublicKeyWhere } from "../../functions/venue-public-key"
+
+const venueLinkRowSelect = {
+  kind: true,
+  url: true,
+  visible: true,
+  position: true,
+} as const
+
+function resolvedLinksOf(venue: {
+  name: string
+  links: VenueLinkRow[]
+  organization?: { url: string | null } | null
+} & VenueLinkSource) {
+  return resolvedPublicVenueLinks(venue.name, venue.links, {
+    url: venue.url,
+    instagramUrl: venue.instagramUrl,
+    facebookUrl: venue.facebookUrl,
+    tiktokUrl: venue.tiktokUrl,
+    whatsappNumber: venue.whatsappNumber,
+    email: venue.email,
+    tourVideoUrl: venue.tourVideoUrl,
+    street: venue.street,
+    streetNumber: venue.streetNumber,
+    neighborhood: venue.neighborhood,
+    city: venue.city,
+    state: venue.state,
+    organizationUrl: venue.organization?.url ?? venue.organizationUrl,
+  })
+}
 
 export class PrismaVenueRepository implements VenueRepositoryInterface {
 
@@ -122,7 +152,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async updateInfo(reference: UpdateVenueInfoSchemaDb): Promise<Venue | null> {
-    const { venueId,userId, ...rest } = reference;
+    const { venueId, userId, ...rest } = omitLegacyVenueLinkColumns(reference);
 
     return await this.prisma.venue.update({
       where: { id: venueId },
@@ -133,7 +163,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async update(reference: UpdateVenueSchemaDb): Promise<Venue | null> {
-    const { pricePerDay, pricePerPerson, pricePerPersonDay,standardEventDuration, pricePerPersonHour, owners, maxGuest,hasOvernightStay, minimumPrice,minimumNights, ...rest } = reference.data;
+    const { pricePerDay, pricePerPerson, pricePerPersonDay,standardEventDuration, pricePerPersonHour, owners, maxGuest,hasOvernightStay, minimumPrice,minimumNights, ...rest } = omitLegacyVenueLinkColumns(reference.data);
 
     const currentVenue = await this.prisma.venue.findUnique({
       where: { id: reference.venueId },
@@ -212,6 +242,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         description: true,
         slogan: true,
         logoUrl: true,
+        faviconUrl: true,
         proposalPrimaryColor: true,
         proposalSecondaryColor: true,
         proposalTextColor: true,
@@ -221,6 +252,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         tiktokUrl: true,
         tourVideoUrl: true,
         whatsappNumber: true,
+        email: true,
         neighborhood: true,
         city: true,
         state: true,
@@ -272,13 +304,21 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           },
           orderBy: { name: "asc" },
         },
+        organization: { select: { url: true } },
+        links: {
+          select: venueLinkRowSelect,
+          orderBy: { position: "asc" },
+        },
       },
     });
 
     if (!venue) return null;
 
+    const { organization, links, ...rest } = venue;
     return {
-      ...venue,
+      ...rest,
+      organizationUrl: organization?.url ?? null,
+      links,
       amenities: venue.amenities.map((amenity) => {
         const images = amenity.images.map((image) => image.imageUrl);
         return {
@@ -322,6 +362,14 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         }))
         .sort((left, right) => left.position - right.position || left.id.localeCompare(right.id)),
     };
+  }
+
+  async getPublicId(key: string): Promise<string | null> {
+    const venue = await this.prisma.venue.findUnique({
+      where: venuePublicKeyWhere(key),
+      select: { id: true },
+    });
+    return venue?.id ?? null;
   }
 
   async getById({ venueId }: GetVenueByIdRequestParamSchema): Promise<Venue | null> {
@@ -389,7 +437,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
   }
 
   async getWebData({ venueId }: GetSelectedVenueRequestParamSchema): Promise<WebDataResponse | null> {
-    return await this.prisma.venue.findFirst({
+    const venue = await this.prisma.venue.findFirst({
       where: {
         id: venueId,
       },
@@ -410,12 +458,26 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         minimumNights: true,
         whatsappNumber: true,
         standardEventDuration: true,
+        tourVideoUrl: true,
+        street: true,
+        streetNumber: true,
+        neighborhood: true,
+        city: true,
+        state: true,
+        organization: { select: { url: true } },
+        links: { select: venueLinkRowSelect, orderBy: { position: "asc" } },
       }
     });
+    if (!venue) return null;
+    const { links, organization, tourVideoUrl, street, streetNumber, neighborhood, city, state, ...rest } = venue;
+    return {
+      ...rest,
+      links: resolvedLinksOf({ ...venue, links, organization, tourVideoUrl, street, streetNumber, neighborhood, city, state }),
+    };
   }
 
   async getHubData({ organizationId }: GetHubDataRequestParamSchema): Promise<HubDataResponse[] | null> {
-    return await this.prisma.venue.findMany({
+    const venues = await this.prisma.venue.findMany({
       where: {
         organizationId,
         isShowOnOrganization: true
@@ -434,6 +496,10 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         whatsappNumber: true,
         standardEventDuration: true,
         minimumNights: true,
+        tourVideoUrl: true,
+        street: true,
+        streetNumber: true,
+        neighborhood: true,
         images: {
           where: {
             isShowOnOrganization: true
@@ -444,7 +510,16 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
             area: "amenities"
           }
         },
+        organization: { select: { url: true } },
+        links: { select: venueLinkRowSelect, orderBy: { position: "asc" } },
       },
+    });
+    return venues.map((venue) => {
+      const { links, organization, tourVideoUrl, street, streetNumber, neighborhood, ...rest } = venue;
+      return {
+        ...rest,
+        links: resolvedLinksOf({ ...venue, links, organization, tourVideoUrl, street, streetNumber, neighborhood }),
+      };
     });
   }
 
@@ -523,7 +598,7 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
 
-    return await this.prisma.venue.findMany({
+    const venues = await this.prisma.venue.findMany({
       where: {
         organizationId,
         ...(name && { name }),
@@ -563,6 +638,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
         tiktokUrl: true,
         whatsappNumber: true,
         isShowOnOrganization: true,
+        email: true,
+        tourVideoUrl: true,
+        street: true,
+        streetNumber: true,
+        neighborhood: true,
+        organization: { select: { url: true } },
+        links: { select: venueLinkRowSelect, orderBy: { position: "asc" } },
         // Próximo evento (qualquer data futura)
         DateEvent: {
           where: {
@@ -596,6 +678,13 @@ export class PrismaVenueRepository implements VenueRepositoryInterface {
           }
         }
       }
+    });
+    return venues.map((venue) => {
+      const { links, organization, email, tourVideoUrl, street, streetNumber, neighborhood, ...rest } = venue;
+      return {
+        ...rest,
+        links: resolvedLinksOf({ ...venue, links, organization, email, tourVideoUrl, street, streetNumber, neighborhood }),
+      };
     });
   }
 

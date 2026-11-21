@@ -4,6 +4,7 @@ import { VenueRule } from "@prisma/client";
 import { HttpForbiddenError } from "../../errors/errors-type/http-forbidden-error";
 import { HttpResourceNotFoundError } from "../../errors/errors-type/http-resource-not-found-error";
 import { HttpTokenError } from "../../errors/errors-type/http-token-error";
+import { PrismaVenueRepository } from "../../repositories/in-prisma/venue-in-prisma-repository";
 import { VenueRuleRepositoryInterface } from "../../repositories/interface/venue-rule-repository-interface";
 import { createVenueRuleSchema } from "../../zod/venue-rule/create-venue-rule-schema";
 import { updateVenueRuleSchema } from "../../zod/venue-rule/update-venue-rule-schema";
@@ -206,8 +207,7 @@ describe("venue rule", () => {
             },
         );
         const venues = {
-            getById: async ({ venueId }: { venueId: string }) =>
-                venueId === "venue-a" ? ({ id: venueId } as never) : null,
+            getPublicId: async (key: string) => (key === "venue-a" || key === "AR756" ? "venue-a" : null),
         };
         const list = new ListPublicVenueRuleUseCase(repository, venues);
 
@@ -217,12 +217,37 @@ describe("venue rule", () => {
             { id: "rule-late", title: null, text: "<b>sem html</b>", position: 2 },
         ]);
         expect(listed.count).toBe(2);
+        const byName = await list.execute("AR756");
+        expect(byName.data).toEqual(listed.data);
+        expect(JSON.stringify(byName)).not.toContain("Nao mostrar");
+        expect(Object.keys(byName.data[0]).sort()).toEqual(["id", "position", "text", "title"]);
 
         const emptyRepository = new FakeVenueRuleRepository();
         const empty = await new ListPublicVenueRuleUseCase(emptyRepository, venues).execute("venue-a");
         expect(empty.data).toEqual([]);
 
         await expect(list.execute("venue-x")).rejects.toBeInstanceOf(HttpResourceNotFoundError);
+    });
+
+    it("resolve o id publico por nome ou uuid e seleciona so o id", async () => {
+        const calls: Array<{ where: unknown; select: unknown }> = [];
+        const prisma = {
+            venue: {
+                findUnique: async (args: { where: unknown; select: unknown }) => {
+                    calls.push(args);
+                    return args.where && "name" in (args.where as object) ? null : { id: "real-id" };
+                },
+            },
+        };
+        const repository = new PrismaVenueRepository(prisma as never);
+        const uuid = "8159e209-0057-4df3-ae72-855363c3b84e";
+
+        await expect(repository.getPublicId("AR756")).resolves.toBeNull();
+        await expect(repository.getPublicId(uuid)).resolves.toBe("real-id");
+        expect(calls).toEqual([
+            { where: { name: "AR756" }, select: { id: true } },
+            { where: { id: uuid }, select: { id: true } },
+        ]);
     });
 
     it("recusa listar e apagar sem token e publica a rota antes da autenticacao", async () => {

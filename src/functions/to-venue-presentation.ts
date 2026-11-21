@@ -1,3 +1,5 @@
+import { resolvedPublicVenueLinks, VenueLinkRow } from "./venue-link";
+
 export type VenuePresentationPricingModel =
     | "PER_PERSON"
     | "PER_DAY"
@@ -11,6 +13,7 @@ export type VenuePublicPresentationSource = {
     description: string | null;
     slogan: string | null;
     logoUrl: string | null;
+    faviconUrl: string | null;
     proposalPrimaryColor: string | null;
     proposalSecondaryColor: string | null;
     proposalTextColor: string | null;
@@ -20,6 +23,9 @@ export type VenuePublicPresentationSource = {
     tiktokUrl: string | null;
     tourVideoUrl: string | null;
     whatsappNumber: string | null;
+    email?: string | null;
+    organizationUrl?: string | null;
+    links?: VenueLinkRow[];
     neighborhood: string;
     city: string;
     state: string;
@@ -106,6 +112,7 @@ export function toVenuePresentation(source: VenuePublicPresentationSource) {
         description: source.description,
         slogan: source.slogan,
         logoUrl: source.logoUrl,
+        faviconUrl: source.faviconUrl,
         proposalPrimaryColor: source.proposalPrimaryColor,
         proposalSecondaryColor: source.proposalSecondaryColor,
         proposalTextColor: source.proposalTextColor,
@@ -115,6 +122,7 @@ export function toVenuePresentation(source: VenuePublicPresentationSource) {
         tiktokUrl: source.tiktokUrl,
         tourVideoUrl: source.tourVideoUrl,
         whatsappNumber: source.whatsappNumber,
+        links: resolvedPublicVenueLinks(source.name, source.links ?? [], source),
         neighborhood: source.neighborhood,
         city: source.city,
         state: source.state,

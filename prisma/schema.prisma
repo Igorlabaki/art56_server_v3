@@ -417,6 +417,7 @@ model Venue {
   facebookUrl            String?
   isShowOnOrganization   Boolean?              @default(false)
   logoUrl                String?
+  faviconUrl             String?
   proposalPrimaryColor   String?               @db.VarChar(7)
   proposalSecondaryColor String?               @db.VarChar(7)
   proposalTextColor      String?               @db.VarChar(7)
@@ -470,9 +471,24 @@ model Venue {
   goals                  Goal[]
   EmailConfig            EmailConfig[]
   userVenuePermissions   UserVenuePermission[]
+  links                  VenueLink[]
 
   @@index([organizationId])
   @@map("venue")
+}
+
+model VenueLink {
+  id       String         @id @default(uuid())
+  venueId  String
+  kind     VenueLinkKind
+  url      String?        @db.VarChar(2048)
+  visible  Boolean        @default(false)
+  position Int            @default(0)
+  venue    Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, kind])
+  @@index([venueId])
+  @@map("venue_link")
 }
 
 model TieredPrice {
@@ -931,6 +947,28 @@ enum DateEventType {
 enum SeasonalFeeType {
   SURCHARGE
   DISCOUNT
+}
+
+enum VenueLinkKind {
+  PRESENTATION
+  BUDGET_FORM
+  RULES
+  WHATSAPP
+  EMAIL
+  GOOGLE_MAPS
+  TOUR_VIDEO
+  ORGANIZATION_SITE
+  SITE
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  YOUTUBE
+  GOOGLE_BUSINESS
+  PINTEREST
+  LINKEDIN
+  TRIPADVISOR
+  AIRBNB
+  MENU
 }
 
 enum PricingModel {

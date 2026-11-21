@@ -6,7 +6,23 @@ import { handleErrors } from "../../../errors/error-handler";
 import { UpdateVenueUseCase } from "./use-case-update-venue";
 import { VenueRepositoryInterface } from "../../../repositories/interface/venue-repository-interface";
 import { HttpConflictError } from "../../../errors/errors-type/htttp-conflict-error";
+import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-request-error";
 import { updateVenueSchemaRequest } from "../../../zod/venue/update-venue-params-schema-db";
+
+type VenueUpload = { buffer: Buffer; mimetype: string; originalname: string };
+
+function venueUploads(req: Request): { logo?: VenueUpload; favicon?: VenueUpload } {
+    const files = req.files as { file?: VenueUpload[]; favicon?: VenueUpload[] } | undefined;
+    return { logo: files?.file?.[0], favicon: files?.favicon?.[0] };
+}
+
+function publicObjectUrl(file: VenueUpload) {
+    const key = `${Date.now()}-${randomUUID()}-${file.originalname}`;
+    return {
+        key,
+        url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+    };
+}
 
 class UpdateVenueController {
     constructor(
@@ -17,76 +33,91 @@ class UpdateVenueController {
     async handle(req: Request, resp: Response) {
         try {
             const param = updateVenueSchemaRequest.parse(req.body);
-            const { venueId, userId, logoUrl, hasOvernightStay,owners,isShowOnOrganization, ...rest } = param;
+            const { venueId, userId, logoUrl: _logoUrl, hasOvernightStay, owners, isShowOnOrganization, ...rest } = param;
+            void _logoUrl;
+            const { logo, favicon } = venueUploads(req);
 
-            if (req.file) {
-                console.log("req.file", req.file);
-                // Busca o venue atual para pegar a URL da imagem antiga
-                const currentVenue = await this.venueRepository.getById({ venueId: param.venueId });
-
-                if (currentVenue?.logoUrl) {
-                    const fileKeyDelete = currentVenue.logoUrl.split("/").pop(); // Pega a chave do arquivo no S3
-
-                    const imageDeleted = await s3Client.send(
-                        new DeleteObjectCommand({
-                            Bucket: process.env.AWS_BUCKET_NAME!,
-                            Key: fileKeyDelete!,
-                        })
-                    );
-
-                    if (!imageDeleted) {
-                        throw new HttpConflictError("Erro ao deletar imagem da aws.");
-                    }
-                }
-
-                // Gerando um nome único para o arquivo
-                const fileKeyUpload = `${Date.now()}-${randomUUID()}-${req.file.originalname}`;
-
-                const params = {
-                    Bucket: process.env.AWS_BUCKET_NAME!,
-                    Key: fileKeyUpload,
-                    Body: req.file.buffer,
-                    ContentType: req.file.mimetype,
-                };
-
-                await s3Client.send(new PutObjectCommand(params));
-
-                // URL pública do arquivo
-                const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKeyUpload}`;
-
-                // Atualiza o venue com a nova URL da imagem
-                const response = await this.updateVenueUseCase.execute({
-                    venueId: param.venueId,
-                    userId: param.userId,
-                    data: {
-                        ...rest,
-                        owners: owners ? JSON.parse(owners) : undefined,
-                        isShowOnOrganization: isShowOnOrganization === "true" ? true : isShowOnOrganization === "false" ? false : undefined,
-                        logoUrl: fileUrl,
-                        hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
-                    }
-                });
-
-                return resp.json(response);
+            if (favicon && !favicon.mimetype.startsWith("image/")) {
+                throw new HttpBadRequestError("O icone da aba precisa ser uma imagem.");
             }
 
-            const venueById = await this.updateVenueUseCase.execute({
-                venueId: param.venueId,
-                userId: param.userId,
-                data: {
-                    ...rest,
-                    owners: owners ? JSON.parse(owners) : undefined,
-                    isShowOnOrganization: isShowOnOrganization === "true" ? true : isShowOnOrganization === "false" ? false : undefined,
-                    hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined
+            const data: typeof rest & {
+                owners?: string[];
+                isShowOnOrganization?: boolean;
+                hasOvernightStay?: boolean;
+                logoUrl?: string;
+                faviconUrl?: string;
+            } = {
+                ...rest,
+                owners: owners ? JSON.parse(owners) : undefined,
+                isShowOnOrganization: isShowOnOrganization === "true" ? true : isShowOnOrganization === "false" ? false : undefined,
+                hasOvernightStay: hasOvernightStay === "true" ? true : hasOvernightStay === "false" ? false : undefined,
+            };
+
+            let previousFaviconKey: string | undefined;
+
+            if (logo || favicon) {
+                const currentVenue = await this.venueRepository.getById({ venueId });
+
+                if (logo) {
+                    if (currentVenue?.logoUrl) {
+                        const fileKeyDelete = currentVenue.logoUrl.split("/").pop();
+                        const imageDeleted = await s3Client.send(
+                            new DeleteObjectCommand({
+                                Bucket: process.env.AWS_BUCKET_NAME!,
+                                Key: fileKeyDelete!,
+                            })
+                        );
+                        if (!imageDeleted) {
+                            throw new HttpConflictError("Erro ao deletar imagem da aws.");
+                        }
+                    }
+
+                    const uploaded = publicObjectUrl(logo);
+                    await s3Client.send(new PutObjectCommand({
+                        Bucket: process.env.AWS_BUCKET_NAME!,
+                        Key: uploaded.key,
+                        Body: logo.buffer,
+                        ContentType: logo.mimetype,
+                    }));
+                    data.logoUrl = uploaded.url;
                 }
+
+                if (favicon) {
+                    const uploaded = publicObjectUrl(favicon);
+                    await s3Client.send(new PutObjectCommand({
+                        Bucket: process.env.AWS_BUCKET_NAME!,
+                        Key: uploaded.key,
+                        Body: favicon.buffer,
+                        ContentType: favicon.mimetype,
+                    }));
+                    data.faviconUrl = uploaded.url;
+                    const previousKey = currentVenue?.faviconUrl?.split("/").pop();
+                    if (previousKey && previousKey !== uploaded.key) previousFaviconKey = previousKey;
+                }
+            }
+
+            const response = await this.updateVenueUseCase.execute({
+                venueId,
+                userId,
+                data,
             });
-            return resp.json(venueById);
+
+            if (previousFaviconKey) {
+                try {
+                    await s3Client.send(new DeleteObjectCommand({
+                        Bucket: process.env.AWS_BUCKET_NAME!,
+                        Key: previousFaviconKey,
+                    }));
+                } catch {
+                    // A URL nova ja foi gravada. O objeto antigo pode ficar.
+                }
+            }
+
+            return resp.json(response);
         } catch (error) {
             console.log("error", error)
-            // Chamar o handleErrors para formatar o erro
             const errorResponse = handleErrors(error);
-
-            // Retornar a resposta formatada
             return resp.status(errorResponse.statusCode).json(errorResponse.body);
         }
     }

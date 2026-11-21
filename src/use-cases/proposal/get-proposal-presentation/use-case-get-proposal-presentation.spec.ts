@@ -19,6 +19,7 @@ const record: ProposalPresentationRecord = {
     description: "Casa",
     slogan: "O OASIS URBANO",
     logoUrl: "https://logo",
+    faviconUrl: "https://favicon",
     city: "Campinas",
     state: "SP",
     neighborhood: "Cambuí",
@@ -75,6 +76,7 @@ function publicCodeGallery() {
         description: null,
         slogan: null,
         logoUrl: null,
+        faviconUrl: null,
         city: "Campinas",
         state: "SP",
         neighborhood: "Centro",
@@ -179,9 +181,11 @@ describe("pacote publico da proposta", () => {
             "closingHour",
             "description",
             "facebookUrl",
+            "faviconUrl",
             "hasOvernightStay",
             "images",
             "instagramUrl",
+            "links",
             "logoUrl",
             "maxGuest",
             "minimumNights",
@@ -213,6 +217,28 @@ describe("pacote publico da proposta", () => {
         expect(packed).not.toHaveProperty("ownerVenue");
         expect(packed).not.toHaveProperty("contracts");
         expect(packed).not.toHaveProperty("Payment");
+    });
+
+    it("o href sai da linha, o oculto fica de fora e o WhatsApp usa o numero atual", () => {
+        const packed = toProposalPresentation({
+            ...record,
+            instagramUrl: "https://instagram.com/coluna",
+            linkRows: [
+                { kind: "INSTAGRAM", url: "https://www.instagram.com/ar756_/", visible: true, position: 0 },
+                { kind: "TIKTOK", url: "https://www.tiktok.com/@ar756_", visible: false, position: 1 },
+                { kind: "WHATSAPP", url: "created", visible: true, position: 2 },
+            ],
+            email: "casa@example.com",
+            organizationUrl: "https://org.example",
+        });
+        expect(packed.links).toEqual([
+            { kind: "INSTAGRAM", label: "Instagram", href: "https://www.instagram.com/ar756_/" },
+            { kind: "WHATSAPP", label: "WhatsApp", href: "https://wa.me/19999999999" },
+        ]);
+        expect(packed).not.toHaveProperty("email");
+        expect(packed).not.toHaveProperty("organizationUrl");
+        expect(packed).not.toHaveProperty("linkRows");
+        expect(packed.instagramUrl).toBe("https://instagram.com/coluna");
     });
 
     it("orcamento inexistente nao devolve a casa", async () => {

@@ -12,12 +12,12 @@ export type PublicVenueRule = {
 class ListPublicVenueRuleUseCase {
     constructor(
         private rules: Pick<VenueRuleRepositoryInterface, "listByVenue">,
-        private venues: Pick<VenueRepositoryInterface, "getById">,
+        private venues: Pick<VenueRepositoryInterface, "getPublicId">,
     ) {}
 
-    async execute(venueId: string) {
-        const venue = await this.venues.getById({ venueId });
-        if (!venue) {
+    async execute(key: string) {
+        const venueId = await this.venues.getPublicId(key);
+        if (!venueId) {
             throw new HttpResourceNotFoundError("Espaco");
         }
 

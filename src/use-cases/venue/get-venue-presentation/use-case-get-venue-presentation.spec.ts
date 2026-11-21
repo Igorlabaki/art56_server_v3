@@ -12,6 +12,7 @@ const ALLOWED_KEYS = [
     "description",
     "slogan",
     "logoUrl",
+    "faviconUrl",
     "proposalPrimaryColor",
     "proposalSecondaryColor",
     "proposalTextColor",
@@ -21,6 +22,7 @@ const ALLOWED_KEYS = [
     "tiktokUrl",
     "tourVideoUrl",
     "whatsappNumber",
+    "links",
     "neighborhood",
     "city",
     "state",
@@ -52,6 +54,7 @@ function source(overrides: Partial<VenuePublicPresentationSource> = {}): VenuePu
         description: "Jardim",
         slogan: "O OASIS URBANO",
         logoUrl: "https://cdn.example/logo.png",
+        faviconUrl: "https://cdn.example/favicon.png",
         proposalPrimaryColor: "#111315",
         proposalSecondaryColor: "#ffffff",
         proposalTextColor: "#181818",
@@ -138,6 +141,7 @@ function source(overrides: Partial<VenuePublicPresentationSource> = {}): VenuePu
 describe("apresentacao publica do espaco", () => {
     it("devolve so o recorte, filtra foto e tira o preco do servico", () => {
         const data = toVenuePresentation(source());
+        expect(data.links).toEqual([]);
 
         expect(Object.keys(data).sort()).toEqual([...ALLOWED_KEYS].sort());
         expect(data.images).toEqual([
@@ -351,5 +355,37 @@ describe("apresentacao publica pelo nome do espaco", () => {
         await expect(useCase.execute("Casa Norte")).rejects.toBeInstanceOf(HttpResourceNotFoundError);
         expect(calls).toHaveLength(1);
         expect(calls[0].where).toEqual({ name: "Casa Norte" });
+    });
+
+    it("link visivel entra com kind, label e href; o oculto fica de fora", () => {
+        const data = toVenuePresentation(source({
+            instagramUrl: "https://instagram.com/coluna",
+            links: [
+                { kind: "INSTAGRAM", url: "https://www.instagram.com/ar756_/", visible: true, position: 0 },
+                { kind: "FACEBOOK", url: "https://www.facebook.com/casa", visible: false, position: 1 },
+                { kind: "WHATSAPP", url: "created", visible: true, position: 2 },
+                { kind: "PRESENTATION", url: "created", visible: true, position: 3 },
+                { kind: "BUDGET_FORM", url: "created", visible: true, position: 4 },
+                { kind: "RULES", url: "created", visible: true, position: 5 },
+                { kind: "EMAIL", url: "created", visible: true, position: 6 },
+                { kind: "GOOGLE_MAPS", url: "created", visible: true, position: 7 },
+                { kind: "ORGANIZATION_SITE", url: "created", visible: true, position: 8 },
+            ],
+            email: "casa@example.com",
+            organizationUrl: "https://org.example",
+        }));
+        expect(data.links).toEqual([
+            { kind: "INSTAGRAM", label: "Instagram", href: "https://www.instagram.com/ar756_/" },
+            { kind: "WHATSAPP", label: "WhatsApp", href: "https://wa.me/5511999999999" },
+            { kind: "PRESENTATION", label: "Apresentação", href: "https://event-hub-dashboard.vercel.app/espaco/Casa%20Aurora/apresentacao" },
+            { kind: "BUDGET_FORM", label: "Fazer orçamento", href: "https://event-hub-dashboard.vercel.app/espaco/Casa%20Aurora/formulario" },
+            { kind: "RULES", label: "Regras", href: "https://event-hub-dashboard.vercel.app/espaco/Casa%20Aurora/regras" },
+            { kind: "EMAIL", label: "E-mail", href: "mailto:casa@example.com" },
+            { kind: "GOOGLE_MAPS", label: "Google Maps", href: "https://www.google.com/maps/search/?api=1&query=Rua%20das%20Flores%2C%2010%2C%20Centro%2C%20Ubatuba%2C%20SP" },
+            { kind: "ORGANIZATION_SITE", label: "Site da organização", href: "https://org.example" },
+        ]);
+        expect(data).not.toHaveProperty("email");
+        expect(data).not.toHaveProperty("organizationUrl");
+        expect(data.instagramUrl).toBe("https://instagram.com/coluna");
     });
 });

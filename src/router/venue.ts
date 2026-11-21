@@ -21,6 +21,7 @@ import { getEventProfileReportFactory } from "../use-cases/venue/reports/event-p
 import { getEventOriginReportFactory } from "../use-cases/venue/reports/event-origin/factory-get-event-origin-report";
 import { getAdsReportFactory } from "../use-cases/venue/reports/ads/factory-get-ads-report";
 import { getVenuePresentationFactory } from "../use-cases/venue/get-venue-presentation/factory-get-venue-presentation";
+import { createVenueLinkFactory, getVenueLinkEditorFactory, getVenueLinksFactory, hideVenueLinkFactory, orderVenueLinksFactory, saveVenueLinksFactory, setVenueLinkVisibleFactory } from "../use-cases/venue/venue-links/factory-venue-links";
 import { reorderVenueImagesFactory } from "../use-cases/venue/reorder-venue-images/factory-reorder-venue-images";
 import { chooseVenueImageFactory } from "../use-cases/venue/choose-venue-image/factory-choose-venue-image";
 
@@ -29,6 +30,41 @@ const venueRoutes = Router()
 
 venueRoutes.get("/presentation/:venueId", async (req, res) => {
     const controller = getVenuePresentationFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.get("/links/:venueId/editor", ensureAuthenticate, async (req, res) => {
+    const controller = getVenueLinkEditorFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.get("/links/:venueId", async (req, res) => {
+    const controller = getVenueLinksFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.put("/links/:venueId/order", ensureAuthenticate, async (req, res) => {
+    const controller = orderVenueLinksFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.put("/links/:venueId/visible", ensureAuthenticate, async (req, res) => {
+    const controller = setVenueLinkVisibleFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.put("/links/:venueId/hide", ensureAuthenticate, async (req, res) => {
+    const controller = hideVenueLinkFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.put("/links/:venueId/create", ensureAuthenticate, async (req, res) => {
+    const controller = createVenueLinkFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.put("/links/:venueId", ensureAuthenticate, async (req, res) => {
+    const controller = saveVenueLinksFactory();
     await controller.handle(req, res);
 })
 
@@ -45,8 +81,12 @@ venueRoutes.put("/presentation/:venueId/image-choice", ensureAuthenticate, async
 // Configuração do Multer (memória)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+const venueImages = upload.fields([
+    { name: "file", maxCount: 1 },
+    { name: "favicon", maxCount: 1 },
+]);
 // Register
-venueRoutes.post("/create",ensureAuthenticate, upload.single("file"), async (req, res) => {
+venueRoutes.post("/create",ensureAuthenticate, venueImages, async (req, res) => {
     const controller = createVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })
@@ -86,7 +126,7 @@ venueRoutes.get("/getWebData/:venueId?", async (req, res) => {
 })
 
 // Update
-venueRoutes.put("/update",ensureAuthenticate, upload.single("file"), async (req, res) => {
+venueRoutes.put("/update",ensureAuthenticate, venueImages, async (req, res) => {
     const controller = updateVenueFactory();  // Cria o controlador
     await controller.handle(req, res);         // Chama o método handle de forma assíncrona
 })

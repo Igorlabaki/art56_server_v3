@@ -1,4 +1,5 @@
 import { ProposalImageCatalogItem, ProposalPresentation, ProposalPresentationRecord } from "../repositories/interface/proposal-repository-interface";
+import { resolvedPublicVenueLinks } from "./venue-link";
 
 export function toProposalPresentation(
     row: Omit<ProposalPresentationRecord, "venueId"> & { venueId?: string },
@@ -10,6 +11,7 @@ export function toProposalPresentation(
         description: row.description,
         slogan: row.slogan,
         logoUrl: row.logoUrl,
+        faviconUrl: row.faviconUrl,
         city: row.city,
         state: row.state,
         neighborhood: row.neighborhood,
@@ -28,6 +30,7 @@ export function toProposalPresentation(
         tiktokUrl: row.tiktokUrl,
         tourVideoUrl: row.tourVideoUrl,
         whatsappNumber: row.whatsappNumber,
+        links: resolvedPublicVenueLinks(row.name, row.linkRows ?? [], row),
         proposalPrimaryColor: row.proposalPrimaryColor,
         proposalSecondaryColor: row.proposalSecondaryColor,
         proposalTextColor: row.proposalTextColor,

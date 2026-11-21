@@ -34,6 +34,7 @@ export const updateVenueSchemaDb = z.object({
         instagramUrl: z.string().optional(),
         tourVideoUrl: tourVideoUrlSchema,
         logoUrl: z.string().optional(),
+        faviconUrl: z.string().optional(),
         proposalPrimaryColor: proposalColorSchema,
         proposalSecondaryColor: proposalColorSchema,
         proposalTextColor: proposalColorSchema,

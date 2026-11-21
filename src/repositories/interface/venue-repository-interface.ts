@@ -1,4 +1,5 @@
 import { Venue, User, Question, Image, Text, Service } from "@prisma/client";
+import { ResolvedVenueLink } from "../../functions/venue-link";
 
 import { CreateVenueDbSchema } from "../../zod/venue/create-venue-db-schema";
 import { GetVenueByIdRequestParamSchema } from "../../zod/venue/get-by-id-venue-param-schema";
@@ -16,6 +17,7 @@ import { UpdateVenueInfoSchemaDb } from "../../zod/venue/update-info-venue-param
 export type ItemListVenueResponse = {
   id: string;
   name: string;
+  links?: ResolvedVenueLink[];
   logoUrl: string | null;
   proposalPrimaryColor: string | null;
   proposalSecondaryColor: string | null;
@@ -83,6 +85,7 @@ export interface VenueAnalyticsResponse {
 
 export interface WebDataResponse  {
   id: string;
+  links: ResolvedVenueLink[];
   minimumNights: number | null;
   maxGuest: number;
   facebookUrl: string | null;
@@ -99,6 +102,7 @@ export interface WebDataResponse  {
 };
 export interface HubDataResponse  {
   id: string;
+  links: ResolvedVenueLink[];
   facebookUrl: string | null;
   instagramUrl: string | null;
   tiktokUrl: string | null;
@@ -117,6 +121,7 @@ export interface VenueRepositoryInterface {
   create: (params: CreateVenueDbSchema
   ) => Promise<Venue | null>
   getById: (params: GetVenueByIdRequestParamSchema) => Promise<Venue | null>
+  getPublicId: (key: string) => Promise<string | null>
   getSelectedVenue: (params: GetSelectedVenueRequestParamSchema) => Promise<Venue | null>
   getWebData: (params: GetSelectedVenueRequestParamSchema) => Promise<WebDataResponse | null>
   getHubData: (params: GetHubDataRequestParamSchema) => Promise<HubDataResponse[] | null>

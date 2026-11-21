@@ -18,6 +18,7 @@ export const createVenueDbSchema =  z.object({
         hasOvernightStay: z.boolean(),
         checkIn: z.string().optional(),
         logoUrl: z.string().optional(),
+        faviconUrl: z.string().optional(),
         checkOut: z.string().optional(),
         tiktokUrl: z.string().optional(),
         description:z.string().optional(),
