@@ -10,7 +10,6 @@ import {
     VenueDomainRecord,
     VenueDomainRepository,
 } from "../../../repositories/interface/venue-domain-repository-interface";
-import { VenueDomainAttachError, VenueDomainRegistrar } from "./venue-domain-registrar";
 
 const denyEdit: VenueInfoEditPermission = { canEditVenueInfo: async () => false };
 const denyRead: VenueDomainReadPermission = { canReadVenueDomain: async () => false };
@@ -57,11 +56,16 @@ class GetVenueDomainUseCase {
     }
 }
 
+function shareHostname(rows: VenueDomainRecord[]): string | null {
+    const pending = rows.find((row) => row.status === "PENDING");
+    const active = rows.find((row) => row.status === "ACTIVE");
+    return (pending ?? active)?.hostname ?? null;
+}
+
 class SaveVenueDomainUseCase {
     constructor(
         private readonly domains: VenueDomainRepository,
         private readonly permission: VenueInfoEditPermission = denyEdit,
-        private readonly registrar: VenueDomainRegistrar,
     ) {}
 
     async execute(userId: string, venueKey: string, rawHostname: string) {
@@ -79,16 +83,7 @@ class SaveVenueDomainUseCase {
             row.hostname === normalized.hostname && (row.status === "PENDING" || row.status === "ACTIVE")
         ));
         if (same) return envelope(viewOf(current));
-        let challenge = null;
-        try {
-            challenge = await this.registrar.add(normalized.hostname);
-        } catch (error) {
-            if (error instanceof VenueDomainAttachError && error.status === 409) {
-                throw new HttpConflictError("Dominio");
-            }
-            throw error;
-        }
-        await this.domains.savePending(venue.id, normalized.hostname, challenge);
+        await this.domains.savePending(venue.id, normalized.hostname, null);
         return envelope(viewOf(await this.domains.listByVenue(venue.id)));
     }
 }
@@ -97,7 +92,6 @@ class VerifyVenueDomainUseCase {
     constructor(
         private readonly domains: VenueDomainRepository,
         private readonly permission: VenueInfoEditPermission = denyEdit,
-        private readonly registrar: VenueDomainRegistrar,
     ) {}
 
     async execute(userId: string, venueKey: string) {
@@ -106,17 +100,6 @@ class VerifyVenueDomainUseCase {
         if (!(await this.permission.canEditVenueInfo(userId, venue.id))) {
             throw new HttpForbiddenError("Sem permissao para editar o espaco");
         }
-        const current = await this.domains.listByVenue(venue.id);
-        const pending = current.find((row) => row.status === "PENDING");
-        if (!pending) return envelope(viewOf(current));
-        const verified = await this.registrar.verify(pending.hostname);
-        if (!verified) return envelope(viewOf(current));
-        const active = current.find((row) => row.status === "ACTIVE");
-        if (active) {
-            await this.registrar.remove(active.hostname);
-            await this.domains.markRemoved(active.id);
-        }
-        await this.domains.markActive(pending.id);
         return envelope(viewOf(await this.domains.listByVenue(venue.id)));
     }
 }
@@ -125,7 +108,6 @@ class DeleteVenueDomainUseCase {
     constructor(
         private readonly domains: VenueDomainRepository,
         private readonly permission: VenueInfoEditPermission = denyEdit,
-        private readonly registrar: VenueDomainRegistrar,
     ) {}
 
     async execute(userId: string, venueKey: string) {
@@ -137,7 +119,6 @@ class DeleteVenueDomainUseCase {
         const current = await this.domains.listByVenue(venue.id);
         const target = current.find((row) => row.status === "ACTIVE") ?? current.find((row) => row.status === "PENDING");
         if (!target) return envelope(viewOf(current));
-        await this.registrar.remove(target.hostname);
         await this.domains.markRemoved(target.id);
         return envelope(viewOf(await this.domains.listByVenue(venue.id)));
     }
@@ -161,4 +142,4 @@ class ResolveVenueDomainUseCase {
     }
 }
 
-export { DeleteVenueDomainUseCase, GetVenueDomainUseCase, ResolveVenueDomainUseCase, SaveVenueDomainUseCase, VerifyVenueDomainUseCase };
+export { DeleteVenueDomainUseCase, GetVenueDomainUseCase, ResolveVenueDomainUseCase, SaveVenueDomainUseCase, shareHostname, VerifyVenueDomainUseCase };

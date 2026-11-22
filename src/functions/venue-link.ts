@@ -229,13 +229,21 @@ export function venueLinkColumns(rows: VenueLinkRow[]): VenueLinkColumns {
     };
 }
 
-export function venueLinkHref(name: string, row: VenueLinkRow, source: VenueLinkSource): string | null {
+const SHARE_PATH = {
+    PRESENTATION: "apresentacao",
+    BUDGET_FORM: "formulario",
+    RULES: "regras",
+} as const;
+
+export function venueLinkHref(name: string, row: VenueLinkRow, source: VenueLinkSource, shareHost?: string | null): string | null {
     if (isPastedVenueLink(row.kind)) {
         if (!row.url) return null;
         const check = checkVenueLinkUrl(row.kind, row.url);
         return check.status === "green" ? check.href : null;
     }
     const key = encodeURIComponent(name);
+    const sharePath = row.kind in SHARE_PATH ? SHARE_PATH[row.kind as keyof typeof SHARE_PATH] : null;
+    if (sharePath && shareHost) return `https://${shareHost}/${sharePath}`;
     switch (row.kind) {
         case "PRESENTATION":
             return `${PUBLIC_HOST}/espaco/${key}/apresentacao`;
@@ -264,10 +272,10 @@ export function venueLinkHref(name: string, row: VenueLinkRow, source: VenueLink
     }
 }
 
-export function publicVenueLinks(name: string, rows: VenueLinkRow[], source: VenueLinkSource) {
+export function publicVenueLinks(name: string, rows: VenueLinkRow[], source: VenueLinkSource, shareHost?: string | null) {
     return ordered(rows).flatMap((row) => {
         if (!row.visible) return [];
-        const href = venueLinkHref(name, row, source);
+        const href = venueLinkHref(name, row, source, shareHost);
         if (!href) return [];
         return [{ kind: row.kind, label: VENUE_LINK_LABEL[row.kind], subtitle: VENUE_LINK_SUBTITLE[row.kind], href }];
     });

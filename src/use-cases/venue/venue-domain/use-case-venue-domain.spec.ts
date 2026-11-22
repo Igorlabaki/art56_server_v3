@@ -14,8 +14,8 @@ import {
     VenueDomainVenue,
 } from "../../../repositories/interface/venue-domain-repository-interface";
 import { venueRoutes } from "../../../router/venue";
-import { VenueDomainChallenge, VenueDomainRegistrar } from "./venue-domain-registrar";
-import { DeleteVenueDomainUseCase, GetVenueDomainUseCase, ResolveVenueDomainUseCase, SaveVenueDomainUseCase, VerifyVenueDomainUseCase } from "./use-case-venue-domain";
+import { VenueDomainRegistrar } from "./venue-domain-registrar";
+import { DeleteVenueDomainUseCase, GetVenueDomainUseCase, ResolveVenueDomainUseCase, SaveVenueDomainUseCase, shareHostname, VerifyVenueDomainUseCase } from "./use-case-venue-domain";
 
 const allow: VenueInfoEditPermission = { canEditVenueInfo: async () => true };
 const deny: VenueInfoEditPermission = { canEditVenueInfo: async () => false };
@@ -23,19 +23,14 @@ const allowRead: VenueDomainReadPermission = { canReadVenueDomain: async () => t
 const denyRead: VenueDomainReadPermission = { canReadVenueDomain: async () => false };
 
 function registrar(): VenueDomainRegistrar & { calls: string[] } {
+    const fail = (name: string) => async (hostname: string) => {
+        throw new Error(`registrar chamado: ${name}:${hostname}`);
+    };
     return {
         calls: [],
-        async add(hostname: string): Promise<VenueDomainChallenge> {
-            this.calls.push(`add:${hostname}`);
-            return { type: "TXT", name: `_vercel.${hostname}`, value: "challenge-token" };
-        },
-        async verify(hostname: string) {
-            this.calls.push(`verify:${hostname}`);
-            return false;
-        },
-        async remove(hostname: string) {
-            this.calls.push(`remove:${hostname}`);
-        },
+        add: fail("add"),
+        verify: fail("verify"),
+        remove: fail("remove"),
     };
 }
 
@@ -126,53 +121,51 @@ describe("gravar dominio", () => {
         { id: "venue-b", name: "Casa B" },
     ];
 
-    it("grava o host limpo como pendente e chama o registrar uma vez", async () => {
+    it("grava o host limpo como pendente sem chamar o registrar", async () => {
         const { domains, rows } = memory(venues);
         const fake = registrar();
-        const saved = await new SaveVenueDomainUseCase(domains, allow, fake).execute("user-1", "Casa A", "https://WWW.Casa.com/");
-        expect(saved.data).toMatchObject({
-            hostname: "www.casa.com",
-            status: "PENDING",
-            verification: { type: "TXT", name: "_vercel.www.casa.com", value: "challenge-token" },
-        });
-        expect(fake.calls).toEqual(["add:www.casa.com"]);
+        const saved = await new SaveVenueDomainUseCase(domains, allow).execute("user-1", "Casa A", "https://WWW.Casa.com/");
+        expect(saved.data).toEqual({ hostname: "www.casa.com", status: "PENDING", verification: null });
+        expect(fake.calls).toEqual([]);
         expect(rows).toHaveLength(1);
         expect(rows[0]?.status).toBe("PENDING");
+        expect(shareHostname(rows)).toBe("www.casa.com");
     });
 
-    it("localhost e vercel.app respondem 400 e nao chamam o registrar", async () => {
+    it("o mesmo hostname no mesmo espaco nao cria outra linha", async () => {
+        const { domains, rows } = memory(venues, [row("venue-a", "www.casa.com", "PENDING")]);
+        const saved = await new SaveVenueDomainUseCase(domains, allow).execute("user-1", "Casa A", "www.casa.com");
+        expect(saved.data.hostname).toBe("www.casa.com");
+        expect(rows).toHaveLength(1);
+    });
+
+    it("localhost e vercel.app respondem 400 e nao gravam", async () => {
         const { domains, rows } = memory(venues);
-        const fake = registrar();
-        const save = new SaveVenueDomainUseCase(domains, allow, fake);
+        const save = new SaveVenueDomainUseCase(domains, allow);
         await expect(save.execute("user-1", "Casa A", "localhost")).rejects.toBeInstanceOf(HttpBadRequestError);
         await expect(save.execute("user-1", "Casa A", "https://casa.vercel.app/")).rejects.toBeInstanceOf(HttpBadRequestError);
-        expect(fake.calls).toEqual([]);
         expect(rows).toHaveLength(0);
     });
 
-    it("segundo espaco no mesmo host responde 409 e nao chama o registrar", async () => {
+    it("segundo espaco no mesmo host responde 409", async () => {
         const { domains, rows } = memory(venues, [row("venue-a", "www.casa.com", "PENDING")]);
-        const fake = registrar();
         await expect(
-            new SaveVenueDomainUseCase(domains, allow, fake).execute("user-2", "Casa B", "https://www.casa.com/"),
+            new SaveVenueDomainUseCase(domains, allow).execute("user-2", "Casa B", "https://www.casa.com/"),
         ).rejects.toBeInstanceOf(HttpConflictError);
-        expect(fake.calls).toEqual([]);
         expect(rows.filter((item) => item.venueId === "venue-b")).toHaveLength(0);
         try {
-            await new SaveVenueDomainUseCase(domains, allow, fake).execute("user-2", "Casa B", "www.casa.com");
+            await new SaveVenueDomainUseCase(domains, allow).execute("user-2", "Casa B", "www.casa.com");
         } catch (error) {
             expect(error).toBeInstanceOf(HttpConflictError);
             expect((error as Error).message).not.toContain("Casa A");
         }
     });
 
-    it("usuario sem permissao recebe 403 e o registrar nao e chamado", async () => {
+    it("usuario sem permissao recebe 403 e nao grava", async () => {
         const { domains, rows } = memory(venues);
-        const fake = registrar();
         await expect(
-            new SaveVenueDomainUseCase(domains, deny, fake).execute("user-1", "Casa A", "https://www.casa.com/"),
+            new SaveVenueDomainUseCase(domains, deny).execute("user-1", "Casa A", "https://www.casa.com/"),
         ).rejects.toBeInstanceOf(HttpForbiddenError);
-        expect(fake.calls).toEqual([]);
         expect(rows).toHaveLength(0);
     });
 });
@@ -209,35 +202,24 @@ describe("resolver hostname", () => {
 describe("verificar e remover", () => {
     const venues = [{ id: "venue-a", name: "Casa A" }];
 
-    it("verify verdadeiro marca ACTIVE e o resolve devolve a casa", async () => {
-        const seeded = row("venue-a", "www.casa.com", "PENDING");
-        const { domains } = memory(venues, [seeded]);
+    it("verify nao muda o pendente e nao chama o registrar", async () => {
+        const { domains, rows } = memory(venues, [row("venue-a", "www.casa.com", "PENDING")]);
         const fake = registrar();
-        fake.verify = async (hostname: string) => {
-            fake.calls.push(`verify:${hostname}`);
-            return true;
-        };
-        const saved = await new VerifyVenueDomainUseCase(domains, allow, fake).execute("user-1", "Casa A");
-        expect(saved.data.status).toBe("ACTIVE");
-        await expect(new ResolveVenueDomainUseCase(domains).execute("www.casa.com")).resolves.toEqual({
-            venueId: "venue-a",
-            name: "Casa A",
-        });
+        const saved = await new VerifyVenueDomainUseCase(domains, allow).execute("user-1", "Casa A");
+        expect(saved.data).toMatchObject({ hostname: "www.casa.com", status: "PENDING" });
+        expect(fake.calls).toEqual([]);
+        expect(rows[0]?.status).toBe("PENDING");
+        expect(shareHostname(rows)).toBe("www.casa.com");
     });
 
-    it("verify falso nao marca ACTIVE", async () => {
-        const { domains } = memory(venues, [row("venue-a", "www.casa.com", "PENDING")]);
-        const saved = await new VerifyVenueDomainUseCase(domains, allow, registrar()).execute("user-1", "Casa A");
-        expect(saved.data.status).toBe("PENDING");
-        await expect(new ResolveVenueDomainUseCase(domains).execute("www.casa.com")).rejects.toBeInstanceOf(HttpResourceNotFoundError);
-    });
-
-    it("delete tira o hostname vivo e o resolve passa a 404", async () => {
-        const { domains } = memory(venues, [row("venue-a", "www.casa.com", "ACTIVE")]);
+    it("delete marca REMOVED e o resolve passa a 404", async () => {
+        const { domains, rows } = memory(venues, [row("venue-a", "www.casa.com", "ACTIVE")]);
         const fake = registrar();
-        const saved = await new DeleteVenueDomainUseCase(domains, allow, fake).execute("user-1", "Casa A");
+        const saved = await new DeleteVenueDomainUseCase(domains, allow).execute("user-1", "Casa A");
         expect(saved.data).toEqual({ hostname: null, status: null, verification: null });
-        expect(fake.calls).toEqual(["remove:www.casa.com"]);
+        expect(fake.calls).toEqual([]);
+        expect(rows[0]?.status).toBe("REMOVED");
+        expect(shareHostname(rows)).toBeNull();
         await expect(new ResolveVenueDomainUseCase(domains).execute("www.casa.com")).rejects.toBeInstanceOf(HttpResourceNotFoundError);
     });
 });
@@ -248,6 +230,12 @@ describe("leitura do dominio", () => {
         const empty = await new GetVenueDomainUseCase(domains, allowRead).execute("user-1", "Casa A");
         expect(empty.data).toEqual({ hostname: null, status: null, verification: null });
         await expect(new GetVenueDomainUseCase(domains, denyRead).execute("user-1", "Casa A")).rejects.toBeInstanceOf(HttpForbiddenError);
+    });
+
+    it("leitura devolve o hostname pendente", async () => {
+        const { domains } = memory([{ id: "venue-a", name: "Casa A" }], [row("venue-a", "www.casa.com", "PENDING")]);
+        const saved = await new GetVenueDomainUseCase(domains, allowRead).execute("user-1", "Casa A");
+        expect(saved.data).toMatchObject({ hostname: "www.casa.com", status: "PENDING" });
     });
 });
 

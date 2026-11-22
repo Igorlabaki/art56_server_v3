@@ -1,3 +1,4 @@
+import { PrismaVenueDomainRepository } from "../../../repositories/in-prisma/venue-domain-in-prisma-repository";
 import { PrismaVenueInfoEditPermission, PrismaVenueLinkRepository } from "../../../repositories/in-prisma/venue-link-in-prisma-repository";
 import { PrismaVenueSiteEditPermission } from "../../../repositories/in-prisma/venue-site-edit-permission-in-prisma";
 import prismaClient from "../../../services/prisma-client";
@@ -7,7 +8,7 @@ import { CreateVenueLinkUseCase, GetVenueLinkEditorUseCase, GetVenueLinksUseCase
 export const getVenueLinksFactory = () => {
     const links = new PrismaVenueLinkRepository(prismaClient);
     const permission = new PrismaVenueSiteEditPermission(prismaClient);
-    return new GetVenueLinksController(new GetVenueLinksUseCase(links, permission));
+    return new GetVenueLinksController(new GetVenueLinksUseCase(links, permission, new PrismaVenueDomainRepository(prismaClient)));
 };
 
 export const getVenueLinkEditorFactory = () => {

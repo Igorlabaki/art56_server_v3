@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkVenueLinkUrl, createVenueLink, createdVenueLinks, defaultVenueLinks, linkTreePlace, publicVenueLinks, replaceVenueLinkUrl, VENUE_LINK_KINDS, VENUE_LINK_SUBTITLE, type VenueLinkKind, type VenueLinkSource } from "./venue-link";
+import { checkVenueLinkUrl, createVenueLink, createdVenueLinks, defaultVenueLinks, linkTreePlace, publicVenueLinks, replaceVenueLinkUrl, venueLinkHref, VENUE_LINK_KINDS, VENUE_LINK_SUBTITLE, type VenueLinkKind, type VenueLinkSource } from "./venue-link";
 
 const ar756: VenueLinkSource = {
     url: "https://www.ar756.com/",
@@ -91,6 +91,23 @@ describe("subtitulo do link publico", () => {
             ], source);
             expect(hidden).toEqual([]);
         }
+    });
+});
+
+describe("href publico com hostname", () => {
+    const row = { url: null, visible: true, position: 0 };
+
+    it("com hostname usa o caminho curto e sem hostname fica no host padrao", () => {
+        expect(venueLinkHref("AR756", { ...row, kind: "PRESENTATION" }, ar756, "www.casa.com")).toBe("https://www.casa.com/apresentacao");
+        expect(venueLinkHref("AR756", { ...row, kind: "BUDGET_FORM" }, ar756, "www.casa.com")).toBe("https://www.casa.com/formulario");
+        expect(venueLinkHref("AR756", { ...row, kind: "RULES" }, ar756, "www.casa.com")).toBe("https://www.casa.com/regras");
+        expect(venueLinkHref("AR756", { ...row, kind: "PRESENTATION" }, ar756, null)).toBe("https://event-hub-dashboard.vercel.app/espaco/AR756/apresentacao");
+    });
+
+    it("whatsapp, mapa e url colada ignoram o hostname", () => {
+        expect(venueLinkHref("AR756", { ...row, kind: "WHATSAPP" }, { ...ar756, whatsappNumber: "5511999999999" }, "www.casa.com")).toBe("https://wa.me/5511999999999");
+        expect(venueLinkHref("AR756", { ...row, kind: "SITE", url: "https://www.ar756.com/" }, ar756, "www.casa.com")).toBe("https://www.ar756.com/");
+        expect(venueLinkHref("AR756", { ...row, kind: "GOOGLE_MAPS" }, ar756, "www.casa.com")).toContain("google.com/maps");
     });
 });
 

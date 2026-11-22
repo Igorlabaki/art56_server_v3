@@ -186,6 +186,34 @@ describe("gravacao dos links", () => {
         expect(again.data.links[0]?.href).toBe("https://event-hub-dashboard.vercel.app/espaco/AR756/apresentacao");
     });
 
+    it("com hostname pendente os tres caminhos internos ficam curtos e o WhatsApp nao", async () => {
+        const rows: VenueLinkRow[] = [
+            { kind: "PRESENTATION", url: "created", visible: true, position: 0 },
+            { kind: "BUDGET_FORM", url: "created", visible: true, position: 1 },
+            { kind: "RULES", url: "created", visible: true, position: 2 },
+            { kind: "WHATSAPP", url: "created", visible: true, position: 3 },
+        ];
+        const found = record(rows);
+        found.whatsappNumber = "5511999999999";
+        const domains = {
+            listByVenue: async () => [{
+                id: "domain-1",
+                venueId: found.id,
+                hostname: "www.casa.com",
+                status: "PENDING" as const,
+                verificationType: null,
+                verificationName: null,
+                verificationValue: null,
+            }],
+        };
+        const response = await new GetVenueLinksUseCase(store(found).links, allowSite, domains).execute("AR756");
+        const hrefs = Object.fromEntries(response.data.links.map((link) => [link.kind, link.href]));
+        expect(hrefs.PRESENTATION).toBe("https://www.casa.com/apresentacao");
+        expect(hrefs.BUDGET_FORM).toBe("https://www.casa.com/formulario");
+        expect(hrefs.RULES).toBe("https://www.casa.com/regras");
+        expect(hrefs.WHATSAPP).toBe("https://wa.me/5511999999999");
+    });
+
     it("grava WhatsApp sem numero fora do link tree", async () => {
         const { links, replaced } = store(record());
         const saved = await new SaveVenueLinksUseCase(links, allow).execute("user-1", "AR756", [

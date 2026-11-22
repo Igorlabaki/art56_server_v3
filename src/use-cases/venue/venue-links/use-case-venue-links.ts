@@ -18,7 +18,9 @@ import {
     VenueLinkRow,
     VenueLinkSource,
 } from "../../../functions/venue-link";
+import { VenueDomainRepository } from "../../../repositories/interface/venue-domain-repository-interface";
 import { VenueInfoEditPermission, VenueLinkRecord, VenueLinkRepository } from "../../../repositories/interface/venue-link-repository-interface";
+import { shareHostname } from "../venue-domain/use-case-venue-domain";
 import { VenueSiteEditPermission } from "../../../repositories/interface/venue-site-edit-permission-interface";
 
 const deny: VenueInfoEditPermission = { canEditVenueInfo: async () => false };
@@ -109,7 +111,7 @@ async function withLegacy(links: VenueLinkRepository, record: VenueLinkRecord) {
     return { ...record, links: next };
 }
 
-function publicData(record: VenueLinkRecord, rows = rowsOf(record)) {
+function publicData(record: VenueLinkRecord, rows = rowsOf(record), shareHost: string | null = null) {
     const source = sourceOf(record);
     return {
         name: record.name,
@@ -119,7 +121,7 @@ function publicData(record: VenueLinkRecord, rows = rowsOf(record)) {
         proposalSecondaryColor: record.proposalSecondaryColor,
         proposalTextColor: record.proposalTextColor,
         ...linkTreePlace(rows, source),
-        links: publicVenueLinks(record.name, rows, source),
+        links: publicVenueLinks(record.name, rows, source, shareHost),
     };
 }
 
@@ -127,6 +129,7 @@ class GetVenueLinksUseCase {
     constructor(
         private readonly links: VenueLinkRepository,
         private readonly permission: VenueSiteEditPermission = denySite,
+        private readonly domains: Pick<VenueDomainRepository, "listByVenue"> | null = null,
     ) {}
 
     async execute(venueKey: string, userId: string | null = null) {
@@ -134,11 +137,12 @@ class GetVenueLinksUseCase {
         if (!found) throw new HttpResourceNotFoundError("Espaco");
         const record = await withLegacy(this.links, found);
         const rows = rowsOf(record);
+        const shareHost = this.domains ? shareHostname(await this.domains.listByVenue(record.id)) : null;
         const canReorder = userId
             ? await this.permission.canEditVenueSite(userId, record.id)
             : false;
         const data = {
-            ...publicData(record, rows),
+            ...publicData(record, rows, shareHost),
             canReorder,
             ...(canReorder ? { usedKinds: rows.map((row) => row.kind) } : {}),
         };
