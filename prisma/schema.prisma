@@ -472,6 +472,7 @@ model Venue {
   EmailConfig            EmailConfig[]
   userVenuePermissions   UserVenuePermission[]
   links                  VenueLink[]
+  domains                VenueDomain[]
 
   @@index([organizationId])
   @@map("venue")
@@ -489,6 +490,29 @@ model VenueLink {
   @@unique([venueId, kind])
   @@index([venueId])
   @@map("venue_link")
+}
+
+model VenueDomain {
+  id                String             @id @default(uuid())
+  venueId           String
+  hostname          String             @unique @db.VarChar(253)
+  status            VenueDomainStatus
+  verificationType  String?            @db.VarChar(32)
+  verificationName  String?            @db.VarChar(255)
+  verificationValue String?            @db.Text
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  activatedAt       DateTime?
+  venue             Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
+  @@map("venue_domain")
+}
+
+enum VenueDomainStatus {
+  PENDING
+  ACTIVE
+  REMOVED
 }
 
 model TieredPrice {

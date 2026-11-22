@@ -24,9 +24,35 @@ import { getVenuePresentationFactory } from "../use-cases/venue/get-venue-presen
 import { createVenueLinkFactory, getVenueLinkEditorFactory, getVenueLinksFactory, hideVenueLinkFactory, orderVenueLinksFactory, saveVenueLinksFactory, setVenueLinkVisibleFactory } from "../use-cases/venue/venue-links/factory-venue-links";
 import { reorderVenueImagesFactory } from "../use-cases/venue/reorder-venue-images/factory-reorder-venue-images";
 import { chooseVenueImageFactory } from "../use-cases/venue/choose-venue-image/factory-choose-venue-image";
+import { deleteVenueDomainFactory, getVenueDomainFactory, resolveVenueDomainFactory, saveVenueDomainFactory, verifyVenueDomainFactory } from "../use-cases/venue/venue-domain/factory-venue-domain";
 
 
 const venueRoutes = Router()
+
+venueRoutes.get("/domain/resolve", async (req, res) => {
+    const controller = resolveVenueDomainFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.get("/domain/:venueId", ensureAuthenticate, async (req, res) => {
+    const controller = getVenueDomainFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.put("/domain/:venueId", ensureAuthenticate, async (req, res) => {
+    const controller = saveVenueDomainFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.post("/domain/:venueId/verify", ensureAuthenticate, async (req, res) => {
+    const controller = verifyVenueDomainFactory();
+    await controller.handle(req, res);
+})
+
+venueRoutes.delete("/domain/:venueId", ensureAuthenticate, async (req, res) => {
+    const controller = deleteVenueDomainFactory();
+    await controller.handle(req, res);
+})
 
 venueRoutes.get("/presentation/:venueId", async (req, res) => {
     const controller = getVenuePresentationFactory();
