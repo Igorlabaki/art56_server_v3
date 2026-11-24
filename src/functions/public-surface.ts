@@ -2,8 +2,8 @@ import { createHash } from "crypto";
 
 export const PUBLIC_SURFACE_TIME_ZONE = "America/Sao_Paulo";
 
-/** Corte estável da medição. Permanece nulo até o rollout gravar o instante. */
-export const PUBLIC_SURFACE_ACTIVATED_AT: Date | null = null;
+/** Instante em que a coleta entrou na main. Não mover: a janela dos orçamentos parte daqui. */
+export const PUBLIC_SURFACE_ACTIVATED_AT: Date | null = new Date("2026-11-24T01:31:37.000Z");
 
 export const SITE_CREATION_ACTIONS = [
     "Cliente criou este orçamento pelo site",

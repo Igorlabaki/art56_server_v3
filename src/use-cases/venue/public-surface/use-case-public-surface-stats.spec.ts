@@ -3,7 +3,7 @@ import { HttpBadRequestError } from "../../../errors/errors-type/htttp-bad-reque
 import { HttpForbiddenError } from "../../../errors/errors-type/http-forbidden-error";
 import { HttpResourceNotFoundError } from "../../../errors/errors-type/http-resource-not-found-error";
 import { HttpTokenError } from "../../../errors/errors-type/http-token-error";
-import { DAILY_INCREMENT_SQL, formRate, monthWindow, saoPauloCalendar, VISITOR_INSERT_SQL } from "../../../functions/public-surface";
+import { DAILY_INCREMENT_SQL, formRate, monthWindow, PUBLIC_SURFACE_ACTIVATED_AT, saoPauloCalendar, VISITOR_INSERT_SQL } from "../../../functions/public-surface";
 import { VenueLinkRecord, VenueLinkRepository } from "../../../repositories/interface/venue-link-repository-interface";
 import { MemoryPublicSurfaceStore } from "../../../repositories/interface/public-surface-store";
 import { VenueSiteViewPermission } from "../../../repositories/in-prisma/venue-site-view-permission-in-prisma";
@@ -48,6 +48,14 @@ describe("janela de Sao Paulo", () => {
     it("deixa a taxa em branco quando o formulario nao abriu", () => {
         expect(formRate(8, 0)).toBeNull();
         expect(formRate(8, 35)).toBeCloseTo(8 / 35);
+    });
+
+    it("parte os orcamentos do instante gravado na main", () => {
+        expect(PUBLIC_SURFACE_ACTIVATED_AT?.toISOString()).toBe("2026-11-24T01:31:37.000Z");
+        const november = monthWindow("2026-11");
+        expect(november?.historyFrom.toISOString()).toBe("2026-11-24T01:31:37.000Z");
+        expect(november?.historyTo.toISOString()).toBe("2026-12-01T03:00:00.000Z");
+        expect(november?.dataSince).toBe("2026-11-23");
     });
 });
 
