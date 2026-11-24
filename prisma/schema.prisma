@@ -473,6 +473,8 @@ model Venue {
   userVenuePermissions   UserVenuePermission[]
   links                  VenueLink[]
   domains                VenueDomain[]
+  surfaceDaily           PublicSurfaceDaily[]
+  surfaceVisitors        PublicSurfaceVisitor[]
 
   @@index([organizationId])
   @@map("venue")
@@ -490,6 +492,31 @@ model VenueLink {
   @@unique([venueId, kind])
   @@index([venueId])
   @@map("venue_link")
+}
+
+model PublicSurfaceDaily {
+  id      String   @id @default(uuid())
+  venueId String
+  day     DateTime @db.Date
+  subject String   @db.VarChar(32)
+  opens   Int      @default(0)
+  clicks  Int      @default(0)
+  venue   Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, day, subject])
+  @@map("public_surface_daily")
+}
+
+model PublicSurfaceVisitor {
+  id         String @id @default(uuid())
+  venueId    String
+  month      String @db.VarChar(7)
+  surface    String @db.VarChar(16)
+  visitorKey String @db.VarChar(64)
+  venue      Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, month, surface, visitorKey])
+  @@map("public_surface_visitor")
 }
 
 model VenueDomain {

@@ -22,6 +22,9 @@ import { getEventOriginReportFactory } from "../use-cases/venue/reports/event-or
 import { getAdsReportFactory } from "../use-cases/venue/reports/ads/factory-get-ads-report";
 import { getVenuePresentationFactory } from "../use-cases/venue/get-venue-presentation/factory-get-venue-presentation";
 import { createVenueLinkFactory, getVenueLinkEditorFactory, getVenueLinksFactory, hideVenueLinkFactory, orderVenueLinksFactory, saveVenueLinksFactory, setVenueLinkVisibleFactory } from "../use-cases/venue/venue-links/factory-venue-links";
+import { getPublicSurfaceStatsFactory } from "../use-cases/venue/public-surface/factory-public-surface-stats";
+import { mountPublicSurfaceCollection } from "../use-cases/venue/public-surface/controller-record-public-surface";
+import { recordPublicSurfaceClickFactory, recordPublicSurfaceViewFactory } from "../use-cases/venue/public-surface/factory-record-public-surface";
 import { reorderVenueImagesFactory } from "../use-cases/venue/reorder-venue-images/factory-reorder-venue-images";
 import { chooseVenueImageFactory } from "../use-cases/venue/choose-venue-image/factory-choose-venue-image";
 import { deleteVenueDomainFactory, getVenueDomainFactory, resolveVenueDomainFactory, saveVenueDomainFactory, verifyVenueDomainFactory } from "../use-cases/venue/venue-domain/factory-venue-domain";
@@ -61,6 +64,13 @@ venueRoutes.get("/presentation/:venueId", async (req, res) => {
 
 venueRoutes.get("/links/:venueId/editor", ensureAuthenticate, async (req, res) => {
     const controller = getVenueLinkEditorFactory();
+    await controller.handle(req, res);
+})
+
+mountPublicSurfaceCollection(venueRoutes, recordPublicSurfaceViewFactory, recordPublicSurfaceClickFactory);
+
+venueRoutes.get("/links/:venueId/stats", ensureAuthenticate, async (req, res) => {
+    const controller = getPublicSurfaceStatsFactory();
     await controller.handle(req, res);
 })
 
